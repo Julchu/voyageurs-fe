@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendUrl } from "@/utils/env";
 
 const accessTokenStale = (token: string) => {
   try {
@@ -7,7 +6,10 @@ const accessTokenStale = (token: string) => {
     if (!part) return true;
     const padded = part.replace(/-/g, "+").replace(/_/g, "/");
     const payload = JSON.parse(atob(padded)) as { exp?: unknown };
-    return typeof payload.exp !== "number" || payload.exp * 1000 <= Date.now() + 30_000;
+    return (
+      typeof payload.exp !== "number" ||
+      payload.exp * 1000 <= Date.now() + 30_000
+    );
   } catch {
     return true;
   }
@@ -42,8 +44,12 @@ const removeCookie = (cookieHeader: string, name: string) =>
 export async function proxy(req: NextRequest) {
   const accessTokenKey = process.env.ACCESS_TOKEN_KEY;
   const refreshTokenKey = process.env.REFRESH_TOKEN_KEY;
-  const accessToken = accessTokenKey ? req.cookies.get(accessTokenKey)?.value : undefined;
-  const refreshToken = refreshTokenKey ? req.cookies.get(refreshTokenKey)?.value : undefined;
+  const accessToken = accessTokenKey
+    ? req.cookies.get(accessTokenKey)?.value
+    : undefined;
+  const refreshToken = refreshTokenKey
+    ? req.cookies.get(refreshTokenKey)?.value
+    : undefined;
 
   let requestCookie = req.headers.get("cookie") ?? "";
   const setCookies: string[] = [];
@@ -55,13 +61,16 @@ export async function proxy(req: NextRequest) {
 
   if (shouldRefresh && accessTokenKey && refreshTokenKey && refreshToken) {
     try {
-      const refreshRes = await fetch(`${backendUrl()}/user/refresh`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${refreshToken}`,
+      const refreshRes = await fetch(
+        `${process.env.VOYAGEURS_BACKEND_URL}/user/refresh`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+          },
+          cache: "no-store",
         },
-        cache: "no-store",
-      });
+      );
 
       if (refreshRes.ok) {
         for (const cookie of refreshRes.headers.getSetCookie()) {
@@ -82,7 +91,10 @@ export async function proxy(req: NextRequest) {
         );
       }
     } catch (error) {
-      console.error("Session refresh failed", error instanceof Error ? error.name : "unknown");
+      console.error(
+        "Session refresh failed",
+        error instanceof Error ? error.name : "unknown",
+      );
     }
   }
 
@@ -103,5 +115,7 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets/).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets/).*)",
+  ],
 };

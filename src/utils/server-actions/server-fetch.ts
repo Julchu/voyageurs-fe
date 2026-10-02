@@ -1,5 +1,4 @@
 "use server";
-import { backendUrl } from "@/utils/env";
 import { getAccessToken } from "@/utils/server-actions/session-token";
 
 export const serverFetch = async <T>({
@@ -16,14 +15,17 @@ export const serverFetch = async <T>({
 
     if (!token) return null;
 
-    const fetchResponse = await fetch(`${backendUrl()}/${endpoint}`, {
-      method,
-      body: body ? JSON.stringify(body) : undefined,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(body ? { "Content-Type": "application/json" } : {}),
+    const fetchResponse = await fetch(
+      `${process.env.VOYAGEURS_BACKEND_URL}/${endpoint}`,
+      {
+        method,
+        body: body ? JSON.stringify(body) : undefined,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(body ? { "Content-Type": "application/json" } : {}),
+        },
       },
-    });
+    );
 
     const { success, data, error } = await fetchResponse.json();
 

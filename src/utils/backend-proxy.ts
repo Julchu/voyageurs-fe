@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { backendUrl } from "@/utils/env";
 import { getAccessToken } from "@/utils/server-actions/session-token";
 
 type BackendPayload = {
@@ -8,13 +7,20 @@ type BackendPayload = {
   error?: string;
 };
 
-export const proxyJson = async (path: string, init: RequestInit | undefined, dataKey: string) => {
+export const proxyJson = async (
+  path: string,
+  init: RequestInit | undefined,
+  dataKey: string,
+) => {
   const token = await getAccessToken();
   if (!token) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
-  const response = await fetch(`${backendUrl()}/${path}`, {
+  const response = await fetch(`${process.env.VOYAGEURS_BACKEND_URL}/${path}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -31,5 +37,8 @@ export const proxyJson = async (path: string, init: RequestInit | undefined, dat
     );
   }
 
-  return NextResponse.json({ [dataKey]: payload.data ?? null }, { status: response.status });
+  return NextResponse.json(
+    { [dataKey]: payload.data ?? null },
+    { status: response.status },
+  );
 };

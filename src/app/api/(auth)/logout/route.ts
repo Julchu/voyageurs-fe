@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { backendUrl } from "@/utils/env";
 import {
   getAccessToken,
   getRefreshToken,
@@ -11,7 +10,7 @@ export async function POST() {
     const accessToken = await getAccessToken();
     const refreshToken = await getRefreshToken();
 
-    await fetch(`${backendUrl()}/user/logout`, {
+    await fetch(`${process.env.VOYAGEURS_BACKEND_URL}/user/logout`, {
       method: "POST",
       headers: {
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
@@ -28,7 +27,10 @@ export async function POST() {
     if (refreshKey) response.cookies.set(refreshKey, "", clearOptions);
     return response;
   } catch (error) {
-    console.error("Logout failed", error instanceof Error ? error.name : "unknown");
+    console.error(
+      "Logout failed",
+      error instanceof Error ? error.name : "unknown",
+    );
     return NextResponse.json({ userInfo: null }, { status: 500 });
   }
 }

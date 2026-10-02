@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendUrl } from "@/utils/env";
 import { getAccessToken } from "@/utils/server-actions/session-token";
 import {
   googleRedirectUri,
@@ -8,7 +7,8 @@ import {
   oauthCookieOptions,
 } from "@/utils/server-actions/oauth";
 
-const base64url = (bytes: Uint8Array) => Buffer.from(bytes).toString("base64url");
+const base64url = (bytes: Uint8Array) =>
+  Buffer.from(bytes).toString("base64url");
 
 export async function GET(req: NextRequest) {
   const redirectUri = googleRedirectUri(req.url);
@@ -20,7 +20,10 @@ export async function GET(req: NextRequest) {
 
   const state = crypto.randomUUID();
   const codeVerifier = base64url(crypto.getRandomValues(new Uint8Array(32)));
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(codeVerifier));
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(codeVerifier),
+  );
   const codeChallenge = base64url(new Uint8Array(digest));
 
   const googleUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -46,20 +49,29 @@ export async function POST() {
       return NextResponse.json({ userInfo: null });
     }
 
-    const loginResponse = await fetch(`${backendUrl()}/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const loginResponse = await fetch(
+      `${process.env.VOYAGEURS_BACKEND_URL}/user`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
 
     const { success, data } = await loginResponse.json();
     if (!success) {
-      return NextResponse.json({ userInfo: null }, { status: loginResponse.status });
+      return NextResponse.json(
+        { userInfo: null },
+        { status: loginResponse.status },
+      );
     }
 
     return NextResponse.json({ userInfo: data });
   } catch (error) {
-    console.error("Failed to load session", error instanceof Error ? error.name : "unknown");
+    console.error(
+      "Failed to load session",
+      error instanceof Error ? error.name : "unknown",
+    );
     return NextResponse.json({ userInfo: null }, { status: 500 });
   }
 }

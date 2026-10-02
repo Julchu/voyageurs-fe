@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { backendUrl } from "@/utils/env";
 import {
   OAUTH_STATE_COOKIE,
   OAUTH_VERIFIER_COOKIE,
@@ -8,7 +7,10 @@ import {
 } from "@/utils/server-actions/oauth";
 
 const finishLogin = (req: NextRequest, failed: boolean) => {
-  const base = process.env.VOYAGEURS_BASE_URL ?? process.env.TEAWORK_BASE_URL ?? req.nextUrl.origin;
+  const base =
+    process.env.VOYAGEURS_BASE_URL ??
+    process.env.TEAWORK_BASE_URL ??
+    req.nextUrl.origin;
   const destination = new URL(failed ? "/?login=failed" : "/", base);
   const response = NextResponse.redirect(destination);
   const clearOptions = oauthCookieClearOptions();
@@ -25,17 +27,27 @@ export async function GET(req: NextRequest) {
   const expectedState = jar.get(OAUTH_STATE_COOKIE)?.value;
   const codeVerifier = jar.get(OAUTH_VERIFIER_COOKIE)?.value;
 
-  if (oauthError || !code || !state || !expectedState || !codeVerifier || state !== expectedState) {
+  if (
+    oauthError ||
+    !code ||
+    !state ||
+    !expectedState ||
+    !codeVerifier ||
+    state !== expectedState
+  ) {
     return finishLogin(req, true);
   }
 
   try {
-    const loginResponse = await fetch(`${backendUrl()}/user/login/google`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, codeVerifier }),
-      cache: "no-store",
-    });
+    const loginResponse = await fetch(
+      `${process.env.VOYAGEURS_BACKEND_URL}/user/login/google`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, codeVerifier }),
+        cache: "no-store",
+      },
+    );
 
     if (!loginResponse.ok) return finishLogin(req, true);
 
@@ -45,7 +57,10 @@ export async function GET(req: NextRequest) {
     }
     return response;
   } catch (error) {
-    console.error("Google login callback failed", error instanceof Error ? error.name : "unknown");
+    console.error(
+      "Google login callback failed",
+      error instanceof Error ? error.name : "unknown",
+    );
     return finishLogin(req, true);
   }
 }
