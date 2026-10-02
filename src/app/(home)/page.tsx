@@ -1,11 +1,14 @@
-import { MapWorkspace } from "@/components/map-box/map-workspace";
+import { MapComponents } from "@/components/map-box/map-components";
 import type { Coordinates } from "@/utils/interfaces";
 
 type HomeProps = {
   searchParams: Promise<{ lat?: string; lng?: string }>;
 };
 
-const focusFrom = (latValue: string | undefined, lngValue: string | undefined): Coordinates | undefined => {
+const focusFrom = (
+  latValue: string | undefined,
+  lngValue: string | undefined,
+): Coordinates | undefined => {
   const lat = Number(latValue);
   const lng = Number(lngValue);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
@@ -18,7 +21,12 @@ export default async function Home({ searchParams }: HomeProps) {
   }
 
   const params = await searchParams;
-  const focus = focusFrom(params.lat, params.lng);
+  const initialCoords = focusFrom(params.lat, params.lng);
 
-  return <MapWorkspace key={focus ? `${focus.lat}-${focus.lng}` : "map"} focus={focus} />;
+  return (
+    <MapComponents
+      key={initialCoords ? `${initialCoords.lat}-${initialCoords.lng}` : "map"}
+      initialCoords={initialCoords}
+    />
+  );
 }

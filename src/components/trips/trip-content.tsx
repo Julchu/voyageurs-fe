@@ -5,7 +5,7 @@ import { useState } from "react";
 import { currentTripFrom } from "@/stores/travel-store";
 import { RouteKind } from "@/components/map-box/directions";
 import { TripForm } from "@/components/trips/trip-form";
-import { CircleAddIcon } from "@/components/ui/circle-add-icon";
+import { CircleAddIcon } from "@/components/ui/icons/circle-add-icon";
 
 const moveIds = (ids: string[], from: number, to: number) => {
   const next = [...ids];

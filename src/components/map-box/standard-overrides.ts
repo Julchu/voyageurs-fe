@@ -1,10 +1,15 @@
-import type { LightsSpecification, Map as MapboxMap, StyleSpecification } from "mapbox-gl";
+import type { LightsSpecification, Map as MapboxMap, StyleSpecification, } from "mapbox-gl";
+import { MapTime } from "@/utils/interfaces";
 
 /** Official Mapbox Standard (not Studio forks). */
 export const STANDARD_STYLE_URL = "mapbox://styles/mapbox/standard";
 
 /** Left in place so a hot reload can drop the earlier custom overlay. */
-const OWNED_LAYER_IDS = ["voyageurs-poi-labels", "voyageurs-poi-highlight", "voyageurs-poi-dots"];
+const OWNED_LAYER_IDS = [
+  "voyageurs-poi-labels",
+  "voyageurs-poi-highlight",
+  "voyageurs-poi-dots",
+];
 const OWNED_SOURCE_ID = "voyageurs-streets";
 
 /**
@@ -24,7 +29,7 @@ const filterBasemapConfig = {
   showHdRoads: true,
 };
 
-export const buildStandardStyle = (): StyleSpecification =>
+export const buildStandardStyle = (mapTimeMode: MapTime): StyleSpecification =>
   ({
     version: 8,
     glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
@@ -34,7 +39,9 @@ export const buildStandardStyle = (): StyleSpecification =>
       {
         id: "basemap",
         url: STANDARD_STYLE_URL,
-        config: filterBasemapConfig,
+        config: filterBasemapConfig && {
+          lightPreset: mapTimeMode,
+        },
       },
     ],
   }) as StyleSpecification;

@@ -56,7 +56,7 @@ export const LinksNavigationMenu = () => {
                 <li key={link.href}>
                   <NavigationMenu.Link
                     className={
-                      "group relative block h-full w-full rounded-md p-2 text-left text-inherit no-underline hover:bg-blue-500 hover:text-white focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-blue-500"
+                      "group initialCoords-visible:-outline-offset-1 initialCoords-visible:outline-blue-500 relative block h-full w-full rounded-md p-2 text-left text-inherit no-underline hover:bg-blue-500 hover:text-white focus-visible:outline-2"
                     }
                     closeOnClick
                     render={<NextLink href={link.href} />}

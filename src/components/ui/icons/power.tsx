@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import type { TailwindIcon } from "@/components/ui/icons";
 
+// TODO: no more FC, add className to caller
 export const PowerIcon: FC<TailwindIcon> = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

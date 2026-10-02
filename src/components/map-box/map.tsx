@@ -2,16 +2,28 @@
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
-import mapBoxGL, { type Map as MapboxMap, type MapMouseEvent, type Marker } from "mapbox-gl";
+import mapBoxGL, {
+  type Map as MapboxMap,
+  type MapMouseEvent,
+  type Marker,
+} from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import Controls from "@/components/map-box/controls";
 import { routeForStops, type RouteKind } from "@/components/map-box/directions";
 import { placeFromFeature } from "@/components/map-box/place";
 import { drawRoute } from "@/components/map-box/route-layer";
-import { applyStandardOverrides, buildStandardStyle } from "@/components/map-box/standard-overrides";
+import {
+  applyStandardOverrides,
+  buildStandardStyle,
+} from "@/components/map-box/standard-overrides";
 import useMapHook from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
-import type { Coordinates, MapTime, PlaceDraft, TripStop } from "@/utils/interfaces";
+import type {
+  Coordinates,
+  MapTime,
+  PlaceDraft,
+  TripStop,
+} from "@/utils/interfaces";
 
 const hitBox = (point: { x: number; y: number }) =>
   [
@@ -67,7 +79,9 @@ const MapBoxMap = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [currentMarker, setCurrentMarker] = useState<Marker>();
-  const stopMarkers = useRef<globalThis.Map<string, Marker>>(new globalThis.Map());
+  const stopMarkers = useRef<globalThis.Map<string, Marker>>(
+    new globalThis.Map(),
+  );
   const onPlaceRef = useRef(onPlace);
   const onRouteKindRef = useRef(onRouteKind);
 
@@ -84,7 +98,11 @@ const MapBoxMap = ({
   );
 
   useEffect(() => {
-    if (!map.current && mapContainer.current !== null && process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
+    if (
+      !map.current &&
+      mapContainer.current !== null &&
+      process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+    ) {
       try {
         mapBoxGL.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
         map.current = new mapBoxGL.Map({
@@ -96,7 +114,7 @@ const MapBoxMap = ({
           fadeDuration: 0,
           crossSourceCollisions: false,
           performanceMetricsCollection: false,
-          style: buildStandardStyle(),
+          style: buildStandardStyle(mapTimeMode),
         })
           .on("style.load", () => {
             if (!map.current) return;
@@ -176,7 +194,9 @@ const MapBoxMap = ({
         return;
       }
 
-      const marker = new mapBoxGL.Marker({ element: stopMarker(index, stop.visited) })
+      const marker = new mapBoxGL.Marker({
+        element: stopMarker(index, stop.visited),
+      })
         .setLngLat([stop.coordinates.lng, stop.coordinates.lat])
         .addTo(mapInstance);
       stopMarkers.current.set(stop.publicId, marker);
@@ -198,7 +218,10 @@ const MapBoxMap = ({
   }, []);
 
   const stopKey = stops
-    .map((stop) => `${stop.publicId}:${stop.coordinates.lng}:${stop.coordinates.lat}`)
+    .map(
+      (stop) =>
+        `${stop.publicId}:${stop.coordinates.lng}:${stop.coordinates.lat}`,
+    )
     .join("|");
 
   useEffect(() => {
@@ -206,7 +229,8 @@ const MapBoxMap = ({
     if (!mapInstance || mapLoading) return;
     let cancelled = false;
     const straight = stops.map(
-      (stop) => [stop.coordinates.lng, stop.coordinates.lat] as [number, number],
+      (stop) =>
+        [stop.coordinates.lng, stop.coordinates.lat] as [number, number],
     );
     drawRoute(mapInstance, straight);
     if (straight.length < 2) {
@@ -215,11 +239,13 @@ const MapBoxMap = ({
     }
 
     const timer = window.setTimeout(() => {
-      void routeForStops(stops.map((stop) => stop.coordinates)).then((route) => {
-        if (cancelled || !map.current) return;
-        drawRoute(map.current, route.line);
-        onRouteKindRef.current(route.kind);
-      });
+      void routeForStops(stops.map((stop) => stop.coordinates)).then(
+        (route) => {
+          if (cancelled || !map.current) return;
+          drawRoute(map.current, route.line);
+          onRouteKindRef.current(route.kind);
+        },
+      );
     }, 400);
 
     return () => {
@@ -233,11 +259,21 @@ const MapBoxMap = ({
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const coords: Coordinates = { lng: pos.coords.longitude, lat: pos.coords.latitude };
+        const coords: Coordinates = {
+          lng: pos.coords.longitude,
+          lat: pos.coords.latitude,
+        };
         flyTo(coords);
         setLastLocation(coords);
 
-        if (map.current) addMarker(markers["location"], currentMarker, setCurrentMarker, coords, true);
+        if (map.current)
+          addMarker(
+            markers["location"],
+            currentMarker,
+            setCurrentMarker,
+            coords,
+            true,
+          );
 
         map.current?.once("movestart", () => {
           setLocationLoading(true);
@@ -253,7 +289,13 @@ const MapBoxMap = ({
 
   useEffect(() => {
     if (map.current && lastLocation)
-      addMarker(markers["home"], currentMarker, setCurrentMarker, lastLocation, true);
+      addMarker(
+        markers["home"],
+        currentMarker,
+        setCurrentMarker,
+        lastLocation,
+        true,
+      );
     else {
       currentMarker?.remove();
       setCurrentMarker(undefined);
@@ -266,7 +308,10 @@ const MapBoxMap = ({
         shouldUseDarkMode ? "bg-slate-800" : "bg-gray-100"
       }`}
     >
-      <div className={`h-full w-full ${locationLoading ? "animate-pulse" : ""}`} ref={mapContainer} />
+      <div
+        className={`h-full w-full ${locationLoading ? "animate-pulse" : ""}`}
+        ref={mapContainer}
+      />
       <Controls
         map={map}
         mapLoading={mapLoading}
