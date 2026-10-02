@@ -4,19 +4,26 @@ import { useState } from "react";
 import { AddressSearch } from "@/components/map-box/address-search";
 import type { RouteKind } from "@/components/map-box/directions";
 import MapBoxMap, { type MapFocus } from "@/components/map-box/map";
-import { OrderDrawer } from "@/components/trips/order-drawer";
+import { TripDrawer, tripDrawerHandle } from "@/components/trips/trip-drawer";
 import { VisitDrawer } from "@/components/trips/visit-drawer";
 import { useTravelStore } from "@/providers/travel-store-provider";
 import { currentTripFrom } from "@/stores/travel-store";
-import { MapTime, type Coordinates, type PlaceDraft } from "@/utils/interfaces";
+import { type Coordinates, MapTime, type PlaceDraft } from "@/utils/interfaces";
+import { useShallow } from "zustand/react/shallow";
+import { Drawer } from "@base-ui/react/drawer";
 
 const DEFAULT_COORDS = { lng: -79.387054, lat: 43.642567 };
 
 export const MapWorkspace = ({ focus }: { focus?: Coordinates }) => {
-  const trips = useTravelStore((state) => state.trips);
-  const addStop = useTravelStore((state) => state.addStop);
-  const logSearch = useTravelStore((state) => state.logSearch);
-  const openOrderDrawer = useTravelStore((state) => state.openOrderDrawer);
+  const { trips, addStop, logSearch, openOrderDrawer } = useTravelStore(
+    useShallow(({ trips, addStop, logSearch, openOrderDrawer }) => ({
+      trips,
+      addStop,
+      logSearch,
+      openOrderDrawer,
+    })),
+  );
+
   const current = currentTripFrom(trips);
   const [selected, setSelected] = useState<PlaceDraft | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
@@ -43,13 +50,13 @@ export const MapWorkspace = ({ focus }: { focus?: Coordinates }) => {
         onSelect={choosePlace}
         proximity={mapFocus?.coordinates ?? focus ?? DEFAULT_COORDS}
       />
-      <button
-        type="button"
-        className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white/95 px-4 py-2 text-sm font-medium tracking-widest text-zinc-900 shadow"
-        onClick={openOrderDrawer}
-      >
-        Trip
-      </button>
+
+      <Drawer.Trigger handle={tripDrawerHandle}>
+        <div className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white/95 px-4 py-2 text-sm font-medium tracking-widest text-zinc-900 shadow">
+          Trip
+        </div>
+      </Drawer.Trigger>
+
       {selected ? (
         <div className="absolute bottom-20 left-1/2 z-20 w-[min(24rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl bg-white/95 p-3 text-neutral-950 shadow">
           <div className="flex items-start justify-between gap-3">
@@ -59,7 +66,11 @@ export const MapWorkspace = ({ focus }: { focus?: Coordinates }) => {
                 {selected.address || "No address yet"}
               </p>
             </div>
-            <button type="button" className="text-xs text-neutral-500" onClick={() => setSelected(null)}>
+            <button
+              type="button"
+              className="text-xs text-neutral-500"
+              onClick={() => setSelected(null)}
+            >
               Close
             </button>
           </div>
@@ -75,7 +86,8 @@ export const MapWorkspace = ({ focus }: { focus?: Coordinates }) => {
           </button>
         </div>
       ) : null}
-      <OrderDrawer routeKind={routeKind} />
+
+      <TripDrawer routeKind={routeKind} />
       {/* Visit checklist stays closed until openVisitDrawer() is called. */}
       <VisitDrawer />
     </div>

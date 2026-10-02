@@ -1,13 +1,15 @@
-import { BrandMenu } from "@/components/header/brand-menu";
+import { LinksNavigationMenu } from "@/components/header/links-navigation-menu";
 import { Hamburger } from "@/components/header/hamburger";
 
 export const Header = () => {
   return (
-    <header className="pointer-events-none absolute inset-0 z-30">
-      <div className="pointer-events-auto">
-        <BrandMenu />
-      </div>
-      <div className="pointer-events-auto absolute top-4 right-4 h-10">
+    <header className="pointer-events-none absolute inset-0 z-1 p-4">
+      <div
+        className={
+          "pointer-events-auto flex h-12 flex-row items-center justify-between gap-3 drop-shadow-lg"
+        }
+      >
+        <LinksNavigationMenu />
         <Hamburger />
       </div>
     </header>

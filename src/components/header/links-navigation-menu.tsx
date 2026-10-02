@@ -3,20 +3,13 @@
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
-import { montserrat } from "@/components/fonts";
-import Logo from "@/components/ui/logo";
 import { useUserStore } from "@/providers/user-store-provider";
 
-const links = [
+const browseLinks = [
   {
     href: "/",
     title: "Map",
     description: "Plan a trip as an ordered list of places.",
-  },
-  {
-    href: "/trips",
-    title: "Trips",
-    description: "Saved trips and visit order.",
   },
   {
     href: "/searches",
@@ -25,31 +18,52 @@ const links = [
   },
 ] as const;
 
-const triggerClass = `absolute top-5 left-5 inline-flex h-9 cursor-pointer items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-2xl font-bold tracking-widest text-white opacity-50 shadow ${montserrat.className}`;
+const listLinks = [
+  {
+    href: "/trips",
+    title: "Trips",
+    description: "Saved trips and visit order.",
+  },
+] as const;
 
-export const BrandMenu = () => {
-  const userInfo = useUserStore((state) => state.userInfo);
+type NavLink = {
+  href: string;
+  title: string;
+  description?: string;
+};
+
+export const LinksNavigationMenu = () => {
   const pathname = usePathname();
-  const visible = links.filter((link) => link.href !== pathname);
-
-  if (!userInfo || visible.length === 0) return <Logo />;
+  const userInfo = useUserStore(({ userInfo }) => userInfo);
+  const links: readonly NavLink[] = (
+    userInfo ? [...browseLinks, ...listLinks] : browseLinks
+  ).filter((link) => link.href !== pathname);
 
   return (
-    <NavigationMenu.Root className="text-neutral-950" delay={50} closeDelay={100}>
-      <NavigationMenu.List className="m-0 list-none p-0">
+    <NavigationMenu.Root className="text-neutral-950">
+      <NavigationMenu.List className="m-0 list-none">
         <NavigationMenu.Item>
-          <NavigationMenu.Trigger className={triggerClass}>Voyageurs</NavigationMenu.Trigger>
-          <NavigationMenu.Content className="h-full w-max min-w-40 p-0">
+          <NavigationMenu.Trigger
+            className={
+              "flex cursor-pointer items-center rounded-md bg-blue-500 px-4 py-2 text-2xl font-bold tracking-widest text-white"
+            }
+          >
+            Voyageurs
+          </NavigationMenu.Trigger>
+          <NavigationMenu.Content>
             <ul className="m-0 flex list-none flex-col gap-0.5 p-2">
-              {visible.map((link) => (
+              {links.map((link) => (
                 <li key={link.href}>
                   <NavigationMenu.Link
-                    href={link.href}
+                    className={
+                      "group relative block h-full w-full rounded-md p-2 text-left text-inherit no-underline hover:bg-blue-500 hover:text-white focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-blue-500"
+                    }
                     closeOnClick
-                    className="group relative block h-full w-full rounded-md p-2 text-left text-inherit no-underline hover:bg-blue-500 hover:text-white focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-blue-500"
                     render={<NextLink href={link.href} />}
                   >
-                    <h5 className="m-0 text-sm leading-4 font-medium tracking-widest">{link.title}</h5>
+                    <h5 className="m-0 text-sm leading-4 font-medium tracking-widest">
+                      {link.title}
+                    </h5>
                     <p className="m-0 text-sm text-neutral-500 group-hover:text-white/80">
                       {link.description}
                     </p>

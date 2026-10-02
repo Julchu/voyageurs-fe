@@ -156,7 +156,7 @@ const MapBoxMap = ({
     return () => {
       mapInstance.off("click", onClick);
       mapInstance.off("mousemove", onMouseMove);
-      mapInstance.getCanvas().style.cursor = "";
+      // mapInstance.getCanvas().style.cursor = "";
     };
   }, [mapLoading]);
 

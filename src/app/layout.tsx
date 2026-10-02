@@ -1,30 +1,27 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Header } from "@/components/header/header";
 import { Providers } from "@/providers/providers";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { PropsWithChildren } from "react";
+import { montserrat } from "@/components/fonts";
+import { Header } from "@/components/header/header";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Voyageurs",
   description: "Plan a trip as an ordered list of places on the map",
 };
 
-export const dynamic = "force-dynamic";
-
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function Layout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="h-full bg-[#F5F7FA] font-sans text-neutral-950">
+    <html lang={"en"} className={"bg-background-grey"}>
+      <head>
+        <Script
+          src="//unpkg.com/react-scan/dist/auto.global.js"
+          crossOrigin="anonymous"
+          strategy="beforeInteractive"
+        />
+      </head>
+      <body className={`${montserrat.className} h-full antialiased`}>
         <main className="relative h-dvh w-screen">
           <Providers>
             <Header />
