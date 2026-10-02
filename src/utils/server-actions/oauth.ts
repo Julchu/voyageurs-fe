@@ -18,8 +18,7 @@ export const oauthCookieClearOptions = () => ({
 
 export const googleRedirectUri = (requestUrl: string) => {
   const configured = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URIS;
-  const base =
-    process.env.VOYAGEURS_BASE_URL ?? process.env.TEAWORK_BASE_URL ?? new URL(requestUrl).origin;
+  const base = process.env.VOYAGEURS_BASE_URL ?? new URL(requestUrl).origin;
   if (!configured) return;
 
   try {

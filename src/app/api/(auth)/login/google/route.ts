@@ -7,10 +7,7 @@ import {
 } from "@/utils/server-actions/oauth";
 
 const finishLogin = (req: NextRequest, failed: boolean) => {
-  const base =
-    process.env.VOYAGEURS_BASE_URL ??
-    process.env.TEAWORK_BASE_URL ??
-    req.nextUrl.origin;
+  const base = process.env.VOYAGEURS_BASE_URL ?? req.nextUrl.origin;
   const destination = new URL(failed ? "/?login=failed" : "/", base);
   const response = NextResponse.redirect(destination);
   const clearOptions = oauthCookieClearOptions();
