@@ -1,5 +1,5 @@
 import type { LightsSpecification, Map as MapboxMap, StyleSpecification, } from "mapbox-gl";
-import { MapTime } from "@/utils/interfaces";
+import { mapTimeFromDate } from "@/utils/map-time";
 
 /** Official Mapbox Standard (not Studio forks). */
 export const STANDARD_STYLE_URL = "mapbox://styles/mapbox/standard";
@@ -27,24 +27,30 @@ const filterBasemapConfig = {
   show3dTrees: false,
   showIndoor: false,
   showHdRoads: true,
+  showPlaceLabels: true,
+  showRoadLabels: true,
+  showTransitLabels: true,
+  showLandmarkIcons: true,
+  showLandmarkIconLabels: true,
+  showIndoorLabels: true,
+  showPedestrianRoads: true,
 };
 
-export const buildStandardStyle = (mapTimeMode: MapTime): StyleSpecification =>
-  ({
-    version: 8,
-    glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
-    sources: {},
-    layers: [],
-    imports: [
-      {
-        id: "basemap",
-        url: STANDARD_STYLE_URL,
-        config: filterBasemapConfig && {
-          lightPreset: mapTimeMode,
-        },
+export const buildStandardStyle: StyleSpecification = {
+  version: 8,
+  glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
+  sources: {},
+  layers: [],
+  imports: [
+    {
+      id: "basemap",
+      url: STANDARD_STYLE_URL,
+      config: filterBasemapConfig && {
+        lightPreset: mapTimeFromDate(),
       },
-    ],
-  }) as StyleSpecification;
+    },
+  ],
+} as StyleSpecification;
 
 const removeOwnedPoiOverlay = (map: MapboxMap) => {
   for (const layerId of OWNED_LAYER_IDS) {

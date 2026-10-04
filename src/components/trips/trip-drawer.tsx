@@ -25,6 +25,7 @@ export const TripDrawer = ({ routeKind }: { routeKind: RouteKind }) => {
         onOpenChange={(next) => {
           if (!next) closeOrderDrawer();
         }}
+         // TODO: reset form
         // onOpenChange={(open) => {
         //   if (open) methods.reset({ ingredients: pantryIngredients });
         // }}

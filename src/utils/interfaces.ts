@@ -11,14 +11,21 @@ export const MapStyle = {
 
 export type MapStyle = (typeof MapStyle)[keyof typeof MapStyle];
 
-export const MapTime = {
+export const MapTimeEnum = {
   night: "night",
   dawn: "dawn",
   day: "day",
   dusk: "dusk",
 } as const;
+export const MapTimeValues = [
+  MapTimeEnum.night,
+  MapTimeEnum.dawn,
+  MapTimeEnum.day,
+  MapTimeEnum.dusk,
+];
 
-export type MapTime = (typeof MapTime)[keyof typeof MapTime];
+export type MapTimeType = (typeof MapTimeValues)[number];
+export type MapTime = (typeof MapTimeEnum)[keyof typeof MapTimeEnum];
 
 export const Color = {
   LIGHT: "light",

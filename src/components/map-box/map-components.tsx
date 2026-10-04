@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { mapTimeFromDate } from "@/utils/map-time";
 import { AddressSearch } from "@/components/map-box/address-search";
 import type { RouteKind } from "@/components/map-box/directions";
-import MapBoxMap, { type MapFocus } from "@/components/map-box/map";
+import { MapAndControls, type MapFocus } from "@/components/map-box/map";
 import { TripDrawer } from "@/components/trips/trip-drawer";
 import { useTravelStore } from "@/providers/travel-store-provider";
 import { currentTripFrom } from "@/stores/travel-store";
@@ -32,7 +31,6 @@ export const MapComponents = ({
   const [selected, setSelected] = useState<PlaceDraft | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
   const [routeKind, setRouteKind] = useState<RouteKind>("empty");
-  const [mapTimeMode] = useState(() => mapTimeFromDate());
 
   const choosePlace = (place: PlaceDraft, query: string, log: boolean) => {
     setSelected(place);
@@ -42,9 +40,8 @@ export const MapComponents = ({
 
   return (
     <div className="relative h-full w-full">
-      <MapBoxMap
+      <MapAndControls
         shouldUseDarkMode={true}
-        mapTimeMode={mapTimeMode}
         initialCoords={initialCoords ?? DEFAULT_COORDS}
         focus={mapFocus}
         stops={current?.stops ?? []}

@@ -1,29 +1,16 @@
-"use client";
-
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
-import mapBoxGL, {
-  type Map as MapboxMap,
-  type MapMouseEvent,
-  type Marker,
-} from "mapbox-gl";
+import mapBoxGL, { type Map as MapboxMap, type MapMouseEvent, type Marker, } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import Controls from "@/components/map-box/controls";
 import { routeForStops, type RouteKind } from "@/components/map-box/directions";
 import { placeFromFeature } from "@/components/map-box/place";
 import { drawRoute } from "@/components/map-box/route-layer";
-import {
-  applyStandardOverrides,
-  buildStandardStyle,
-} from "@/components/map-box/standard-overrides";
-import useMapHook from "@/hooks/use-map-hook";
+import { useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
-import type {
-  Coordinates,
-  MapTime,
-  PlaceDraft,
-  TripStop,
-} from "@/utils/interfaces";
+import { Coordinates, PlaceDraft, TripStop } from "@/utils/interfaces";
+import { mapTimeFromDate } from "@/utils/map-time";
+import { applyStandardOverrides, buildStandardStyle, } from "@/components/map-box/standard-overrides";
 
 const hitBox = (point: { x: number; y: number }) =>
   [
@@ -55,17 +42,15 @@ export type MapFocus = {
   coordinates: Coordinates;
 };
 
-const MapBoxMap = ({
+export const MapAndControls = ({
   shouldUseDarkMode,
   initialCoords,
-  mapTimeMode,
   focus,
   stops,
   onPlace,
   onRouteKind,
 }: {
   shouldUseDarkMode: boolean;
-  mapTimeMode: MapTime;
   initialCoords: Coordinates;
   focus: MapFocus | null;
   stops: TripStop[];
@@ -84,25 +69,24 @@ const MapBoxMap = ({
   );
   const onPlaceRef = useRef(onPlace);
   const onRouteKindRef = useRef(onRouteKind);
+  const [currentMapTimeMode, setCurrentMapTimeMode] = useState(() =>
+    mapTimeFromDate(),
+  );
 
   useEffect(() => {
     onPlaceRef.current = onPlace;
     onRouteKindRef.current = onRouteKind;
   }, [onPlace, onRouteKind]);
 
-  const [{ markers, addMarker, flyTo }] = useMapHook(
+  const [{ markers, addMarker, flyTo }] = useMapHook({
     map,
     mapLoading,
     setMapLoading,
     shouldUseDarkMode,
-  );
+  });
 
   useEffect(() => {
-    if (
-      !map.current &&
-      mapContainer.current !== null &&
-      process.env.NEXT_PUBLIC_MAPBOX_TOKEN
-    ) {
+    if (!map.current && mapContainer.current !== null) {
       try {
         mapBoxGL.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
         map.current = new mapBoxGL.Map({
@@ -111,10 +95,9 @@ const MapBoxMap = ({
           center: [initialCoords.lng, initialCoords.lat],
           zoom: 15.5,
           antialias: true,
-          fadeDuration: 0,
-          crossSourceCollisions: false,
+          crossSourceCollisions: true,
           performanceMetricsCollection: false,
-          style: buildStandardStyle(mapTimeMode),
+          style: buildStandardStyle,
         })
           .on("style.load", () => {
             if (!map.current) return;
@@ -132,10 +115,10 @@ const MapBoxMap = ({
     }
 
     return () => {
-      map.current?.remove();
-      map.current = null;
+      // map.current?.remove();
+      // map.current = null;
     };
-  }, [initialCoords.lat, initialCoords.lng, mapTimeMode]);
+  }, [initialCoords.lat, initialCoords.lng]);
 
   useEffect(() => {
     if (!focus || mapLoading) return;
@@ -319,9 +302,9 @@ const MapBoxMap = ({
         locationLoading={locationLoading}
         triggerGeolocator={flyAndUpdateUser}
         shouldUseDarkMode={shouldUseDarkMode}
+        currentMapTimeMode={currentMapTimeMode}
+        setCurrentMapTimeMode={setCurrentMapTimeMode}
       />
     </div>
   );
 };
-
-export default MapBoxMap;

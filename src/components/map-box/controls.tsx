@@ -8,12 +8,21 @@ import {
 } from "react";
 import type { Map } from "mapbox-gl";
 import { Button } from "@/components/ui/button";
-import { LocationIcon, NorthIcon } from "@/components/ui/icons/map-controls";
-import { NoPowerIcon, PowerIcon } from "@/components/ui/icons/power";
+import {
+  DawnIcon,
+  DayIcon,
+  DuskIcon,
+  LocationIcon,
+  NightIcon,
+  NoPowerIcon,
+  NorthIcon,
+  PowerIcon,
+} from "@/components/ui/icons/map-control-icons";
 import Spinner from "@/components/ui/icons/spinner";
-import useMapHook from "@/hooks/use-map-hook";
+import { useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
-import { SunIcon } from "@/components/ui/icons/suns";
+import { useShallow } from "zustand/react/shallow";
+import { MapTimeEnum, MapTimeType, MapTimeValues } from "@/utils/interfaces";
 
 const Controls = ({
   map,
@@ -22,6 +31,8 @@ const Controls = ({
   locationLoading,
   triggerGeolocator,
   shouldUseDarkMode,
+  currentMapTimeMode,
+  setCurrentMapTimeMode,
 }: {
   map: RefObject<Map | null>;
   mapLoading: boolean;
@@ -29,16 +40,39 @@ const Controls = ({
   locationLoading: boolean;
   triggerGeolocator: () => void;
   shouldUseDarkMode: boolean;
+  currentMapTimeMode: MapTimeType;
+  setCurrentMapTimeMode: Dispatch<SetStateAction<MapTimeType>>;
 }) => {
-  const userInfo = useUserStore((state) => state.userInfo);
-  const performanceMode = useUserStore((state) => state.performanceMode);
-  const [{ updatePerformance, triggerNorth, togglePerformanceLayer }] =
-    useMapHook(map, mapLoading, setMapLoading);
+  const { userInfo, performanceMode } = useUserStore(
+    useShallow(({ userInfo, performanceMode }) => ({
+      userInfo,
+      performanceMode,
+    })),
+  );
+  const [
+    { updatePerformance, triggerNorth, togglePerformanceLayer, setLightMode },
+  ] = useMapHook({ map, mapLoading, setMapLoading, currentMapTimeMode });
 
   const updatePerformanceCallback = useCallback(async () => {
     await updatePerformance();
     togglePerformanceLayer(!performanceMode);
   }, [performanceMode, togglePerformanceLayer, updatePerformance]);
+
+  const rotateMapTime = useCallback(() => {
+    const currentIndex = MapTimeValues.indexOf(currentMapTimeMode);
+    const nextIndex =
+      currentIndex === -1 ? 0 : (currentIndex + 1) % MapTimeValues.length;
+    const nextMode = MapTimeValues[nextIndex];
+    setLightMode(nextMode);
+    setCurrentMapTimeMode(nextMode);
+  }, [currentMapTimeMode, setCurrentMapTimeMode, setLightMode]);
+
+  const mapTimeIcon = {
+    [MapTimeEnum.dawn]: <DawnIcon className={"h-6 w-6"} />,
+    [MapTimeEnum.day]: <DayIcon className={"h-6 w-6"} />,
+    [MapTimeEnum.dusk]: <DuskIcon className={"h-6 w-6"} />,
+    [MapTimeEnum.night]: <NightIcon className={"h-6 w-6"} />,
+  };
 
   if (mapLoading)
     return (
@@ -54,7 +88,11 @@ const Controls = ({
           className="absolute bottom-5 left-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-100"
           onClick={updatePerformanceCallback}
         >
-          {performanceMode ? <PowerIcon /> : <NoPowerIcon />}
+          {performanceMode ? (
+            <PowerIcon className={"h-6 w-6"} />
+          ) : (
+            <NoPowerIcon className={"h-6 w-6"} />
+          )}
         </Button>
       ) : null}
 
@@ -63,8 +101,9 @@ const Controls = ({
           className={
             "absolute bottom-20 left-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-100"
           }
+          onClick={rotateMapTime}
         >
-          <SunIcon className={"h-6 w-6"} />
+          {mapTimeIcon[currentMapTimeMode]}
         </Button>
       ) : null}
 

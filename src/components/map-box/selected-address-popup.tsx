@@ -33,7 +33,7 @@ export const SelectedAddressPopup = ({
         type="button"
         className="mt-3 rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white"
         onClick={() => {
-          if (selected) addStop(selected);
+          addStop(selected);
           setSelected(null);
         }}
       >

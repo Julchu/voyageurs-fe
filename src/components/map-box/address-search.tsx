@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useId, useState } from "react";
 import useDebouncedState from "@/hooks/use-debounced-state";
 import { useTravelStore } from "@/providers/travel-store-provider";
@@ -73,7 +71,8 @@ export const AddressSearch = ({
     void searchAddresses(trimmed, proximity, controller.signal)
       .then((next) => setHits(next))
       .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
         setHits([]);
       });
     return () => controller.abort();
@@ -130,7 +129,9 @@ export const AddressSearch = ({
                 </li>
               ))
             : null}
-          {showHits && pending ? <li className="px-3 py-2 text-neutral-500">Searching</li> : null}
+          {showHits && pending ? (
+            <li className="px-3 py-2 text-neutral-500">Searching</li>
+          ) : null}
           {showHits && !pending && hits.length === 0 ? (
             <li className="px-3 py-2 text-neutral-500">No matches</li>
           ) : null}
@@ -148,7 +149,9 @@ export const AddressSearch = ({
                     }}
                   >
                     <span className="block truncate">{hit.name}</span>
-                    <span className="block truncate text-xs text-neutral-500">{hit.address}</span>
+                    <span className="block truncate text-xs text-neutral-500">
+                      {hit.address}
+                    </span>
                   </button>
                 </li>
               ))

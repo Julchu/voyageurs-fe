@@ -8,7 +8,7 @@ import {
 } from "react";
 import { Map, Marker } from "mapbox-gl";
 import { useUserStore } from "@/providers/user-store-provider";
-import type { Coordinates } from "@/utils/interfaces";
+import { Coordinates, MapTimeType } from "@/utils/interfaces";
 import { renderToStaticMarkup } from "react-dom/server";
 import { CurrentLocationIcon } from "@/components/ui/icons/map-pins";
 import { useShallow } from "zustand/react/shallow";
@@ -30,14 +30,22 @@ type MapMethods = {
   flyTo: (coords: Coordinates, zoom?: number) => void;
   mapStyles: Record<string, string>;
   markers: Record<string, string>;
+  setLightMode: (toMapTime: MapTimeType) => void;
 };
 
-const useMapHook = (
-  map: RefObject<Map | null>,
-  mapLoading: boolean,
-  _setMapLoading: Dispatch<SetStateAction<boolean>>,
-  shouldUseDarkMode?: boolean,
-): [MapMethods, boolean, Error | undefined] => {
+export const useMapHook = ({
+  map,
+  mapLoading,
+  setMapLoading: _setMapLoading,
+  shouldUseDarkMode,
+  currentMapTimeMode,
+}: {
+  map?: RefObject<Map | null>;
+  mapLoading?: boolean;
+  setMapLoading?: Dispatch<SetStateAction<boolean>>;
+  shouldUseDarkMode?: boolean;
+  currentMapTimeMode?: MapTimeType;
+}): [MapMethods, boolean, Error | undefined] => {
   const [userLoading] = useState(false);
   const [error] = useState<Error>();
   const { performanceMode, setPerformanceMode } = useUserStore(
@@ -72,7 +80,9 @@ const useMapHook = (
 
   const markers = useMemo(() => {
     return {
-      location: renderToStaticMarkup(<CurrentLocationIcon />),
+      location: renderToStaticMarkup(
+        <CurrentLocationIcon className={"stroke-blue-500"} />,
+      ),
       location2: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" class="w-5 h-5 fill-blue-600 absolute">
                   <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" />
                 </svg>
@@ -90,7 +100,7 @@ const useMapHook = (
 
   const addMarker = useCallback<MapMethods["addMarker"]>(
     (htmlElement, currentMarker, setCurrentMarker, coords, save) => {
-      if (!map.current) return;
+      if (!map?.current) return;
       const element = document.createElement("div");
       element.className = "marker";
       element.innerHTML = htmlElement;
@@ -115,16 +125,18 @@ const useMapHook = (
 
   const flyTo = useCallback<MapMethods["flyTo"]>(
     (coords, zoom = 15) => {
-      map.current?.flyTo({ center: [coords.lng, coords.lat], zoom });
+      if (map?.current && !mapLoading)
+        map.current.flyTo({ center: [coords.lng, coords.lat], zoom });
     },
-    [map],
+    [map, mapLoading],
   );
 
   // TODO: fix performance layer actions
   const removePerformanceLayer = useCallback<
     MapMethods["removePerformanceLayer"]
   >(() => {
-    if (map.current && !mapLoading) map.current.removeLayer("add-3d-buildings");
+    if (map?.current && !mapLoading)
+      map.current.removeLayer("add-3d-buildings");
   }, [map, mapLoading]);
 
   const addPerformanceLayer = useCallback<
@@ -135,13 +147,13 @@ const useMapHook = (
     MapMethods["togglePerformanceLayer"]
   >(
     (toggleOn) => {
-      if (map.current && !mapLoading) {
+      if (map?.current && !mapLoading) {
         if (!toggleOn && map.current.getLayer("add-3d-buildings"))
           removePerformanceLayer();
         else if (toggleOn) addPerformanceLayer();
       }
     },
-    [map, mapLoading, removePerformanceLayer],
+    [addPerformanceLayer, map, mapLoading, removePerformanceLayer],
   );
 
   const triggerGeolocator = useCallback<MapMethods["triggerGeolocator"]>(() => {
@@ -149,14 +161,22 @@ const useMapHook = (
   }, []);
 
   const triggerNorth = useCallback<MapMethods["triggerNorth"]>(() => {
-    map.current?.resetNorth({ duration: 2000 });
-  }, [map]);
+    if (map?.current && !mapLoading) map.current.resetNorth({ duration: 2000 });
+  }, [map, mapLoading]);
 
   const updatePerformance = useCallback<
     MapMethods["updatePerformance"]
   >(async () => {
     setPerformanceMode(!performanceMode);
   }, [performanceMode, setPerformanceMode]);
+
+  const setLightMode = useCallback(
+    (mapTime: MapTimeType) => {
+      if (map?.current && !mapLoading)
+        map.current.setConfigProperty("basemap", "lightPreset", mapTime);
+    },
+    [map, mapLoading],
+  );
 
   return [
     {
@@ -170,10 +190,9 @@ const useMapHook = (
       updatePerformance,
       mapStyles,
       markers,
+      setLightMode,
     },
     userLoading,
     error,
   ];
 };
-
-export default useMapHook;
