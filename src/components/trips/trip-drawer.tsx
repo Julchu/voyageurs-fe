@@ -2,7 +2,7 @@
 
 import { Drawer } from "@base-ui/react/drawer";
 import { useTravelStore } from "@/providers/travel-store-provider";
-import type { RouteKind } from "@/components/map-box/directions";
+import type { RouteKind } from "@/components/map-box/utils/directions";
 import { FormProvider, useForm } from "react-hook-form";
 import { TripContent } from "@/components/trips/trip-content";
 
@@ -25,7 +25,7 @@ export const TripDrawer = ({ routeKind }: { routeKind: RouteKind }) => {
         onOpenChange={(next) => {
           if (!next) closeOrderDrawer();
         }}
-         // TODO: reset form
+        // TODO: reset form
         // onOpenChange={(open) => {
         //   if (open) methods.reset({ ingredients: pantryIngredients });
         // }}

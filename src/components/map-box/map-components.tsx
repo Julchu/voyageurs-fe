@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AddressSearch } from "@/components/map-box/address-search";
-import type { RouteKind } from "@/components/map-box/directions";
+import type { RouteKind } from "@/components/map-box/utils/directions";
 import { MapAndControls, type MapFocus } from "@/components/map-box/map";
 import { TripDrawer } from "@/components/trips/trip-drawer";
 import { useTravelStore } from "@/providers/travel-store-provider";
@@ -37,6 +37,10 @@ export const MapComponents = ({
     setMapFocus({ token: Date.now(), coordinates: place.coordinates });
     if (log) void logSearch({ ...place, query });
   };
+
+  if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
+    return <div className="p-6">Missing NEXT_PUBLIC_MAPBOX_TOKEN</div>;
+  }
 
   return (
     <div className="relative h-full w-full">

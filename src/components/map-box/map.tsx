@@ -1,16 +1,26 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
-import mapBoxGL, { type Map as MapboxMap, type MapMouseEvent, type Marker, } from "mapbox-gl";
+import mapBoxGL, {
+  type Map as MapboxMap,
+  type MapMouseEvent,
+  type Marker,
+} from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import Controls from "@/components/map-box/controls";
-import { routeForStops, type RouteKind } from "@/components/map-box/directions";
-import { placeFromFeature } from "@/components/map-box/place";
-import { drawRoute } from "@/components/map-box/route-layer";
+import {
+  routeForStops,
+  type RouteKind,
+} from "@/components/map-box/utils/directions";
+import { placeFromFeature } from "@/components/map-box/utils/place";
+import { drawRoute } from "@/components/map-box/utils/route-layer";
 import { useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
 import { Coordinates, PlaceDraft, TripStop } from "@/utils/interfaces";
 import { mapTimeFromDate } from "@/utils/map-time";
-import { applyStandardOverrides, buildStandardStyle, } from "@/components/map-box/standard-overrides";
+import {
+  applyStandardOverrides,
+  buildStandardStyle,
+} from "@/components/map-box/utils/standard-overrides";
 
 const hitBox = (point: { x: number; y: number }) =>
   [

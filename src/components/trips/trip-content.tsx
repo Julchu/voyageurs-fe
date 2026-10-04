@@ -3,7 +3,7 @@ import { useTravelStore } from "@/providers/travel-store-provider";
 import { useShallow } from "zustand/react/shallow";
 import { useState } from "react";
 import { currentTripFrom } from "@/stores/travel-store";
-import { RouteKind } from "@/components/map-box/directions";
+import { RouteKind } from "@/components/map-box/utils/directions";
 import { TripForm } from "@/components/trips/trip-form";
 import { CircleAddIcon } from "@/components/ui/icons/circle-add-icon";
 

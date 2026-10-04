@@ -5,6 +5,7 @@ import { PropsWithChildren } from "react";
 import { montserrat } from "@/components/fonts";
 import { Header } from "@/components/header/header";
 import Script from "next/script";
+import { AppShell } from "@/components/map-box/app-shell";
 
 export const metadata: Metadata = {
   title: "Voyageurs",
@@ -25,7 +26,9 @@ export default async function Layout({ children }: PropsWithChildren) {
         <main className="relative h-dvh w-screen">
           <Providers>
             <Header />
-            <div className="h-full">{children}</div>
+            <AppShell>
+              <div className="h-full">{children}</div>
+            </AppShell>
           </Providers>
         </main>
       </body>
