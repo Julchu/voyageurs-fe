@@ -1,9 +1,10 @@
 import type { GeoJSONFeature } from "mapbox-gl";
-import type { PlaceDraft } from "@/utils/interfaces";
+import type { Place } from "@/utils/interfaces";
 
 type MapFeature = GeoJSONFeature & {
   geometry: { type: string; coordinates: number[] };
   properties?: Record<string, unknown> | null;
+  id: number;
 };
 
 const readFeature = (feature: GeoJSONFeature) => feature as MapFeature;
@@ -15,8 +16,9 @@ const textProp = (feature: GeoJSONFeature, key: string) => {
   return "";
 };
 
-export const placeFromFeature = (feature: GeoJSONFeature): PlaceDraft | null => {
+export const placeFromFeature = (feature: GeoJSONFeature): Place | null => {
   const geometry = readFeature(feature).geometry;
+  const id = readFeature(feature).id;
   if (geometry.type !== "Point") return null;
   const lng = geometry.coordinates[0];
   const lat = geometry.coordinates[1];
@@ -26,7 +28,9 @@ export const placeFromFeature = (feature: GeoJSONFeature): PlaceDraft | null => 
   if (!name) return null;
 
   return {
+    id,
     name,
+    // TODO: doesn't work, fix address
     address: textProp(feature, "address") || textProp(feature, "category_en"),
     coordinates: { lat, lng },
   };

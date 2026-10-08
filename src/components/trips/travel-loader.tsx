@@ -1,37 +1,30 @@
 "use client";
 
 import { useEffect } from "react";
-import { useTravelStore } from "@/providers/travel-store-provider";
 import { useUserStore } from "@/providers/user-store-provider";
+import { useSearchStore } from "@/providers/search-store-provider";
+import { useShallow } from "zustand/react/shallow";
+import { useTripStore } from "@/providers/trip-store-provider";
 
 export const TravelLoader = () => {
   const userInfo = useUserStore((state) => state.userInfo);
-  const tripsLoadState = useTravelStore((state) => state.tripsLoadState);
-  const searchesLoadState = useTravelStore((state) => state.searchesLoadState);
-  const setMode = useTravelStore((state) => state.setMode);
-  const markLocalReady = useTravelStore((state) => state.markLocalReady);
-  const fetchTrips = useTravelStore((state) => state.fetchTrips);
-  const fetchSearches = useTravelStore((state) => state.fetchSearches);
+  const { tripsLoadState, fetchTrips } = useTripStore(
+    useShallow(({ tripsLoadState, fetchTrips }) => ({
+      tripsLoadState,
+      fetchTrips,
+    })),
+  );
+  const { searchesLoadState, fetchSearches } = useSearchStore(
+    useShallow(({ searchesLoadState, fetchSearches }) => ({
+      searchesLoadState,
+      fetchSearches,
+    })),
+  );
 
   useEffect(() => {
-    if (!userInfo) {
-      setMode("local");
-      markLocalReady();
-      return;
-    }
-
-    setMode("account");
     if (tripsLoadState === "idle") void fetchTrips();
     if (searchesLoadState === "idle") void fetchSearches();
-  }, [
-    userInfo,
-    tripsLoadState,
-    searchesLoadState,
-    setMode,
-    markLocalReady,
-    fetchTrips,
-    fetchSearches,
-  ]);
+  }, [fetchSearches, fetchTrips, searchesLoadState, tripsLoadState, userInfo]);
 
   return null;
 };

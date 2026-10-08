@@ -1,10 +1,6 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
-import mapBoxGL, {
-  type Map as MapboxMap,
-  type MapMouseEvent,
-  type Marker,
-} from "mapbox-gl";
+import mapBoxGL, { type Map as MapboxMap, type Marker } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import Controls from "@/components/map-box/controls";
 import {
@@ -12,15 +8,15 @@ import {
   type RouteKind,
 } from "@/components/map-box/utils/directions";
 import { placeFromFeature } from "@/components/map-box/utils/place";
-import { drawRoute } from "@/components/map-box/utils/route-layer";
 import { useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
-import { Coordinates, PlaceDraft, TripStop } from "@/utils/interfaces";
+import { Coordinates, Place, TripStop } from "@/utils/interfaces";
 import { mapTimeFromDate } from "@/utils/map-time";
 import {
   applyStandardOverrides,
   buildStandardStyle,
 } from "@/components/map-box/utils/standard-overrides";
+import { drawRoute } from "@/components/map-box/utils/route-layer";
 
 const hitBox = (point: { x: number; y: number }) =>
   [
@@ -52,6 +48,7 @@ export type MapFocus = {
   coordinates: Coordinates;
 };
 
+// TODO: switch loading state to loaded state and move up 1
 export const MapAndControls = ({
   shouldUseDarkMode,
   initialCoords,
@@ -64,7 +61,7 @@ export const MapAndControls = ({
   initialCoords: Coordinates;
   focus: MapFocus | null;
   stops: TripStop[];
-  onPlace: (place: PlaceDraft) => void;
+  onPlace: (place: Place) => void;
   onRouteKind: (kind: RouteKind) => void;
 }) => {
   const lastLocation = useUserStore((state) => state.lastLocation);
@@ -125,8 +122,8 @@ export const MapAndControls = ({
     }
 
     return () => {
-      // map.current?.remove();
-      // map.current = null;
+      map.current?.remove();
+      map.current = null;
     };
   }, [initialCoords.lat, initialCoords.lng]);
 
@@ -139,35 +136,49 @@ export const MapAndControls = ({
     const mapInstance = map.current;
     if (!mapInstance || mapLoading) return;
 
-    const poiAt = (event: MapMouseEvent) => {
-      const features = mapInstance.queryRenderedFeatures(hitBox(event.point), {
-        target: { featuresetId: "poi", importId: "basemap" },
+    const ids: string[] = [];
+    const featuresets = ["poi", "landmark-icons"] as const;
+
+    for (const featuresetId of featuresets) {
+      const target = { featuresetId, importId: "basemap" };
+
+      const clickId = `${featuresetId}-click`;
+      mapInstance.addInteraction(clickId, {
+        type: "click",
+        target,
+        handler: (e) => {
+          const place = e.feature ? placeFromFeature(e.feature) : null;
+          if (place) {
+            onPlaceRef.current(place);
+            return true; // stop lower-priority interactions
+          }
+        },
       });
-      for (const feature of features) {
-        const place = placeFromFeature(feature);
-        if (place) return place;
-      }
-      return null;
-    };
+      ids.push(clickId);
 
-    const onClick = (event: MapMouseEvent) => {
-      const target = event.originalEvent.target;
-      if (target instanceof Element && target.closest(".marker")) return;
-      const place = poiAt(event);
-      if (place) onPlaceRef.current(place);
-    };
+      const enterId = `${featuresetId}-enter`;
+      mapInstance.addInteraction(enterId, {
+        type: "mouseenter",
+        target,
+        handler: () => {
+          mapInstance.getCanvas().style.cursor = "pointer";
+        },
+      });
+      ids.push(enterId);
 
-    const onMouseMove = (event: MapMouseEvent) => {
-      mapInstance.getCanvas().style.cursor = poiAt(event) ? "pointer" : "";
-    };
-
-    mapInstance.on("click", onClick);
-    mapInstance.on("mousemove", onMouseMove);
+      const leaveId = `${featuresetId}-leave`;
+      mapInstance.addInteraction(leaveId, {
+        type: "mouseleave",
+        target,
+        handler: () => {
+          mapInstance.getCanvas().style.cursor = "";
+        },
+      });
+      ids.push(leaveId);
+    }
 
     return () => {
-      mapInstance.off("click", onClick);
-      mapInstance.off("mousemove", onMouseMove);
-      // mapInstance.getCanvas().style.cursor = "";
+      for (const id of ids) mapInstance.removeInteraction(id);
     };
   }, [mapLoading]);
 
@@ -177,8 +188,10 @@ export const MapAndControls = ({
 
     const seen = new Set<string>();
     stops.forEach((stop, index) => {
-      seen.add(stop.publicId);
-      const existing = stopMarkers.current.get(stop.publicId);
+      seen.add(stop.name);
+      // seen.add(stop.publicId);
+      const existing = stopMarkers.current.get(stop.name);
+      // const existing = stopMarkers.current.get(stop.publicId);
       if (existing) {
         existing.setLngLat([stop.coordinates.lng, stop.coordinates.lat]);
         const element = existing.getElement();
@@ -192,7 +205,8 @@ export const MapAndControls = ({
       })
         .setLngLat([stop.coordinates.lng, stop.coordinates.lat])
         .addTo(mapInstance);
-      stopMarkers.current.set(stop.publicId, marker);
+      stopMarkers.current.set(stop.name, marker);
+      // stopMarkers.current.set(stop.publicId, marker);
     });
 
     for (const [publicId, marker] of stopMarkers.current) {

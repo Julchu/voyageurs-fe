@@ -23,9 +23,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <MapComponents />
       </div>
       {onMap ? null : (
-        <div className="bg-background-grey absolute inset-0 z-10">
-          {children}
-        </div>
+        <div className="bg-background-grey absolute inset-0">{children}</div>
       )}
     </div>
   );

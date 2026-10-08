@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactCompiler: true,
+  allowedDevOrigins: ["192.168.50.65", "**.ngrok-free.app"],
+  experimental: {
+    turbopackRustReactCompiler: true,
+  },
   images: {
     remotePatterns: [
       {

@@ -1,9 +1,9 @@
 import { useEffect, useId, useState } from "react";
 import useDebouncedState from "@/hooks/use-debounced-state";
-import { useTravelStore } from "@/providers/travel-store-provider";
-import type { Coordinates, PlaceDraft } from "@/utils/interfaces";
+import type { Coordinates, Place } from "@/utils/interfaces";
+import { useSearchStore } from "@/providers/search-store-provider";
 
-type GeocodeHit = PlaceDraft & { id: string };
+type GeocodeHit = Place & { id: string };
 
 type GeocodeFeature = {
   id?: string;
@@ -53,11 +53,11 @@ export const AddressSearch = ({
   onSelect,
   proximity,
 }: {
-  onSelect: (place: PlaceDraft, query: string, log: boolean) => void;
+  onSelect: (place: Place, query: string, log: boolean) => void;
   proximity: Coordinates;
 }) => {
   const listId = useId();
-  const searches = useTravelStore((state) => state.searches);
+  const searches = useSearchStore(({ searches }) => searches);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [hits, setHits] = useState<GeocodeHit[]>([]);
@@ -85,7 +85,7 @@ export const AddressSearch = ({
   const pending = trimmedQuery !== debounced.trim();
 
   return (
-    <div className="pointer-events-auto absolute top-16 left-1/2 z-30 w-[min(28rem,calc(100%-2rem))] -translate-x-1/2">
+    <div className="pointer-events-auto absolute top-16 left-1/2 w-[min(28rem,calc(100%-2rem))] -translate-x-1/2">
       <input
         value={query}
         role="combobox"

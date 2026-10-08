@@ -14,9 +14,7 @@ import {
   DuskIcon,
   LocationIcon,
   NightIcon,
-  NoPowerIcon,
   NorthIcon,
-  PowerIcon,
 } from "@/components/ui/icons/map-control-icons";
 import Spinner from "@/components/ui/icons/spinner";
 import { useMapHook } from "@/hooks/use-map-hook";
@@ -43,20 +41,22 @@ const Controls = ({
   currentMapTimeMode: MapTimeType;
   setCurrentMapTimeMode: Dispatch<SetStateAction<MapTimeType>>;
 }) => {
-  const { userInfo, performanceMode } = useUserStore(
-    useShallow(({ userInfo, performanceMode }) => ({
+  const { userInfo } = useUserStore(
+    useShallow(({ userInfo }) => ({
       userInfo,
-      performanceMode,
     })),
   );
-  const [
-    { updatePerformance, triggerNorth, togglePerformanceLayer, setLightMode },
-  ] = useMapHook({ map, mapLoading, setMapLoading, currentMapTimeMode });
+  const [{ updatePerformance, triggerNorth, setLightMode }] = useMapHook({
+    map,
+    mapLoading,
+    setMapLoading,
+    currentMapTimeMode,
+  });
 
   const updatePerformanceCallback = useCallback(async () => {
     await updatePerformance();
-    togglePerformanceLayer(!performanceMode);
-  }, [performanceMode, togglePerformanceLayer, updatePerformance]);
+    // togglePerformanceLayer(!performanceMode);
+  }, [updatePerformance]);
 
   const rotateMapTime = useCallback(() => {
     const currentIndex = MapTimeValues.indexOf(currentMapTimeMode);
@@ -88,11 +88,11 @@ const Controls = ({
           className="absolute bottom-5 left-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-100"
           onClick={updatePerformanceCallback}
         >
-          {performanceMode ? (
-            <PowerIcon className={"h-6 w-6"} />
-          ) : (
-            <NoPowerIcon className={"h-6 w-6"} />
-          )}
+          {/*{performanceMode ? (*/}
+          {/*  <PowerIcon className={"h-6 w-6"} />*/}
+          {/*) : (*/}
+          {/*  <NoPowerIcon className={"h-6 w-6"} />*/}
+          {/*)}*/}
         </Button>
       ) : null}
 

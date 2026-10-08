@@ -1,19 +1,19 @@
-import { PlaceDraft } from "@/utils/interfaces";
-import { useTravelStore } from "@/providers/travel-store-provider";
+import { Place } from "@/utils/interfaces";
+import { useTripStore } from "@/providers/trip-store-provider";
 
 export const SelectedAddressPopup = ({
   selected,
   setSelected,
 }: {
-  selected: PlaceDraft | null;
-  setSelected: (selectedPlaceDraft: PlaceDraft | null) => void;
+  selected: Place | null;
+  setSelected: (selectedPlaceDraft: Place | null) => void;
 }) => {
-  const addStop = useTravelStore(({ addStop }) => addStop);
+  const addStop = useTripStore(({ addStop }) => addStop);
 
   if (!selected) return null;
 
   return (
-    <div className="absolute bottom-20 left-1/2 z-20 w-[min(24rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl bg-white/95 p-3 text-neutral-950 shadow">
+    <div className="absolute bottom-20 left-1/2 w-[min(24rem,calc(100%-2rem))] -translate-x-1/2 rounded-xl bg-white/95 p-3 text-neutral-950 shadow">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{selected.name}</p>

@@ -1,21 +1,39 @@
 import type { PropsWithChildren } from "react";
 import { TravelLoader } from "@/components/trips/travel-loader";
-import { TravelStoreProvider } from "@/providers/travel-store-provider";
+import { TripStoreProvider } from "@/providers/trip-store-provider";
 import { UserStoreProvider } from "@/providers/user-store-provider";
 import { serverFetch } from "@/utils/server-actions/server-fetch";
-import type { PlaceSearch, ServerTrip, UserInfo } from "@/utils/interfaces";
+import type { PlaceSearch, Trip, UserInfo } from "@/utils/interfaces";
+import { SearchStoreProvider } from "@/providers/search-store-provider";
 
 export const Providers = async ({ children }: PropsWithChildren) => {
   const userInfo = await serverFetch<UserInfo>({ endpoint: "user" });
-  const trips = userInfo ? await serverFetch<ServerTrip[]>({ endpoint: "trips" }) : null;
-  const searches = userInfo ? await serverFetch<PlaceSearch[]>({ endpoint: "searches" }) : null;
+
+  const fetchedTrips = userInfo
+    ? await serverFetch<Trip[]>({ endpoint: "trips" })
+    : null;
+
+  const trips = fetchedTrips ?? [];
+  const tripsServerLoaded = fetchedTrips !== null;
+
+  const fetchedSearches = userInfo
+    ? await serverFetch<PlaceSearch[]>({ endpoint: "searches" })
+    : null;
+
+  const searches = fetchedSearches ?? [];
+  const searchesServerLoaded = fetchedSearches !== null;
 
   return (
     <UserStoreProvider userInfo={userInfo}>
-      <TravelStoreProvider trips={trips} searches={searches}>
-        <TravelLoader />
-        {children}
-      </TravelStoreProvider>
+      <TripStoreProvider trips={trips} tripsServerLoaded={tripsServerLoaded}>
+        <SearchStoreProvider
+          searches={searches}
+          searchesServerLoaded={searchesServerLoaded}
+        >
+          <TravelLoader />
+          {children}
+        </SearchStoreProvider>
+      </TripStoreProvider>
     </UserStoreProvider>
   );
 };

@@ -7,11 +7,9 @@ import {
   useState,
 } from "react";
 import { Map, Marker } from "mapbox-gl";
-import { useUserStore } from "@/providers/user-store-provider";
 import { Coordinates, MapTimeType } from "@/utils/interfaces";
 import { renderToStaticMarkup } from "react-dom/server";
 import { CurrentLocationIcon } from "@/components/ui/icons/map-pins";
-import { useShallow } from "zustand/react/shallow";
 
 type MapMethods = {
   triggerGeolocator: () => void;
@@ -48,12 +46,12 @@ export const useMapHook = ({
 }): [MapMethods, boolean, Error | undefined] => {
   const [userLoading] = useState(false);
   const [error] = useState<Error>();
-  const { performanceMode, setPerformanceMode } = useUserStore(
-    useShallow(({ performanceMode, setPerformanceMode }) => ({
-      performanceMode,
-      setPerformanceMode,
-    })),
-  );
+  // const { performanceMode, setPerformanceMode } = useUserStore(
+  //   useShallow(({ performanceMode, setPerformanceMode }) => ({
+  //     performanceMode,
+  //     setPerformanceMode,
+  //   })),
+  // );
 
   const mapStyles = useMemo(() => {
     return {
@@ -167,8 +165,8 @@ export const useMapHook = ({
   const updatePerformance = useCallback<
     MapMethods["updatePerformance"]
   >(async () => {
-    setPerformanceMode(!performanceMode);
-  }, [performanceMode, setPerformanceMode]);
+    // setPerformanceMode(!performanceMode);
+  }, []);
 
   const setLightMode = useCallback(
     (mapTime: MapTimeType) => {
