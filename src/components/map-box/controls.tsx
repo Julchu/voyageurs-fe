@@ -85,7 +85,7 @@ const Controls = ({
     <>
       {userInfo ? (
         <Button
-          className="absolute bottom-5 left-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-100"
+          className="absolute bottom-5 left-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-50"
           onClick={updatePerformanceCallback}
         >
           {/*{performanceMode ? (*/}
@@ -99,7 +99,7 @@ const Controls = ({
       {userInfo ? (
         <Button
           className={
-            "absolute bottom-20 left-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-100"
+            "absolute bottom-20 left-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-50"
           }
           onClick={rotateMapTime}
         >
@@ -108,14 +108,14 @@ const Controls = ({
       ) : null}
 
       <Button
-        className="absolute right-5 bottom-20 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-100"
+        className="absolute right-5 bottom-20 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-50"
         onClick={triggerNorth}
       >
         <NorthIcon className={"h-6 w-6"} />
       </Button>
 
       <Button
-        className="absolute right-5 bottom-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-100"
+        className="absolute right-5 bottom-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-50"
         onClick={triggerGeolocator}
       >
         <LocationIcon className="absolute h-6 w-6" />

@@ -1,8 +1,10 @@
 import { Drawer } from "@base-ui/react/drawer";
 import { TripForm } from "@/components/trips/trip-form";
 import { CircleCloseIcon } from "@/components/ui/icons/circle-close-icon";
+import { RefObject } from "react";
+import type { Map } from "mapbox-gl";
 
-export const TripContent = () => {
+export const TripContent = ({ map }: { map: RefObject<Map | null> }) => {
   return (
     <div className={"flex h-full w-full flex-col"}>
       <div className={"p-4"}>
@@ -26,7 +28,7 @@ export const TripContent = () => {
         </Drawer.Title>
       </div>
 
-      <TripForm />
+      <TripForm map={map} />
     </div>
   );
 };

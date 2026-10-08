@@ -2,10 +2,12 @@
 
 import { Drawer } from "@base-ui/react/drawer";
 import { TripContent } from "@/components/trips/trip-content";
+import { RefObject } from "react";
+import type { Map } from "mapbox-gl";
 
 export const tripDrawerHandle = Drawer.createHandle();
 
-export const TripDrawer = () => {
+export const TripDrawer = ({ map }: { map: RefObject<Map | null> }) => {
   // const snapPoints = ["148px", 1];
   // const [snapPoint, setSnapPoint] = useState<Drawer.Root.SnapPoint | null>(
   //   snapPoints[0],
@@ -22,7 +24,7 @@ export const TripDrawer = () => {
       // snapPoint={snapPoint}
       // onSnapPointChange={setSnapPoint}
     >
-      <Drawer.SwipeArea className="absolute inset-y-0 right-0 w-5 sm:w-10 dark:border-blue-500 dark:bg-blue-500/10" />
+      <Drawer.SwipeArea className={"absolute inset-y-0 right-0 w-5 sm:w-10"} />
 
       <Drawer.Portal>
         <Drawer.Backdrop
@@ -33,10 +35,10 @@ export const TripDrawer = () => {
         <Drawer.Viewport className="pointer-events-none fixed inset-0 z-3 flex items-stretch justify-end">
           <Drawer.Popup
             className={
-              "pointer-events-auto h-full w-[min(100%,24rem)] [transform:translateX(var(--drawer-swipe-movement-x))] overflow-y-auto overscroll-contain bg-white/95 text-neutral-950 shadow-xl transition-transform duration-[450ms] ease-[cubic-bezier(0.32,0.72,0,1)] outline-none data-ending-style:[transform:translateX(100%)] data-starting-style:[transform:translateX(100%)] data-swiping:select-none"
+              "pointer-events-auto h-full w-full [transform:translateX(var(--drawer-swipe-movement-x))] overflow-y-auto overscroll-contain bg-white text-neutral-950 shadow-xl transition-transform duration-[450ms] ease-[cubic-bezier(0.32,0.72,0,1)] outline-none data-ending-style:[transform:translateX(100%)] data-starting-style:[transform:translateX(100%)] data-swiping:select-none sm:w-[min(100%,24rem)]"
             }
           >
-            <TripContent />
+            <TripContent map={map} />
           </Drawer.Popup>
         </Drawer.Viewport>
       </Drawer.Portal>

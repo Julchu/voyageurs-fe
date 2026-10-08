@@ -17,12 +17,7 @@ import {
   buildStandardStyle,
 } from "@/components/map-box/utils/standard-overrides";
 import { drawRoute } from "@/components/map-box/utils/route-layer";
-
-const hitBox = (point: { x: number; y: number }) =>
-  [
-    [point.x - 16, point.y - 16],
-    [point.x + 16, point.y + 16],
-  ] as [[number, number], [number, number]];
+import { TripDrawer } from "@/components/trips/trip-drawer";
 
 const stopMarker = (index: number, visited: boolean) => {
   const element = document.createElement("div");
@@ -329,6 +324,8 @@ export const MapAndControls = ({
         currentMapTimeMode={currentMapTimeMode}
         setCurrentMapTimeMode={setCurrentMapTimeMode}
       />
+
+      <TripDrawer map={map} />
     </div>
   );
 };

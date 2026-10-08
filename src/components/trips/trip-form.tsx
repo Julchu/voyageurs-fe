@@ -7,8 +7,11 @@ import { DraggableTripStops } from "@/components/trips/draggable-trip-stops";
 import { DragDropProvider } from "@dnd-kit/react";
 import type { DragEndEvent } from "@dnd-kit/dom";
 import { isSortable } from "@dnd-kit/react/sortable";
+import { useMapHook } from "@/hooks/use-map-hook";
+import { RefObject } from "react";
+import type { Map } from "mapbox-gl";
 
-export const TripForm = () => {
+export const TripForm = ({ map }: { map: RefObject<Map | null> }) => {
   const { currentTrip, reorderStops, resetDraft } = useTripStore(
     useShallow(({ currentTrip, reorderStops, resetDraft }) => ({
       currentTrip,
@@ -16,6 +19,10 @@ export const TripForm = () => {
       resetDraft,
     })),
   );
+
+  const [{ flyTo }] = useMapHook({
+    map,
+  });
 
   // TODO:
   const onSaveHandler = () => {
@@ -69,6 +76,7 @@ export const TripForm = () => {
                     index={index}
                     key={id}
                     stop={stop}
+                    onClickHandler={flyTo}
                   />
                 );
               })}
@@ -90,10 +98,7 @@ export const TripForm = () => {
       </button>
 
       <div className={"mt-auto"}>
-        <Separator
-          orientation="horizontal"
-          className="h-px bg-gray-200 dark:bg-neutral-700"
-        />
+        <Separator orientation="horizontal" className="h-px bg-gray-200" />
 
         {/* Clear trip button */}
         <div className="flex justify-end gap-4 p-4">
