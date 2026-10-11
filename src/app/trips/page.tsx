@@ -3,20 +3,17 @@
 import Link from "next/link";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useUserStore } from "@/providers/user-store-provider";
-import { currentTripFrom, previousTripsFrom } from "@/stores/trip-store-prev";
 import { useShallow } from "zustand/react/shallow";
 
 const TripsPage = () => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
-  const { trips, tripsLoadState } = useTripStore(
-    useShallow(({ trips, tripsLoadState }) => ({
+  const { trips, tripsLoadState, currentTrip } = useTripStore(
+    useShallow(({ trips, tripsLoadState, currentTrip }) => ({
       trips,
       tripsLoadState,
+      currentTrip,
     })),
   );
-
-  const current = currentTripFrom(trips);
-  const previous = previousTripsFrom(trips);
 
   return (
     <div className="flex h-full flex-col gap-8 overflow-y-auto px-4 pt-20 pb-6">
@@ -48,23 +45,23 @@ const TripsPage = () => {
         <h2 className="text-sm font-medium tracking-widest text-neutral-500 uppercase">
           Current
         </h2>
-        {current ? (
-          <article className="rounded-xl bg-white p-4 shadow">
+        {currentTrip ? (
+          <article className="rounded-md bg-white p-4 shadow">
             <div className="flex items-start justify-between gap-3">
-              <h3 className="text-base font-medium">{current.name}</h3>
+              <h3 className="text-base font-medium">{currentTrip.name}</h3>
               <button
                 type="button"
                 className="text-sm text-neutral-500"
-                // onClick={() => void setTripStatus(current.publicId, "previous")}
+                // onClick={() => void setTripStatus(currentTrip.publicId, "previous")}
               >
                 End trip
               </button>
             </div>
-            {current.stops.length === 0 ? (
+            {currentTrip.stops.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-500">No stops yet.</p>
             ) : (
               <ol className="mt-3 flex flex-col gap-2">
-                {current.stops.map((stop, index) => (
+                {currentTrip.stops.map((stop, index) => (
                   <li key={stop.publicId} className="text-sm">
                     <Link
                       href={`/?lat=${stop.coordinates.lat}&lng=${stop.coordinates.lng}`}
@@ -94,30 +91,36 @@ const TripsPage = () => {
         <h2 className="text-sm font-medium tracking-widest text-neutral-500 uppercase">
           Previous
         </h2>
-        {previous.length === 0 ? (
+        {trips.length === 0 ? (
           <p className="text-sm text-neutral-500">No previous trips.</p>
         ) : null}
-        {previous.map((trip) => (
-          <article
-            key={trip.publicId}
-            className="rounded-xl bg-white p-4 shadow"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="text-base font-medium">{trip.name}</h3>
-              <button
-                type="button"
-                className="text-sm text-blue-700"
-                // onClick={() => void setTripStatus(trip.publicId, "current")}
-              >
-                Make current
-              </button>
-            </div>
-            <p className="mt-1 text-sm text-neutral-500">
-              {trip.stops.length} stops ·{" "}
-              {trip.stops.filter((stop) => stop.visited).length} visited
-            </p>
-          </article>
-        ))}
+        {trips
+          .filter(
+            ({ publicId, clientId }) =>
+              publicId !== currentTrip?.publicId &&
+              clientId !== currentTrip?.clientId,
+          )
+          .map((trip) => (
+            <article
+              key={trip.publicId}
+              className="rounded-md bg-white p-4 shadow"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-base font-medium">{trip.name}</h3>
+                <button
+                  type="button"
+                  className="text-sm text-blue-700"
+                  // onClick={() => void setTripStatus(trip.publicId, "current")}
+                >
+                  Make current
+                </button>
+              </div>
+              <p className="mt-1 text-sm text-neutral-500">
+                {trip.stops.length} stops ·{" "}
+                {trip.stops.filter((stop) => stop.visited).length} visited
+              </p>
+            </article>
+          ))}
       </section>
     </div>
   );

@@ -45,7 +45,7 @@ export const LinksNavigationMenu = () => {
         <NavigationMenu.Item>
           <NavigationMenu.Trigger
             className={
-              "flex cursor-pointer items-center rounded-md bg-blue-500 px-4 py-2 text-2xl font-bold tracking-widest text-white opacity-50"
+              "flex cursor-pointer items-center rounded-md bg-blue-500/50 px-4 py-2 text-2xl font-bold tracking-widest text-white"
             }
           >
             Voyageurs

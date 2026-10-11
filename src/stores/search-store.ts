@@ -63,7 +63,8 @@ export const createSearchStore = (initialState: SearchState) => {
             publicId: crypto.randomUUID(),
             query: entry.query,
             name: entry.name,
-            address: entry.address,
+            streetAddress: entry.streetAddress,
+            areaAddress: entry.areaAddress,
             coordinates: entry.coordinates,
             searchedAt: new Date().toISOString(),
           });

@@ -27,6 +27,8 @@ export type TripActions = {
   removeStop: (clientOrPublicId?: string) => void;
   reorderStops: (from: number, to: number) => void;
   renameTrip: (name: string) => void;
+  selectTrip: (publicId: string) => void;
+  createTrip: (name: string) => void;
   resetDraft: () => void;
 };
 
@@ -57,7 +59,8 @@ const newStop = ({
   ...(tripPublicId ? { tripPublicId } : {}),
   clientId: crypto.randomUUID(),
   name: place.name,
-  address: place.address,
+  streetAddress: place.streetAddress,
+  areaAddress: place.areaAddress,
   coordinates: place.coordinates,
   id: place.id,
   position,
@@ -74,6 +77,7 @@ const addStop = ({
 }): TripFormData => {
   if (!currentTrip) {
     return {
+      clientId: crypto.randomUUID(),
       name: "New Trip",
       stops: [newStop({ place, position: 0 })],
     };
@@ -151,6 +155,7 @@ const resetTripToServerTrip = ({
 }): TripFormData => {
   if (!currentTripPublicId)
     return {
+      clientId: crypto.randomUUID(),
       name: "New Trip",
       stops: [],
     };
@@ -168,6 +173,21 @@ export const initTripStore = (
   tripsLoadState: loadStateFromServer(tripsServerLoaded),
   tripVersion: 1,
 });
+
+const resolveCurrentTrip = (
+  serverTrips: Trip[],
+  draft?: Trip,
+): Trip | undefined => {
+  // Nothing persisted → use the server default
+  if (!draft) return serverTrips[0];
+  // Brand-new, never-synced trip → keep it
+  if (!draft.publicId) return draft;
+  // Existing trip that was deleted on the server → drop the draft
+  const existsOnServer = serverTrips.some((t) => t.publicId === draft.publicId);
+  if (!existsOnServer) return serverTrips[0];
+  // Existing trip still on the server → keep the draft, ignore server's version
+  return draft;
+};
 
 // Store handles actions (per-action) rather than RHF
 export const createTripStore = (initialState: TripState) => {
@@ -231,6 +251,28 @@ export const createTripStore = (initialState: TripState) => {
             tripVersion: tripVersion + 1,
           }));
         },
+        // Switch the draft to an existing, saved trip.
+        selectTrip: (publicId) => {
+          set(({ trips, tripVersion }) => {
+            const trip = trips.find((t) => t.publicId === publicId);
+            return trip
+              ? { currentTrip: trip, tripVersion: tripVersion + 1 }
+              : {};
+          });
+        },
+        // Start a brand-new, unsaved draft. Saving is handled by syncTrips.
+        createTrip: (name) => {
+          const trimmed = name.trim();
+          if (!trimmed) return;
+          set(({ tripVersion }) => ({
+            currentTrip: {
+              clientId: crypto.randomUUID(),
+              name: trimmed,
+              stops: [],
+            },
+            tripVersion: tripVersion + 1,
+          }));
+        },
         resetDraft: () => {
           set(({ currentTrip, tripVersion }) => ({
             currentTrip: resetTripToServerTrip({
@@ -243,7 +285,25 @@ export const createTripStore = (initialState: TripState) => {
       }),
       {
         name: "voyageurs-trips",
-        partialize: ({ trips, currentTrip }) => ({ trips, currentTrip }),
+        partialize: ({ currentTrip, tripVersion }) => ({
+          currentTrip,
+          tripVersion,
+        }),
+        merge: (persisted, current) => {
+          const { currentTrip: draft, tripVersion } =
+            (persisted as Partial<TripState>) ?? {};
+          const serverTrips = current.trips; // authoritative, never from storage
+          const resolved = resolveCurrentTrip(serverTrips, draft);
+          return {
+            ...current,
+            trips: serverTrips,
+            currentTrip: resolved,
+            tripVersion:
+              resolved === draft
+                ? (tripVersion ?? current.tripVersion)
+                : current.tripVersion,
+          };
+        },
       },
     ),
   );

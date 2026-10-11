@@ -7,6 +7,7 @@ import { useUserStore } from "@/providers/user-store-provider";
 import { tripDrawerHandle } from "@/components/trips/trip-drawer";
 import { Drawer } from "@base-ui/react/drawer";
 import { useShallow } from "zustand/react/shallow";
+import { visitDrawerHandle } from "@/components/trips/visit-drawer";
 
 export const UserMenu = () => {
   const { userInfo, logout } = useUserStore(
@@ -32,22 +33,19 @@ export const UserMenu = () => {
             }
           />
 
-          <Menu.Separator className={"relative m-1 flex h-px bg-gray-200"} />
-
           <Menu.Group>
-            <Menu.Separator className={"m-1 h-px bg-gray-200"} />
             <Menu.GroupLabel className="pl-4 text-xs leading-6 font-medium opacity-50">
               Trips
             </Menu.GroupLabel>
 
             {/* TODO: add another trigger/drawer for list of trips to select/load from */}
             <Drawer.Trigger
-              handle={tripDrawerHandle}
+              handle={visitDrawerHandle}
               className={
                 "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-md py-4 pr-[5px] pl-[25px] leading-none outline-none hover:bg-blue-500 hover:text-white"
               }
             >
-              Past Trips
+              Calendar
             </Drawer.Trigger>
 
             <Drawer.Trigger
@@ -56,7 +54,7 @@ export const UserMenu = () => {
                 "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-md py-4 pr-[5px] pl-[25px] leading-none outline-none hover:bg-blue-500 hover:text-white"
               }
             >
-              Current Trip
+              Trip
             </Drawer.Trigger>
           </Menu.Group>
 

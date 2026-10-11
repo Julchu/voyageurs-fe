@@ -36,7 +36,7 @@ const SearchesPage = () => {
       ) : null}
       <ul className="flex flex-col gap-3">
         {searches.map((search) => (
-          <li key={search.publicId} className="rounded-xl bg-white p-4 shadow">
+          <li key={search.publicId} className="rounded-md bg-white p-4 shadow">
             <Link
               href={`/?lat=${search.coordinates.lat}&lng=${search.coordinates.lng}`}
               className="text-sm font-medium hover:underline"
@@ -44,7 +44,7 @@ const SearchesPage = () => {
               {search.name}
             </Link>
             <p className="text-sm text-neutral-500">
-              {search.address || search.query}
+              {search.streetAddress || search.query}
             </p>
             <p className="text-xs text-neutral-400">
               {search.query} · {new Date(search.searchedAt).toLocaleString()}

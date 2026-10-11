@@ -50,7 +50,8 @@ export type UserInfo = {
 export type Place = {
   id: number;
   name: string;
-  address: string;
+  streetAddress: string;
+  areaAddress: string;
   coordinates: Coordinates;
 };
 
@@ -66,6 +67,8 @@ export type TripStop = Place & {
 };
 
 export type Trip = {
+  // Local clientId for a draft trip before the server assigns a publicId
+  clientId?: string;
   publicId?: string;
   name: string;
   stops: TripStop[];
@@ -87,4 +90,18 @@ export type TripStopFormData = FormData<TripStop>;
 
 export type TripFormData = Omit<FormData<Trip>, "stops"> & {
   stops: TripStopFormData[];
+};
+
+// Geocoding v6 reverse response: each feature carries a formatted streetAddress in
+// `properties`. `full_address` = name + place context; `name` is the bare
+// street line. See https://docs.mapbox.com/api/search/geocoding/#reverse-geocoding
+export type GeocodeResponse = {
+  features?: { properties?: GeocodeFeatures }[];
+};
+
+export type GeocodeFeatures = {
+  full_address?: string;
+  name?: string;
+  name_preferred?: string;
+  place_formatted?: string;
 };
