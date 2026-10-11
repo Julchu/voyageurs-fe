@@ -24,7 +24,7 @@ export const TripDrawer = ({ map }: { map: RefObject<Map | null> }) => {
       // snapPoint={snapPoint}
       // onSnapPointChange={setSnapPoint}
     >
-      <Drawer.SwipeArea className={"absolute inset-y-0 right-0 w-5 sm:w-10"} />
+      <Drawer.SwipeArea className={"absolute inset-y-0 right-0 w-5 sm:w-5"} />
 
       <Drawer.Portal>
         <Drawer.Backdrop
@@ -35,7 +35,7 @@ export const TripDrawer = ({ map }: { map: RefObject<Map | null> }) => {
         <Drawer.Viewport className="pointer-events-none fixed inset-0 z-3 flex items-stretch justify-end">
           <Drawer.Popup
             className={
-              "pointer-events-auto h-full w-full [transform:translateX(var(--drawer-swipe-movement-x))] overflow-y-auto overscroll-contain bg-white text-neutral-950 shadow-xl transition-transform duration-[450ms] ease-[cubic-bezier(0.32,0.72,0,1)] outline-none data-ending-style:[transform:translateX(100%)] data-starting-style:[transform:translateX(100%)] data-swiping:select-none sm:w-[min(100%,24rem)]"
+              "pointer-events-auto h-full w-full [transform:translateX(var(--drawer-swipe-movement-x))] overflow-y-auto overscroll-contain bg-red-500 bg-white text-neutral-950 shadow-xl transition-transform duration-[450ms] ease-[cubic-bezier(0.32,0.72,0,1)] outline-none data-ending-style:[transform:translateX(100%)] data-starting-style:[transform:translateX(100%)] data-swiping:select-none sm:w-[min(100%,24rem)]"
             }
           >
             <TripContent map={map} />

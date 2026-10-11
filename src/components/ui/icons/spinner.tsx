@@ -1,9 +1,13 @@
-const Spinner = ({ shouldUseDarkMode }: { shouldUseDarkMode?: boolean }) => {
+export const Spinner = ({
+  shouldUseDarkMode,
+}: {
+  shouldUseDarkMode?: boolean;
+}) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
-      fill={shouldUseDarkMode ? "white" : "currentColor"}
+      fill={shouldUseDarkMode ? "white" : "bg-blue-500"}
       className="h-6 w-6 animate-spin"
     >
       <path d="M6 3a3 3 0 00-3 3v1.5a.75.75 0 001.5 0V6A1.5 1.5 0 016 4.5h1.5a.75.75 0 000-1.5H6zM16.5 3a.75.75 0 000 1.5H18A1.5 1.5 0 0119.5 6v1.5a.75.75 0 001.5 0V6a3 3 0 00-3-3h-1.5zM12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5zM4.5 16.5a.75.75 0 00-1.5 0V18a3 3 0 003 3h1.5a.75.75 0 000-1.5H6A1.5 1.5 0 014.5 18v-1.5zM21 16.5a.75.75 0 00-1.5 0V18a1.5 1.5 0 01-1.5 1.5h-1.5a.75.75 0 000 1.5H18a3 3 0 003-3v-1.5z" />
@@ -11,4 +15,201 @@ const Spinner = ({ shouldUseDarkMode }: { shouldUseDarkMode?: boolean }) => {
   );
 };
 
-export default Spinner;
+// svg-spinners:3-dots-move
+export const AnimatedEllipsisLoader = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="32"
+    height="32"
+    viewBox="0 0 24 24"
+  >
+    <circle cx="4" cy="12" r="0" fill="currentColor">
+      <animate
+        fill="freeze"
+        attributeName="r"
+        begin="0;SVGUppsBdVN.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="0;3"
+      />
+      <animate
+        fill="freeze"
+        attributeName="cx"
+        begin="SVGqCgsydxJ.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="4;12"
+      />
+      <animate
+        fill="freeze"
+        attributeName="cx"
+        begin="SVG3PwDNd6F.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="12;20"
+      />
+      <animate
+        id="SVG3V8yEdYE"
+        fill="freeze"
+        attributeName="r"
+        begin="SVG6wCQhd9Q.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="3;0"
+      />
+      <animate
+        id="SVGUppsBdVN"
+        fill="freeze"
+        attributeName="cx"
+        begin="SVG3V8yEdYE.end"
+        dur="0.001s"
+        values="20;4"
+      />
+    </circle>
+    <circle cx="4" cy="12" r="3" fill="currentColor">
+      <animate
+        fill="freeze"
+        attributeName="cx"
+        begin="0;SVGUppsBdVN.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="4;12"
+      />
+      <animate
+        fill="freeze"
+        attributeName="cx"
+        begin="SVGqCgsydxJ.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="12;20"
+      />
+      <animate
+        id="SVG4PgJdbds"
+        fill="freeze"
+        attributeName="r"
+        begin="SVG3PwDNd6F.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="3;0"
+      />
+      <animate
+        id="SVG6wCQhd9Q"
+        fill="freeze"
+        attributeName="cx"
+        begin="SVG4PgJdbds.end"
+        dur="0.001s"
+        values="20;4"
+      />
+      <animate
+        fill="freeze"
+        attributeName="r"
+        begin="SVG6wCQhd9Q.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="0;3"
+      />
+    </circle>
+    <circle cx="12" cy="12" r="3" fill="currentColor">
+      <animate
+        fill="freeze"
+        attributeName="cx"
+        begin="0;SVGUppsBdVN.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="12;20"
+      />
+      <animate
+        id="SVG38aCdcdI"
+        fill="freeze"
+        attributeName="r"
+        begin="SVGqCgsydxJ.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="3;0"
+      />
+      <animate
+        id="SVG3PwDNd6F"
+        fill="freeze"
+        attributeName="cx"
+        begin="SVG38aCdcdI.end"
+        dur="0.001s"
+        values="20;4"
+      />
+      <animate
+        fill="freeze"
+        attributeName="r"
+        begin="SVG3PwDNd6F.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="0;3"
+      />
+      <animate
+        fill="freeze"
+        attributeName="cx"
+        begin="SVG6wCQhd9Q.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="4;12"
+      />
+    </circle>
+    <circle cx="20" cy="12" r="3" fill="currentColor">
+      <animate
+        id="SVGwaWzveSq"
+        fill="freeze"
+        attributeName="r"
+        begin="0;SVGUppsBdVN.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="3;0"
+      />
+      <animate
+        id="SVGqCgsydxJ"
+        fill="freeze"
+        attributeName="cx"
+        begin="SVGwaWzveSq.end"
+        dur="0.001s"
+        values="20;4"
+      />
+      <animate
+        fill="freeze"
+        attributeName="r"
+        begin="SVGqCgsydxJ.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="0;3"
+      />
+      <animate
+        fill="freeze"
+        attributeName="cx"
+        begin="SVG3PwDNd6F.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="4;12"
+      />
+      <animate
+        fill="freeze"
+        attributeName="cx"
+        begin="SVG6wCQhd9Q.end"
+        calcMode="spline"
+        dur="0.5s"
+        keySplines=".36,.6,.31,1"
+        values="12;20"
+      />
+    </circle>
+  </svg>
+);

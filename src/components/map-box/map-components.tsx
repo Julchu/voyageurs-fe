@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { AddressSearch } from "@/components/map-box/address-search";
-import type { RouteKind } from "@/components/map-box/utils/directions";
 import { MapAndControls, type MapFocus } from "@/components/map-box/map";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { type Coordinates, type Place } from "@/utils/interfaces";
 import { useShallow } from "zustand/react/shallow";
 import { SelectedAddressPopup } from "@/components/map-box/selected-address-popup";
 import { useSearchStore } from "@/providers/search-store-provider";
+import { VisitDrawer } from "@/components/trips/visit-drawer";
 
 const DEFAULT_COORDS = { lng: -79.387054, lat: 43.642567 };
 
@@ -26,7 +26,6 @@ export const MapComponents = ({
   const logSearch = useSearchStore(({ logSearch }) => logSearch);
   const [selected, setSelected] = useState<Place | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
-  const [routeKind, setRouteKind] = useState<RouteKind>("empty");
 
   const choosePlace = (place: Place, query: string, log: boolean) => {
     setSelected(place);
@@ -46,8 +45,6 @@ export const MapComponents = ({
         focus={mapFocus}
         stops={currentTrip?.stops ?? []}
         onPlace={(place) => setSelected(place)}
-        onRouteKind={setRouteKind}
-        onSelect={choosePlace}
       />
 
       <AddressSearch
@@ -58,9 +55,8 @@ export const MapComponents = ({
       <SelectedAddressPopup selected={selected} setSelected={setSelected} />
 
       {/*Visit checklist stays closed until openVisitDrawer() is called.*/}
-
-      {/* Drawer to show visited places? */}
-      {/*<VisitDrawer />*/}
+      {/* Drawer to show visited places? Calendar view */}
+      <VisitDrawer />
     </div>
   );
 };

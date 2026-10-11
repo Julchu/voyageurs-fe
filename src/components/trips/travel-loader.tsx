@@ -7,13 +7,14 @@ import { useShallow } from "zustand/react/shallow";
 import { useTripStore } from "@/providers/trip-store-provider";
 
 export const TravelLoader = () => {
-  const userInfo = useUserStore((state) => state.userInfo);
+  const userInfo = useUserStore(({ userInfo }) => userInfo);
   const { tripsLoadState, fetchTrips } = useTripStore(
     useShallow(({ tripsLoadState, fetchTrips }) => ({
       tripsLoadState,
       fetchTrips,
     })),
   );
+
   const { searchesLoadState, fetchSearches } = useSearchStore(
     useShallow(({ searchesLoadState, fetchSearches }) => ({
       searchesLoadState,

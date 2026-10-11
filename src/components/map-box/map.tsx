@@ -2,12 +2,12 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
 import mapBoxGL, { type Map as MapboxMap, type Marker } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
-import Controls from "@/components/map-box/controls";
+import { Controls } from "@/components/map-box/controls";
+import { routeForStops } from "@/components/map-box/utils/directions";
 import {
-  routeForStops,
-  type RouteKind,
-} from "@/components/map-box/utils/directions";
-import { placeFromFeature } from "@/components/map-box/utils/place";
+  placeFromFeature,
+  reverseGeocode,
+} from "@/components/map-box/utils/place-geocoding";
 import { useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
 import { Coordinates, Place, TripStop } from "@/utils/interfaces";
@@ -18,6 +18,7 @@ import {
 } from "@/components/map-box/utils/standard-overrides";
 import { drawRoute } from "@/components/map-box/utils/route-layer";
 import { TripDrawer } from "@/components/trips/trip-drawer";
+import { useShallow } from "zustand/react/shallow";
 
 const stopMarker = (index: number, visited: boolean) => {
   const element = document.createElement("div");
@@ -50,17 +51,19 @@ export const MapAndControls = ({
   focus,
   stops,
   onPlace,
-  onRouteKind,
 }: {
   shouldUseDarkMode: boolean;
   initialCoords: Coordinates;
   focus: MapFocus | null;
   stops: TripStop[];
   onPlace: (place: Place) => void;
-  onRouteKind: (kind: RouteKind) => void;
 }) => {
-  const lastLocation = useUserStore((state) => state.lastLocation);
-  const setLastLocation = useUserStore((state) => state.setLastLocation);
+  const { lastLocation, setLastLocation } = useUserStore(
+    useShallow(({ lastLocation, setLastLocation }) => ({
+      lastLocation,
+      setLastLocation,
+    })),
+  );
   const map = useRef<MapboxMap | null>(null);
   const [mapLoading, setMapLoading] = useState(true);
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -70,15 +73,15 @@ export const MapAndControls = ({
     new globalThis.Map(),
   );
   const onPlaceRef = useRef(onPlace);
-  const onRouteKindRef = useRef(onRouteKind);
+
+  const addressLookup = useRef<AbortController | null>(null);
   const [currentMapTimeMode, setCurrentMapTimeMode] = useState(() =>
     mapTimeFromDate(),
   );
 
   useEffect(() => {
     onPlaceRef.current = onPlace;
-    onRouteKindRef.current = onRouteKind;
-  }, [onPlace, onRouteKind]);
+  }, [onPlace]);
 
   const [{ markers, addMarker, flyTo }] = useMapHook({
     map,
@@ -122,6 +125,7 @@ export const MapAndControls = ({
     };
   }, [initialCoords.lat, initialCoords.lng]);
 
+  // TODO: test streetAddress search flies map
   useEffect(() => {
     if (!focus || mapLoading) return;
     flyTo(focus.coordinates, 15);
@@ -142,11 +146,37 @@ export const MapAndControls = ({
         type: "click",
         target,
         handler: (e) => {
+          console.log("e", e);
           const place = e.feature ? placeFromFeature(e.feature) : null;
+          console.log("place", place);
           if (place) {
             onPlaceRef.current(place);
+            // Cancel any in-flight lookup so a slower earlier request can't
+            // overwrite the streetAddress of this more recently clicked place.
+            addressLookup.current?.abort();
+            const controller = new AbortController();
+            addressLookup.current = controller;
+            void reverseGeocode(place.coordinates, controller.signal).then(
+              (geocodeData) => {
+                if (controller.signal.aborted || !geocodeData) return;
+                console.log("geocode data", geocodeData);
+
+                // Build Place
+
+                const selectedPlace: Place = {
+                  ...place,
+                  streetAddress:
+                    geocodeData.name_preferred ??
+                    geocodeData.name ??
+                    geocodeData.place_formatted ??
+                    "",
+                };
+                onPlaceRef.current(selectedPlace);
+              },
+            );
             return true; // stop lower-priority interactions
           }
+          v;
         },
       });
       ids.push(clickId);
@@ -174,6 +204,8 @@ export const MapAndControls = ({
 
     return () => {
       for (const id of ids) mapInstance.removeInteraction(id);
+      addressLookup.current?.abort();
+      addressLookup.current = null;
     };
   }, [mapLoading]);
 
@@ -236,7 +268,6 @@ export const MapAndControls = ({
     );
     drawRoute(mapInstance, straight);
     if (straight.length < 2) {
-      onRouteKindRef.current("empty");
       return;
     }
 
@@ -245,7 +276,6 @@ export const MapAndControls = ({
         (route) => {
           if (cancelled || !map.current) return;
           drawRoute(map.current, route.line);
-          onRouteKindRef.current(route.kind);
         },
       );
     }, 400);
@@ -282,7 +312,7 @@ export const MapAndControls = ({
         });
       },
       (error) => {
-        console.log("Error geolocating", error);
+        console.error("Error geolocating", error);
         setLocationLoading(false);
       },
       { enableHighAccuracy: false },

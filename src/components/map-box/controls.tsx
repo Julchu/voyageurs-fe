@@ -7,7 +7,6 @@ import {
   useCallback,
 } from "react";
 import type { Map } from "mapbox-gl";
-import { Button } from "@/components/ui/button";
 import {
   DawnIcon,
   DayIcon,
@@ -15,14 +14,15 @@ import {
   LocationIcon,
   NightIcon,
   NorthIcon,
-} from "@/components/ui/icons/map-control-icons";
-import Spinner from "@/components/ui/icons/spinner";
+} from "@/components/ui/icons/control-icons";
+import { Spinner } from "@/components/ui/icons/spinner";
 import { useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
 import { useShallow } from "zustand/react/shallow";
 import { MapTimeEnum, MapTimeType, MapTimeValues } from "@/utils/interfaces";
+import { Button } from "@base-ui/react/button";
 
-const Controls = ({
+export const Controls = ({
   map,
   mapLoading,
   setMapLoading,
@@ -85,7 +85,7 @@ const Controls = ({
     <>
       {userInfo ? (
         <Button
-          className="absolute bottom-5 left-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-50"
+          className="absolute bottom-5 left-5 inline-flex h-10 w-10 cursor-pointer rounded-full bg-blue-500/50 p-0"
           onClick={updatePerformanceCallback}
         >
           {/*{performanceMode ? (*/}
@@ -99,7 +99,7 @@ const Controls = ({
       {userInfo ? (
         <Button
           className={
-            "absolute bottom-20 left-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-50"
+            "absolute bottom-20 left-5 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50 p-0"
           }
           onClick={rotateMapTime}
         >
@@ -108,14 +108,14 @@ const Controls = ({
       ) : null}
 
       <Button
-        className="absolute right-5 bottom-20 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-50"
+        className="absolute right-5 bottom-20 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50 p-0"
         onClick={triggerNorth}
       >
         <NorthIcon className={"h-6 w-6"} />
       </Button>
 
       <Button
-        className="absolute right-5 bottom-5 h-10 w-10 cursor-pointer rounded-full bg-blue-600 p-0 opacity-50"
+        className="absolute right-5 bottom-5 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50 p-0"
         onClick={triggerGeolocator}
       >
         <LocationIcon className="absolute h-6 w-6" />
@@ -126,5 +126,3 @@ const Controls = ({
     </>
   );
 };
-
-export default Controls;

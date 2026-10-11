@@ -6,7 +6,7 @@ import { MapComponents } from "@/components/map-box/map-components";
 
 // Workaround to keep map mounted
 // TODO: get initial coords
-export function AppShell({ children }: { children: ReactNode }) {
+export const AppShell = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const onMap = pathname === "/";
 
@@ -27,4 +27,4 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
     </div>
   );
-}
+};

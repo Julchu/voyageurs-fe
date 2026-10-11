@@ -28,7 +28,16 @@ const searchAddresses = async (
   url.searchParams.set("autocomplete", "true");
   url.searchParams.set("limit", "5");
   url.searchParams.set("proximity", `${proximity.lng},${proximity.lat}`);
-  url.searchParams.set("types", "address,place,poi,locality,neighborhood");
+  url.searchParams.set(
+    "types",
+    "streetAddress,place,poi,locality,neighborhood",
+  );
+
+  // const url = new URL("https://api.mapbox.com/search/geocode/v6/reverse");
+  // url.searchParams.set("longitude", String(lng));
+  // url.searchParams.set("latitude", String(lat));
+  // url.searchParams.set("access_token", token);
+  // url.searchParams.set("types", "streetAddress");
 
   const response = await fetch(url, { signal });
   if (!response.ok) return [];
@@ -42,7 +51,8 @@ const searchAddresses = async (
       {
         id: feature.id || `${lng},${lat}`,
         name,
-        address: feature.place_name || "",
+        streetAddress: feature.place_name || "",
+        // TODO: check for areaAddress
         coordinates: { lat, lng },
       },
     ];
@@ -85,7 +95,7 @@ export const AddressSearch = ({
   const pending = trimmedQuery !== debounced.trim();
 
   return (
-    <div className="pointer-events-auto absolute top-16 left-1/2 w-[min(28rem,calc(100%-2rem))] -translate-x-1/2">
+    <div className="pointer-events-auto absolute top-16 left-1/2 h-6 w-[min(28rem,calc(100%-2rem))] -translate-x-1/2">
       <input
         value={query}
         role="combobox"
@@ -101,19 +111,19 @@ export const AddressSearch = ({
         onBlur={() => {
           window.setTimeout(() => setOpen(false), 150);
         }}
-        className="w-full rounded-full border border-white/40 bg-white/95 px-4 py-2 text-sm text-neutral-950 shadow outline-none"
+        className="w-full rounded-md bg-white px-4 py-2 text-sm text-neutral-950 shadow outline-none"
       />
       {showRecent || showHits ? (
         <ul
           id={listId}
-          className="mt-2 max-h-72 overflow-y-auto rounded-xl bg-white/95 p-1 text-sm text-neutral-950 shadow"
+          className="mt-2 max-h-72 overflow-y-auto rounded-md bg-white p-1 text-sm text-neutral-950 shadow"
         >
           {showRecent
             ? recent.map((search) => (
                 <li key={search.publicId}>
                   <button
                     type="button"
-                    className="w-full rounded-lg px-3 py-2 text-left hover:bg-neutral-100"
+                    className="w-full rounded-md px-3 py-2 text-left hover:bg-neutral-100"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => {
                       setQuery(search.name);
@@ -123,7 +133,7 @@ export const AddressSearch = ({
                   >
                     <span className="block truncate">{search.name}</span>
                     <span className="block truncate text-xs text-neutral-500">
-                      {search.address || search.query}
+                      {search.streetAddress || search.query}
                     </span>
                   </button>
                 </li>
@@ -140,7 +150,7 @@ export const AddressSearch = ({
                 <li key={hit.id}>
                   <button
                     type="button"
-                    className="w-full rounded-lg px-3 py-2 text-left hover:bg-neutral-100"
+                    className="w-full rounded-md px-3 py-2 text-left hover:bg-neutral-100"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => {
                       setQuery(hit.name);
@@ -150,7 +160,7 @@ export const AddressSearch = ({
                   >
                     <span className="block truncate">{hit.name}</span>
                     <span className="block truncate text-xs text-neutral-500">
-                      {hit.address}
+                      {hit.streetAddress}
                     </span>
                   </button>
                 </li>
