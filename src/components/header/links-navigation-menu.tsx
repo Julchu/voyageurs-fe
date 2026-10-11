@@ -14,7 +14,7 @@ const browseLinks = [
   {
     href: "/searches",
     title: "Searches",
-    description: "Saved address searches.",
+    description: "Saved address searches",
   },
 ] as const;
 
@@ -22,7 +22,7 @@ const listLinks = [
   {
     href: "/trips",
     title: "Trips",
-    description: "Saved trips and visit order.",
+    description: "Saved trips and visit order",
   },
 ] as const;
 

@@ -7,7 +7,7 @@ import type { Map } from "mapbox-gl";
 export const TripContent = ({ map }: { map: RefObject<Map | null> }) => {
   return (
     <div className={"flex h-full w-full flex-col"}>
-      <div className={"p-4"}>
+      <div className={"shrink-0 p-4"}>
         <Drawer.Title className={"flex flex-row justify-between gap-4"}>
           <p
             className={

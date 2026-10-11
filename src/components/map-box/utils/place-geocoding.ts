@@ -14,28 +14,21 @@ type MapFeature = GeoJSONFeature & {
 
 const readFeature = (feature: GeoJSONFeature) => feature as MapFeature;
 
-const getFeatureProperty = (feature: GeoJSONFeature, key: string) => {
+const getFeatureProperty = (
+  feature: GeoJSONFeature,
+  key: string,
+): string | undefined => {
   const value = readFeature(feature).properties?.[key];
-  return JSON.stringify(value);
+  return value == null ? undefined : String(value);
 };
 
 export const placeFromFeature = (feature: GeoJSONFeature): Place | null => {
   const id = readFeature(feature).id;
-  const category = getFeatureProperty(feature, "class");
-  const coordinates = getFeatureProperty(feature, "lngLat");
-  /*
-  * {
-    "name": "The Ritz-Carlton Hotel",
-    "class": "lodging",
-    "maki": "lodging",
-    "group": "poi"
-}
-  *
-  * */
+  const category = getFeatureProperty(feature, "class") ?? "";
   const geometry = readFeature(feature).geometry;
   if (geometry.type !== "Point") return null;
-  // const lng = geometry.coordinates[0];
-  // const lat = geometry.coordinates[1];
+  const lng = geometry.coordinates[0];
+  const lat = geometry.coordinates[1];
   if (typeof lng !== "number" || typeof lat !== "number") return null;
 
   const name =
@@ -48,6 +41,7 @@ export const placeFromFeature = (feature: GeoJSONFeature): Place | null => {
     name,
     // POI/landmark featuresets don't expose a street address; it's filled in
     // asynchronously via reverseGeocode() from the clicked coordinates.
+    category,
     streetAddress: "",
     areaAddress: "",
     coordinates: { lat, lng },

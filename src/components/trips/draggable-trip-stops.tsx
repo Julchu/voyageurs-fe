@@ -49,7 +49,13 @@ export const DraggableTripStops = ({
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm">{stop.name}</span>
           <span className="block truncate text-xs text-neutral-500">
-            {stop.streetAddress || "No streetAddress"}
+            {stop.streetAddress || "No address"}
+          </span>
+          <span className="block truncate text-xs text-neutral-500">
+            {stop.areaAddress || "No address"}
+          </span>
+          <span className="block truncate text-xs text-neutral-500">
+            {stop.category || "No category"}
           </span>
         </span>
         <button

@@ -146,9 +146,7 @@ export const MapAndControls = ({
         type: "click",
         target,
         handler: (e) => {
-          console.log("e", e);
           const place = e.feature ? placeFromFeature(e.feature) : null;
-          console.log("place", place);
           if (place) {
             onPlaceRef.current(place);
             // Cancel any in-flight lookup so a slower earlier request can't
@@ -159,24 +157,18 @@ export const MapAndControls = ({
             void reverseGeocode(place.coordinates, controller.signal).then(
               (geocodeData) => {
                 if (controller.signal.aborted || !geocodeData) return;
-                console.log("geocode data", geocodeData);
-
-                // Build Place
 
                 const selectedPlace: Place = {
                   ...place,
                   streetAddress:
-                    geocodeData.name_preferred ??
-                    geocodeData.name ??
-                    geocodeData.place_formatted ??
-                    "",
+                    geocodeData.name_preferred ?? geocodeData.name ?? "",
+                  areaAddress: geocodeData.place_formatted ?? "",
                 };
                 onPlaceRef.current(selectedPlace);
               },
             );
             return true; // stop lower-priority interactions
           }
-          v;
         },
       });
       ids.push(clickId);

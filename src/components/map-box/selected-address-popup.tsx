@@ -20,6 +20,12 @@ export const SelectedAddressPopup = ({
           <p className="truncate text-xs text-neutral-500">
             {selected.streetAddress || "No address yet"}
           </p>
+          <p className="truncate text-xs text-neutral-500">
+            {selected.areaAddress || "No address yet"}
+          </p>
+          <p className="truncate text-xs text-neutral-500">
+            {selected.category || "No category"}
+          </p>
         </div>
         <button
           type="button"

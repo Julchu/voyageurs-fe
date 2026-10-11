@@ -50,6 +50,7 @@ export type UserInfo = {
 export type Place = {
   id: number;
   name: string;
+  category: string;
   streetAddress: string;
   areaAddress: string;
   coordinates: Coordinates;
