@@ -1,6 +1,6 @@
 import { SVGProps } from "react";
 
-// tabler: current - location;
+// tabler:current-location;
 export const LocationIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
