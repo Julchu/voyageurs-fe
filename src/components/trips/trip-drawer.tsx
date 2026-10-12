@@ -37,13 +37,13 @@ export const TripDrawer = ({ map }: { map: RefObject<Map | null> }) => {
       <Drawer.Portal>
         <Drawer.Backdrop
           className={
-            "pointer-events-none fixed inset-0 min-h-dvh opacity-[calc(var(--backdrop-opacity)*(1-var(--drawer-swipe-progress)))] transition-opacity duration-[450ms] ease-[cubic-bezier(0.32,0.72,0,1)] [--backdrop-opacity:0.2] data-ending-style:opacity-0 data-starting-style:opacity-0 data-swiping:duration-0"
+            "pointer-events-none fixed inset-0 min-h-dvh opacity-[calc(var(--backdrop-opacity)*(1-var(--drawer-swipe-progress)))] transition-opacity duration-450 ease-[cubic-bezier(0.32,0.72,0,1)] [--backdrop-opacity:0.2] data-ending-style:opacity-0 data-starting-style:opacity-0 data-swiping:duration-0"
           }
         />
-        <Drawer.Viewport className="pointer-events-none fixed inset-0 z-3 flex items-stretch justify-end">
+        <Drawer.Viewport className="pointer-events-none fixed inset-0 z-3 flex items-end justify-center sm:items-stretch sm:justify-end">
           <Drawer.Popup
             className={
-              "pointer-events-auto h-full w-full [transform:translateY(calc(var(--drawer-snap-point-offset)+var(--drawer-swipe-movement-y)))] overflow-hidden overscroll-contain bg-red-500 bg-white text-neutral-950 shadow-xl transition-transform duration-[450ms] ease-[cubic-bezier(0.32,0.72,0,1)] outline-none data-ending-style:[transform:translateY(100%)] data-starting-style:[transform:translateY(100%)] data-swiping:select-none sm:w-[min(100%,24rem)] sm:[transform:translateX(var(--drawer-swipe-movement-x))] sm:[--drawer-snap-point-offset:0px] sm:data-ending-style:[transform:translateX(100%)] sm:data-starting-style:[transform:translateX(100%)]"
+              "pointer-events-auto h-dvh w-full [transform:translateY(calc(var(--drawer-snap-point-offset)+var(--drawer-swipe-movement-y)))] overflow-hidden overscroll-contain bg-white [padding-bottom:max(0px,calc(var(--drawer-snap-point-offset)+var(--drawer-swipe-movement-y)))] text-neutral-950 shadow-xl transition-transform duration-450 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none data-ending-style:[transform:translateY(100%)] data-ending-style:pb-0 data-starting-style:[transform:translateY(100%)] data-starting-style:pb-0 data-swiping:select-none sm:h-full sm:w-[min(100%,24rem)] sm:[transform:translateX(var(--drawer-swipe-movement-x))] sm:pb-0 sm:[--drawer-snap-point-offset:0px] sm:data-ending-style:[transform:translateX(100%)] sm:data-starting-style:[transform:translateX(100%)]"
             }
           >
             <TripContent map={map} />

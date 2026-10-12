@@ -50,7 +50,11 @@ export const TripForm = ({ map }: { map: RefObject<Map | null> }) => {
           </div>
 
           {/* Trip list */}
-          <div className={"min-h-0 flex-1 overflow-y-auto"}>
+          <div
+            className={
+              "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain"
+            }
+          >
             <StopsList map={map} />
           </div>
         </div>
