@@ -4,6 +4,7 @@ import { PersonIcon } from "@radix-ui/react-icons";
 import { useUserStore } from "@/providers/user-store-provider";
 import Image from "next/image";
 
+// TODO: replace with BaseUI Avatar
 export const UserAvatar = () => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
 

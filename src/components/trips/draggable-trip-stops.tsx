@@ -32,6 +32,7 @@ export const DraggableTripStops = ({
 
   return (
     <li
+      data-base-ui-swipe-ignore
       ref={ref}
       onClick={() => onClickHandler(stop.coordinates)}
       className={`flex ${isDragging ? "cursor-grab" : "cursor-pointer"} items-center gap-2 rounded-md border border-neutral-200 bg-white px-2 py-2`}
@@ -43,7 +44,7 @@ export const DraggableTripStops = ({
         ⠿
       </span>
       <div className={"flex flex-row items-center gap-2"}>
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-600 text-xs font-medium text-white">
           {index + 1}
         </span>
         <span className="min-w-0 flex-1">

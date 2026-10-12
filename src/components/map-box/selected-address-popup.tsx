@@ -1,5 +1,6 @@
 import { Place } from "@/utils/interfaces";
 import { useTripStore } from "@/providers/trip-store-provider";
+import { CurrentLocationIcon } from "@/components/ui/icons/map-pins";
 
 export const SelectedAddressPopup = ({
   selected,
@@ -17,7 +18,10 @@ export const SelectedAddressPopup = ({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{selected.name}</p>
-          <p className="truncate text-xs text-neutral-500">
+          <p className="flex flex-row items-center gap-1 truncate text-xs text-neutral-500">
+            <CurrentLocationIcon
+              className={"h-3 w-3 fill-none stroke-blue-500"}
+            />
             {selected.streetAddress || "No address yet"}
           </p>
           <p className="truncate text-xs text-neutral-500">
