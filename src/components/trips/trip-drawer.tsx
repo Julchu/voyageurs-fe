@@ -8,14 +8,14 @@ import { RefObject, useState } from "react";
 import type { Map } from "mapbox-gl";
 
 const SM_MQ = "(min-width: 40rem)";
+const SNAP_POINTS: Drawer.Root.SnapPoint[] = [0.5, 1];
 
 export const tripDrawerHandle = Drawer.createHandle();
 
 export const TripDrawer = ({ map }: { map: RefObject<Map | null> }) => {
   const isSm = useMediaQuery(SM_MQ, { defaultMatches: false });
-  const snapPoints = [0.5, 1];
   const [snapPoint, setSnapPoint] = useState<Drawer.Root.SnapPoint | null>(
-    snapPoints[0],
+    SNAP_POINTS[0],
   );
 
   return (
@@ -24,14 +24,12 @@ export const TripDrawer = ({ map }: { map: RefObject<Map | null> }) => {
       disablePointerDismissal
       handle={tripDrawerHandle}
       swipeDirection={isSm ? "right" : "down"}
-      snapPoints={isSm ? undefined : snapPoints}
+      snapPoints={isSm ? undefined : SNAP_POINTS}
       snapPoint={snapPoint}
       onSnapPointChange={setSnapPoint}
     >
       <Drawer.SwipeArea
-        className={
-          "fixed bottom-0 h-5 w-full sm:top-[17.5%] sm:right-0 sm:h-[65%] sm:w-5"
-        }
+        className={"fixed bottom-0 h-5 w-full sm:right-0 sm:h-full sm:w-5"}
       />
 
       <Drawer.Portal>
