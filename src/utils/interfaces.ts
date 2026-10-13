@@ -48,6 +48,7 @@ export type UserInfo = {
 };
 
 export type Place = {
+  // mapbox id
   id: number;
   name: string;
   category: string;

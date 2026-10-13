@@ -62,6 +62,7 @@ const newStop = ({
   streetAddress: place.streetAddress,
   areaAddress: place.areaAddress,
   coordinates: place.coordinates,
+  category: place.category,
   id: place.id,
   position,
   visited: false,

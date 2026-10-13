@@ -19,6 +19,7 @@ import {
 import { drawRoute } from "@/components/map-box/utils/route-layer";
 import { TripDrawer } from "@/components/trips/trip-drawer";
 import { useShallow } from "zustand/react/shallow";
+import { openPlacePopup } from "@/components/map-box/map-components";
 
 const stopMarker = (index: number, visited: boolean) => {
   const element = document.createElement("div");
@@ -50,13 +51,13 @@ export const MapAndControls = ({
   initialCoords,
   focus,
   stops,
-  onPlace,
+  setSelected,
 }: {
   shouldUseDarkMode: boolean;
   initialCoords: Coordinates;
   focus: MapFocus | null;
   stops: TripStop[];
-  onPlace: (place: Place) => void;
+  setSelected: (place: Place) => void;
 }) => {
   const { lastLocation, setLastLocation } = useUserStore(
     useShallow(({ lastLocation, setLastLocation }) => ({
@@ -72,16 +73,11 @@ export const MapAndControls = ({
   const stopMarkers = useRef<globalThis.Map<string, Marker>>(
     new globalThis.Map(),
   );
-  const onPlaceRef = useRef(onPlace);
 
   const addressLookup = useRef<AbortController | null>(null);
   const [currentMapTimeMode, setCurrentMapTimeMode] = useState(() =>
     mapTimeFromDate(),
   );
-
-  useEffect(() => {
-    onPlaceRef.current = onPlace;
-  }, [onPlace]);
 
   const [{ markers, addMarker, flyTo }] = useMapHook({
     map,
@@ -148,7 +144,7 @@ export const MapAndControls = ({
         handler: (e) => {
           const place = e.feature ? placeFromFeature(e.feature) : null;
           if (place) {
-            onPlaceRef.current(place);
+            openPlacePopup.openWithPayload({ place });
             // Cancel any in-flight lookup so a slower earlier request can't
             // overwrite the streetAddress of this more recently clicked place.
             addressLookup.current?.abort();
@@ -164,7 +160,7 @@ export const MapAndControls = ({
                     geocodeData.name_preferred ?? geocodeData.name ?? "",
                   areaAddress: geocodeData.place_formatted ?? "",
                 };
-                onPlaceRef.current(selectedPlace);
+                openPlacePopup.openWithPayload({ place: selectedPlace });
               },
             );
             return true; // stop lower-priority interactions
@@ -216,16 +212,30 @@ export const MapAndControls = ({
         const element = existing.getElement();
         element.textContent = String(index + 1);
         element.style.background = stop.visited ? "#15803d" : "#1d4ed8";
+        // Re-bind so the handler always references the current stop data.
+        element.onclick = (event) => {
+          event.stopPropagation();
+          openPlacePopup.openWithPayload({ place: stop });
+        };
         return;
       }
 
-      const marker = new mapBoxGL.Marker({
-        element: stopMarker(index, stop.visited),
-      })
+      // TODO: check purpose of double onClick setter
+      const element = stopMarker(index, stop.visited);
+      // The stop already carries the full Place data (name, category, address,
+      // coordinates), so clicking opens the popup without any fetch/geocode.
+      element.style.cursor = "pointer";
+      element.onclick = (event) => {
+        event.stopPropagation();
+        openPlacePopup.openWithPayload({ place: stop });
+      };
+
+      const marker = new mapBoxGL.Marker({ element })
         .setLngLat([stop.coordinates.lng, stop.coordinates.lat])
         .addTo(mapInstance);
       stopMarkers.current.set(stop.name, marker);
-      // stopMarkers.current.set(stop.publicId, marker);
+
+      // stopMarkers.current.set(stop?.publicId || stop.clientId , marker);
     });
 
     for (const [publicId, marker] of stopMarkers.current) {

@@ -44,7 +44,7 @@ export const DraggableTripStops = ({
         ⠿
       </span>
       <div className={"flex flex-row items-center gap-2"}>
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-600 text-xs font-medium text-white">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white">
           {index + 1}
         </span>
         <span className="min-w-0 flex-1">
@@ -59,6 +59,8 @@ export const DraggableTripStops = ({
             {stop.category || "No category"}
           </span>
         </span>
+
+        {/* TODO: context menu */}
         <button
           type="button"
           className="text-xs text-neutral-500"

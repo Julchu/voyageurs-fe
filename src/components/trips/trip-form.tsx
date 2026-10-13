@@ -1,7 +1,7 @@
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useShallow } from "zustand/react/shallow";
 import { Separator } from "@base-ui/react";
-import { CircleResetIcon } from "@/components/ui/icons/circle-reset-icon";
+import { ResetIcon } from "@/components/ui/icons/reset-icons";
 import { MapSaveIcon } from "@/components/ui/icons/map-form-icons";
 import { Cursor, DragEndEvent } from "@dnd-kit/dom";
 import { useMapHook } from "@/hooks/use-map-hook";
@@ -72,7 +72,9 @@ export const TripForm = ({ map }: { map: RefObject<Map | null> }) => {
             onClick={onResetHandler}
             className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 px-4 font-medium tracking-widest hover:bg-red-500 hover:text-white lg:w-auto"
           >
-            <CircleResetIcon className={"group-hover:fill-white"} />
+            <ResetIcon
+              className={"h-6 w-6 stroke-black group-hover:stroke-white"}
+            />
             Restore
           </button>
 
@@ -82,7 +84,7 @@ export const TripForm = ({ map }: { map: RefObject<Map | null> }) => {
             // onClick={handleSubmit(onSaveHandler)}
             className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 bg-blue-500 px-4 font-medium tracking-widest text-white hover:bg-green-500 lg:w-auto"
           >
-            <MapSaveIcon className={"fill-white"} />
+            <MapSaveIcon className={"h-6 w-6 fill-white"} />
             Save trip
           </button>
         </div>
