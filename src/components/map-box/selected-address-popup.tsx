@@ -1,36 +1,20 @@
-import { Place } from "@/utils/interfaces";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { CurrentLocationIcon } from "@/components/ui/icons/map-pins";
 import * as React from "react";
-import { RefObject } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "@/components/ui/icons/close-icons";
 import { openPlacePopup } from "@/components/map-box/map-components";
 
-export const SelectedAddressPopup = ({
-  selected,
-  setSelected,
-  initialFocusRef,
-  finalFocusRef,
-}: {
-  selected: Place | null;
-  setSelected: (selectedPlaceDraft: Place | null) => void;
-  initialFocusRef: RefObject<HTMLButtonElement | null>;
-  finalFocusRef: RefObject<HTMLButtonElement | null>;
-}) => {
+export const SelectedAddressPopup = () => {
   const addStop = useTripStore(({ addStop }) => addStop);
 
-  // if (!selected) return;
   return (
     <Dialog.Root handle={openPlacePopup} modal={false} disablePointerDismissal>
       {({ payload }) => {
         if (!payload) return;
         return (
           <Dialog.Portal>
-            <Dialog.Popup
-              initialFocus={initialFocusRef}
-              className="fixed top-1/2 left-1/2 -mt-8 flex w-96 max-w-[calc(100vw-3rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-2xl bg-white p-4 text-neutral-950 shadow-[0.25rem_0.25rem_0] shadow-black/12 transition-[scale,opacity] duration-100 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0"
-            >
+            <Dialog.Popup className="fixed top-1/2 left-1/2 -mt-8 flex w-96 max-w-[calc(100vw-3rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-2xl bg-white p-4 text-neutral-950 shadow-[0.25rem_0.25rem_0] shadow-black/12 transition-[scale,opacity] duration-100 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0">
               <div className="flex flex-col gap-1">
                 <header
                   className={"flex w-full flex-row justify-between gap-2"}
@@ -65,7 +49,6 @@ export const SelectedAddressPopup = ({
               </div>
               <div className="flex justify-end gap-3">
                 <Dialog.Close
-                  ref={initialFocusRef}
                   onClick={() => {
                     addStop(payload.place);
                   }}

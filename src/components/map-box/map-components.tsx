@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { AddressSearch } from "@/components/map-box/address-search";
 import { MapAndControls, type MapFocus } from "@/components/map-box/map";
 import { useTripStore } from "@/providers/trip-store-provider";
@@ -30,9 +30,6 @@ export const MapComponents = ({
   const [selected, setSelected] = useState<Place | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
 
-  const initialFocusRef = useRef<HTMLInputElement | null>(null);
-  const finalFocusRef = useRef<HTMLButtonElement | null>(null);
-
   const choosePlace = (place: Place, query: string, log: boolean) => {
     setSelected(place);
     setMapFocus({ token: Date.now(), coordinates: place.coordinates });
@@ -57,12 +54,7 @@ export const MapComponents = ({
         proximity={mapFocus?.coordinates ?? initialCoords ?? DEFAULT_COORDS}
       />
 
-      <SelectedAddressPopup
-        selected={selected}
-        setSelected={setSelected}
-        initialFocusRef={initialFocusRef}
-        finalFocusRef={finalFocusRef}
-      />
+      <SelectedAddressPopup />
 
       {/*Visit checklist stays closed until openVisitDrawer() is called.*/}
       {/* Drawer to show visited places? Calendar view */}
