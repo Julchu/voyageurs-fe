@@ -51,13 +51,11 @@ export const MapAndControls = ({
   initialCoords,
   focus,
   stops,
-  setSelected,
 }: {
   shouldUseDarkMode: boolean;
   initialCoords: Coordinates;
   focus: MapFocus | null;
   stops: TripStop[];
-  setSelected: (place: Place) => void;
 }) => {
   const { lastLocation, setLastLocation } = useUserStore(
     useShallow(({ lastLocation, setLastLocation }) => ({
@@ -144,7 +142,7 @@ export const MapAndControls = ({
         handler: (e) => {
           const place = e.feature ? placeFromFeature(e.feature) : null;
           if (place) {
-            openPlacePopup.openWithPayload({ place });
+            openPlacePopup.openWithPayload(place);
             // Cancel any in-flight lookup so a slower earlier request can't
             // overwrite the streetAddress of this more recently clicked place.
             addressLookup.current?.abort();
@@ -160,7 +158,7 @@ export const MapAndControls = ({
                     geocodeData.name_preferred ?? geocodeData.name ?? "",
                   areaAddress: geocodeData.place_formatted ?? "",
                 };
-                openPlacePopup.openWithPayload({ place: selectedPlace });
+                openPlacePopup.openWithPayload(selectedPlace);
               },
             );
             return true; // stop lower-priority interactions
@@ -215,7 +213,7 @@ export const MapAndControls = ({
         // Re-bind so the handler always references the current stop data.
         element.onclick = (event) => {
           event.stopPropagation();
-          openPlacePopup.openWithPayload({ place: stop });
+          openPlacePopup.openWithPayload(stop);
         };
         return;
       }
@@ -227,7 +225,7 @@ export const MapAndControls = ({
       element.style.cursor = "pointer";
       element.onclick = (event) => {
         event.stopPropagation();
-        openPlacePopup.openWithPayload({ place: stop });
+        openPlacePopup.openWithPayload(stop);
       };
 
       const marker = new mapBoxGL.Marker({ element })

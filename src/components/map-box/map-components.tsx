@@ -13,7 +13,7 @@ import { Dialog } from "@base-ui/react/dialog";
 
 const DEFAULT_COORDS = { lng: -79.387054, lat: 43.642567 };
 
-export const openPlacePopup = Dialog.createHandle<{ place: Place }>();
+export const openPlacePopup = Dialog.createHandle<Place>();
 
 export const MapComponents = ({
   initialCoords,
@@ -31,7 +31,7 @@ export const MapComponents = ({
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
 
   const choosePlace = (place: Place, query: string, log: boolean) => {
-    setSelected(place);
+    openPlacePopup.openWithPayload(place);
     setMapFocus({ token: Date.now(), coordinates: place.coordinates });
     if (log) void logSearch({ ...place, query });
   };
@@ -46,7 +46,6 @@ export const MapComponents = ({
         initialCoords={initialCoords ?? DEFAULT_COORDS}
         focus={mapFocus}
         stops={currentTrip?.stops ?? []}
-        setSelected={(place) => setSelected(place)}
       />
 
       <AddressSearch

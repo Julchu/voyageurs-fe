@@ -1,5 +1,8 @@
 import { useTripStore } from "@/providers/trip-store-provider";
-import { CurrentLocationIcon } from "@/components/ui/icons/map-pins";
+import {
+  CurrentLocationIcon,
+  MapPinIcon,
+} from "@/components/ui/icons/map-pins";
 import * as React from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "@/components/ui/icons/close-icons";
@@ -20,9 +23,9 @@ export const SelectedAddressPopup = () => {
                   className={"flex w-full flex-row justify-between gap-2"}
                 >
                   <Dialog.Title className="text-base font-bold">
-                    {payload.place.name}
+                    {payload.name}
                   </Dialog.Title>
-                  <Dialog.Close>
+                  <Dialog.Close className={"outline-none"}>
                     <XIcon
                       className={
                         "h-5 w-5 cursor-pointer fill-blue-500 stroke-blue-500"
@@ -38,22 +41,23 @@ export const SelectedAddressPopup = () => {
                   <CurrentLocationIcon
                     className={"h-3 w-3 fill-none stroke-blue-500"}
                   />
-                  {payload.place.streetAddress || "No address yet"}
+                  {payload.streetAddress || "No address yet"}
                 </Dialog.Description>
                 <Dialog.Description className="text-sm text-neutral-600">
-                  {payload.place.areaAddress || "No address yet"}
+                  {payload.areaAddress || "No address yet"}
                 </Dialog.Description>
                 <Dialog.Description className="text-sm text-neutral-600">
-                  {payload.place.category || "No category"}
+                  {payload.category || "No category"}
                 </Dialog.Description>
               </div>
               <div className="flex justify-end gap-3">
                 <Dialog.Close
                   onClick={() => {
-                    addStop(payload.place);
+                    addStop(payload);
                   }}
-                  className="flex h-8 cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 text-sm leading-none font-normal whitespace-nowrap text-white select-none hover:not-data-disabled:bg-neutral-100 focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-neutral-950 active:not-data-disabled:bg-neutral-200 disabled:border-neutral-500 disabled:text-neutral-500 data-disabled:border-neutral-500 data-disabled:text-neutral-500 dark:hover:not-data-disabled:bg-neutral-800 dark:focus-visible:outline-white dark:active:not-data-disabled:bg-neutral-700 dark:data-disabled:border-neutral-400 dark:data-disabled:text-neutral-400"
+                  className="flex h-8 cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 text-sm leading-none font-normal whitespace-nowrap text-white select-none hover:not-data-disabled:bg-neutral-100 active:not-data-disabled:bg-neutral-200 disabled:border-neutral-500 disabled:text-neutral-500 data-disabled:border-neutral-500 data-disabled:text-neutral-500 dark:hover:not-data-disabled:bg-neutral-800 dark:active:not-data-disabled:bg-neutral-700 dark:data-disabled:border-neutral-400 dark:data-disabled:text-neutral-400"
                 >
+                  <MapPinIcon className={"h-6 w-6 stroke-white"} />
                   Add to trip
                 </Dialog.Close>
               </div>
