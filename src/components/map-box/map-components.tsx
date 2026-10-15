@@ -13,7 +13,9 @@ import { Dialog } from "@base-ui/react/dialog";
 
 const DEFAULT_COORDS = { lng: -79.387054, lat: 43.642567 };
 
-export const openPlacePopup = Dialog.createHandle<Place>();
+export const openPlacePopup = Dialog.createHandle<
+  Place & { clientId?: string; publicId?: string }
+>();
 
 export const MapComponents = ({
   initialCoords,
@@ -27,7 +29,6 @@ export const MapComponents = ({
   );
 
   const logSearch = useSearchStore(({ logSearch }) => logSearch);
-  const [selected, setSelected] = useState<Place | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
 
   const choosePlace = (place: Place, query: string, log: boolean) => {

@@ -1,63 +1,13 @@
-import { useEffect, useId, useState } from "react";
-import useDebouncedState from "@/hooks/use-debounced-state";
+import { useEffect, useId, useRef, useState } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounced-state";
 import type { Coordinates, Place } from "@/utils/interfaces";
+import type { SearchSuggestion } from "@/components/map-box/utils/place-geocoding";
+import {
+  createGoogleSessionToken,
+  googleRetrieve,
+  googleSuggest,
+} from "@/components/map-box/utils/google-places";
 import { useSearchStore } from "@/providers/search-store-provider";
-
-type GeocodeHit = Place & { id: string };
-
-type GeocodeFeature = {
-  id?: string;
-  text?: string;
-  place_name?: string;
-  center?: [number, number];
-};
-
-const searchAddresses = async (
-  query: string,
-  proximity: Coordinates,
-  signal: AbortSignal,
-): Promise<GeocodeHit[]> => {
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  const trimmed = query.trim();
-  if (!token || trimmed.length < 2) return [];
-
-  const url = new URL(
-    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(trimmed)}.json`,
-  );
-  url.searchParams.set("access_token", token);
-  url.searchParams.set("autocomplete", "true");
-  url.searchParams.set("limit", "5");
-  url.searchParams.set("proximity", `${proximity.lng},${proximity.lat}`);
-  url.searchParams.set(
-    "types",
-    "streetAddress,place,poi,locality,neighborhood",
-  );
-
-  // const url = new URL("https://api.mapbox.com/search/geocode/v6/reverse");
-  // url.searchParams.set("longitude", String(lng));
-  // url.searchParams.set("latitude", String(lat));
-  // url.searchParams.set("access_token", token);
-  // url.searchParams.set("types", "streetAddress");
-
-  const response = await fetch(url, { signal });
-  if (!response.ok) return [];
-  const body = (await response.json()) as { features?: GeocodeFeature[] };
-  return (body.features ?? []).flatMap((feature) => {
-    const lng = feature.center?.[0];
-    const lat = feature.center?.[1];
-    const name = feature.text || feature.place_name;
-    if (!name || typeof lng !== "number" || typeof lat !== "number") return [];
-    return [
-      {
-        id: feature.id || `${lng},${lat}`,
-        name,
-        streetAddress: feature.place_name || "",
-        // TODO: check for areaAddress
-        coordinates: { lat, lng },
-      },
-    ];
-  });
-};
 
 export const AddressSearch = ({
   onSelect,
@@ -68,25 +18,55 @@ export const AddressSearch = ({
 }) => {
   const listId = useId();
   const searches = useSearchStore(({ searches }) => searches);
-  const [query, setQuery] = useState("");
+  const sessionTokenRef = useRef(createGoogleSessionToken());
+  const retrieveAbortRef = useRef<AbortController | null>(null);
+
+  const renewSession = () => {
+    sessionTokenRef.current = createGoogleSessionToken();
+  };
+
+  // `query` drives the controlled input; `debounced` drives the fetch, so a
+  // Search Box /suggest request fires per typing pause, not per keystroke.
+  const [query, debounced, setQuery] = useDebouncedValue("", 300);
   const [open, setOpen] = useState(false);
-  const [hits, setHits] = useState<GeocodeHit[]>([]);
-  const debounced = useDebouncedState(query, 300);
+  const [hits, setHits] = useState<SearchSuggestion[]>([]);
+  const [retrieving, setRetrieving] = useState(false);
+
+  useEffect(() => () => retrieveAbortRef.current?.abort(), []);
 
   useEffect(() => {
     const trimmed = debounced.trim();
     if (trimmed.length < 2) return;
 
     const controller = new AbortController();
-    void searchAddresses(trimmed, proximity, controller.signal)
-      .then((next) => setHits(next))
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError")
-          return;
-        setHits([]);
-      });
+    void googleSuggest(trimmed, {
+      sessionToken: sessionTokenRef.current,
+      proximity,
+      limit: 5,
+      signal: controller.signal,
+    }).then((next) => setHits(next));
     return () => controller.abort();
   }, [debounced, proximity]);
+
+  const selectSuggestion = (hit: SearchSuggestion) => {
+    const searchQuery = query.trim();
+    setQuery(hit.name);
+    setOpen(false);
+    retrieveAbortRef.current?.abort();
+    const controller = new AbortController();
+    retrieveAbortRef.current = controller;
+    setRetrieving(true);
+
+    void googleRetrieve(hit.mapboxId, {
+      sessionToken: sessionTokenRef.current,
+      signal: controller.signal,
+    }).then((place) => {
+      if (controller.signal.aborted) return;
+      setRetrieving(false);
+      renewSession();
+      if (place) onSelect(place, searchQuery, true);
+    });
+  };
 
   const recent = searches.slice(0, 6);
   const trimmedQuery = query.trim();
@@ -101,8 +81,10 @@ export const AddressSearch = ({
         role="combobox"
         aria-expanded={open}
         aria-controls={listId}
+        aria-busy={retrieving}
         aria-label="Search address"
         placeholder="Search an address"
+        disabled={retrieving}
         onChange={(event) => {
           setQuery(event.target.value);
           setOpen(true);
@@ -111,7 +93,7 @@ export const AddressSearch = ({
         onBlur={() => {
           window.setTimeout(() => setOpen(false), 150);
         }}
-        className="w-full rounded-md bg-white px-4 py-2 text-sm text-neutral-950 shadow outline-none"
+        className="w-full rounded-md bg-white px-4 py-2 text-sm text-neutral-950 shadow outline-none disabled:opacity-70"
       />
       {showRecent || showHits ? (
         <ul
@@ -147,20 +129,17 @@ export const AddressSearch = ({
           ) : null}
           {showHits && !pending
             ? hits.map((hit) => (
-                <li key={hit.id}>
+                <li key={hit.mapboxId}>
                   <button
                     type="button"
-                    className="w-full rounded-md px-3 py-2 text-left hover:bg-neutral-100"
+                    className="w-full rounded-md px-3 py-2 text-left hover:bg-neutral-100 disabled:opacity-50"
+                    disabled={retrieving}
                     onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => {
-                      setQuery(hit.name);
-                      setOpen(false);
-                      onSelect(hit, query.trim(), true);
-                    }}
+                    onClick={() => selectSuggestion(hit)}
                   >
                     <span className="block truncate">{hit.name}</span>
                     <span className="block truncate text-xs text-neutral-500">
-                      {hit.streetAddress}
+                      {hit.streetAddress || hit.areaAddress}
                     </span>
                   </button>
                 </li>

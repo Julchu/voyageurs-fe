@@ -24,6 +24,9 @@ export type TripActions = {
   fetchTrips: () => Promise<void>;
   syncTrips: (tripFormData: TripFormData) => Promise<void>;
   addStop: (stop: Place) => void;
+  // Fill in a stop that was saved before its place lookup finished.
+  rememberPlace: (place: Place) => void;
+  getRememberedPlace: (place: Place) => Place;
   removeStop: (clientOrPublicId?: string) => void;
   reorderStops: (from: number, to: number) => void;
   renameTrip: (name: string) => void;
@@ -64,6 +67,10 @@ const newStop = ({
   coordinates: place.coordinates,
   category: place.category,
   id: place.id,
+  ...(place.mapboxId ? { mapboxId: place.mapboxId } : {}),
+  ...(place.photos ? { photos: place.photos } : {}),
+  ...(place.placeInfoLoaded ? { placeInfoLoaded: true } : {}),
+  ...(place.details ? { details: place.details } : {}),
   position,
   visited: false,
   visitedAt: null,
@@ -91,6 +98,51 @@ const addStop = ({
       newStop({ place, position: currentTrip?.stops.length }),
     ],
   };
+};
+
+const samePoint = (a: Place["coordinates"], b: Place["coordinates"]) =>
+  Math.abs(a.lat - b.lat) < 1e-5 && Math.abs(a.lng - b.lng) < 1e-5;
+
+const samePlace = (a: Place, b: Place) =>
+  (a.mapboxId && a.mapboxId === b.mapboxId) ||
+  (a.name === b.name && samePoint(a.coordinates, b.coordinates));
+
+const withPlaceInfo = <T extends Place>(original: T, place: Place): T => ({
+  ...original,
+  mapboxId: place.mapboxId ?? original.mapboxId,
+  streetAddress: place.streetAddress || original.streetAddress,
+  areaAddress: place.areaAddress || original.areaAddress,
+  category: place.category || original.category,
+  photos: place.photos ?? original.photos,
+  placeInfoLoaded: place.placeInfoLoaded ?? original.placeInfoLoaded,
+  details: place.details ?? original.details,
+});
+
+// Save both basic and expanded details, including on stops that already have
+// an id. Retain each stop's identity, position, and visited state.
+const applyRememberedPlace = ({
+  currentTrip,
+  place,
+}: {
+  currentTrip: TripFormData;
+  place: Place;
+}): TripFormData => {
+  if (!place.mapboxId) return currentTrip;
+  let changed = false;
+  const stops = currentTrip.stops.map((stop) => {
+    if (!samePlace(stop, place)) return stop;
+    const next = withPlaceInfo(stop, place);
+    if (
+      Object.keys(next).every(
+        (key) =>
+          next[key as keyof typeof next] === stop[key as keyof typeof stop],
+      )
+    )
+      return stop;
+    changed = true;
+    return next;
+  });
+  return changed ? { ...currentTrip, stops } : currentTrip;
 };
 
 const removeStop = ({
@@ -226,6 +278,35 @@ export const createTripStore = (initialState: TripState) => {
             currentTrip: addStop({ currentTrip, place }),
             tripVersion: tripVersion + 1,
           }));
+        },
+        // TODO: rework remember Place for temp stop info
+        rememberPlace: (place) => {
+          set(({ currentTrip, trips, tripVersion }) => {
+            if (!currentTrip) return {};
+            const next = applyRememberedPlace({ currentTrip, place });
+            const nextTrips = trips.map((trip) =>
+              applyRememberedPlace({ currentTrip: trip, place }),
+            );
+            if (
+              next === currentTrip &&
+              nextTrips.every((trip, i) => trip === trips[i])
+            )
+              return {};
+            return {
+              currentTrip: next,
+              trips: nextTrips,
+              tripVersion: tripVersion + 1,
+            };
+          });
+        },
+        getRememberedPlace: (place) => {
+          const state = get();
+          const stop =
+            state.currentTrip?.stops.find((stop) => samePlace(stop, place)) ??
+            state.trips
+              .flatMap((trip) => trip.stops)
+              .find((stop) => samePlace(stop, place));
+          return stop ? withPlaceInfo(place, stop) : place;
         },
         removeStop: (clientOrPublicId) => {
           if (!clientOrPublicId) return;

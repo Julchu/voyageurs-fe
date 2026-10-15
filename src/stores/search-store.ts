@@ -58,11 +58,13 @@ export const createSearchStore = (initialState: SearchState) => {
         },
         logSearch: async (entry) => {
           const localSearch = (): PlaceSearch => ({
-            // TODO: clean up (remove publicId)
+            // TODO: clean up (remove clientId)
             id: entry.id,
-            publicId: crypto.randomUUID(),
+            mapboxId: entry.mapboxId,
+            clientId: crypto.randomUUID(),
             query: entry.query,
             name: entry.name,
+            category: entry.category,
             streetAddress: entry.streetAddress,
             areaAddress: entry.areaAddress,
             coordinates: entry.coordinates,

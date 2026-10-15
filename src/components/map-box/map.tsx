@@ -3,14 +3,11 @@ import "./map.css";
 import mapBoxGL, { type Map as MapboxMap, type Marker } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import { Controls } from "@/components/map-box/controls";
-import { routeForStops } from "@/components/map-box/utils/directions";
-import {
-  placeFromFeature,
-  reverseGeocode,
-} from "@/components/map-box/utils/place-geocoding";
+import { googleRouteForStops } from "@/components/map-box/utils/google-directions";
+import { placeFromFeature } from "@/components/map-box/utils/place-geocoding";
 import { useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
-import { Coordinates, Place, TripStop } from "@/utils/interfaces";
+import { Coordinates, TripStop } from "@/utils/interfaces";
 import { mapTimeFromDate } from "@/utils/map-time";
 import {
   applyStandardOverrides,
@@ -23,19 +20,10 @@ import { openPlacePopup } from "@/components/map-box/map-components";
 
 const stopMarker = (index: number, visited: boolean) => {
   const element = document.createElement("div");
-  element.className = "marker";
+  element.className =
+    "w-7 h-7 rounded-full flex items-center justify-center bg-blue-500 text-xs font-medium border-white border-2";
   element.textContent = String(index + 1);
-  element.style.width = "28px";
-  element.style.height = "28px";
-  element.style.borderRadius = "9999px";
-  element.style.display = "flex";
-  element.style.alignItems = "center";
-  element.style.justifyContent = "center";
   element.style.background = visited ? "#15803d" : "#1d4ed8";
-  element.style.color = "#ffffff";
-  element.style.fontSize = "12px";
-  element.style.fontWeight = "600";
-  element.style.border = "2px solid #ffffff";
   element.style.boxShadow = "0 1px 4px rgba(0,0,0,0.35)";
   return element;
 };
@@ -72,7 +60,6 @@ export const MapAndControls = ({
     new globalThis.Map(),
   );
 
-  const addressLookup = useRef<AbortController | null>(null);
   const [currentMapTimeMode, setCurrentMapTimeMode] = useState(() =>
     mapTimeFromDate(),
   );
@@ -131,6 +118,7 @@ export const MapAndControls = ({
 
     const ids: string[] = [];
     const featuresets = ["poi", "landmark-icons"] as const;
+    let openedKey = "";
 
     for (const featuresetId of featuresets) {
       const target = { featuresetId, importId: "basemap" };
@@ -141,28 +129,19 @@ export const MapAndControls = ({
         target,
         handler: (e) => {
           const place = e.feature ? placeFromFeature(e.feature) : null;
-          if (place) {
-            openPlacePopup.openWithPayload(place);
-            // Cancel any in-flight lookup so a slower earlier request can't
-            // overwrite the streetAddress of this more recently clicked place.
-            addressLookup.current?.abort();
-            const controller = new AbortController();
-            addressLookup.current = controller;
-            void reverseGeocode(place.coordinates, controller.signal).then(
-              (geocodeData) => {
-                if (controller.signal.aborted || !geocodeData) return;
-
-                const selectedPlace: Place = {
-                  ...place,
-                  streetAddress:
-                    geocodeData.name_preferred ?? geocodeData.name ?? "",
-                  areaAddress: geocodeData.place_formatted ?? "",
-                };
-                openPlacePopup.openWithPayload(selectedPlace);
-              },
-            );
-            return true; // stop lower-priority interactions
-          }
+          if (!place) return;
+          const key = `${place.name}:${place.coordinates.lat}:${place.coordinates.lng}`;
+          // poi and landmark-icons can both report one click. Ignore the
+          // duplicate in this turn, then allow the place to be opened again.
+          if (openedKey === key) return true;
+          openedKey = key;
+          queueMicrotask(() => {
+            if (openedKey === key) openedKey = "";
+          });
+          // The popup looks up address, photos, and category when the click
+          // doesn't already carry a saved place id.
+          openPlacePopup.openWithPayload(place);
+          return true; // stop lower-priority interactions
         },
       });
       ids.push(clickId);
@@ -190,8 +169,6 @@ export const MapAndControls = ({
 
     return () => {
       for (const id of ids) mapInstance.removeInteraction(id);
-      addressLookup.current?.abort();
-      addressLookup.current = null;
     };
   }, [mapLoading]);
 
@@ -201,10 +178,12 @@ export const MapAndControls = ({
 
     const seen = new Set<string>();
     stops.forEach((stop, index) => {
-      seen.add(stop.name);
-      // seen.add(stop.publicId);
-      const existing = stopMarkers.current.get(stop.name);
-      // const existing = stopMarkers.current.get(stop.publicId);
+      const key =
+        stop.clientId ??
+        stop.publicId ??
+        `${stop.name}:${stop.coordinates.lat}:${stop.coordinates.lng}:${index}`;
+      seen.add(key);
+      const existing = stopMarkers.current.get(key);
       if (existing) {
         existing.setLngLat([stop.coordinates.lng, stop.coordinates.lat]);
         const element = existing.getElement();
@@ -218,10 +197,8 @@ export const MapAndControls = ({
         return;
       }
 
-      // TODO: check purpose of double onClick setter
       const element = stopMarker(index, stop.visited);
-      // The stop already carries the full Place data (name, category, address,
-      // coordinates), so clicking opens the popup without any fetch/geocode.
+      // The popup reuses saved metadata and fetches anything missing.
       element.style.cursor = "pointer";
       element.onclick = (event) => {
         event.stopPropagation();
@@ -231,9 +208,7 @@ export const MapAndControls = ({
       const marker = new mapBoxGL.Marker({ element })
         .setLngLat([stop.coordinates.lng, stop.coordinates.lat])
         .addTo(mapInstance);
-      stopMarkers.current.set(stop.name, marker);
-
-      // stopMarkers.current.set(stop?.publicId || stop.clientId , marker);
+      stopMarkers.current.set(key, marker);
     });
 
     for (const [publicId, marker] of stopMarkers.current) {
@@ -251,20 +226,16 @@ export const MapAndControls = ({
     };
   }, []);
 
-  const stopKey = stops
-    .map(
-      (stop) =>
-        `${stop.publicId}:${stop.coordinates.lng}:${stop.coordinates.lat}`,
-    )
-    .join("|");
+  // Metadata enrichment mustn't trigger another billed directions request.
+  const stopKey = JSON.stringify(stops.map((stop) => stop.coordinates));
 
   useEffect(() => {
     const mapInstance = map.current;
     if (!mapInstance || mapLoading) return;
     let cancelled = false;
-    const straight = stops.map(
-      (stop) =>
-        [stop.coordinates.lng, stop.coordinates.lat] as [number, number],
+    const coordinates = JSON.parse(stopKey) as Coordinates[];
+    const straight = coordinates.map(
+      (point) => [point.lng, point.lat] as [number, number],
     );
     drawRoute(mapInstance, straight);
     if (straight.length < 2) {
@@ -272,19 +243,17 @@ export const MapAndControls = ({
     }
 
     const timer = window.setTimeout(() => {
-      void routeForStops(stops.map((stop) => stop.coordinates)).then(
-        (route) => {
-          if (cancelled || !map.current) return;
-          drawRoute(map.current, route.line);
-        },
-      );
+      void googleRouteForStops(coordinates).then((route) => {
+        if (cancelled || !map.current) return;
+        drawRoute(map.current, route.line);
+      });
     }, 400);
 
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [mapLoading, stopKey, stops]);
+  }, [mapLoading, stopKey]);
 
   const flyAndUpdateUser = () => {
     setLocationLoading(true);

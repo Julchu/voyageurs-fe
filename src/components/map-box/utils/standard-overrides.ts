@@ -1,4 +1,8 @@
-import type { LightsSpecification, Map as MapboxMap, StyleSpecification, } from "mapbox-gl";
+import type {
+  LightsSpecification,
+  Map as MapboxMap,
+  StyleSpecification,
+} from "mapbox-gl";
 import { mapTimeFromDate } from "@/utils/map-time";
 
 /** Official Mapbox Standard (not Studio forks). */

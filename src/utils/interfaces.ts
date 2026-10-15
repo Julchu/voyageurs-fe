@@ -47,14 +47,36 @@ export type UserInfo = {
   lastLocation?: Coordinates;
 };
 
+export type PlacePhoto = {
+  url: string;
+  width?: number | null;
+  height?: number | null;
+};
+
+export type PlaceDetails = {
+  website?: string;
+  phone?: string;
+  openingHours?: string;
+  popularity?: number | null;
+  permanentlyClosed?: boolean | null;
+  photos: PlacePhoto[];
+};
+
 export type Place = {
-  // mapbox id
-  id: number;
+  // Numeric feature id from the Standard style featureset (POI/landmark click).
+  id?: number;
+  // Opaque provider id: Google place id, or a legacy Mapbox `urn:mbxpoi:...`.
+  mapboxId?: string;
   name: string;
   category: string;
   streetAddress: string;
   areaAddress: string;
   coordinates: Coordinates;
+  // Photo URLs returned by the place provider (optional/not guaranteed).
+  photos?: PlacePhoto[];
+  // A successful lookup may legitimately return no photos or address.
+  placeInfoLoaded?: boolean;
+  details?: PlaceDetails;
 };
 
 export type TripStop = Place & {
@@ -77,6 +99,7 @@ export type Trip = {
 };
 
 export type PlaceSearch = Place & {
+  clientId?: string;
   publicId?: string;
   query: string;
   searchedAt: string;
@@ -92,18 +115,4 @@ export type TripStopFormData = FormData<TripStop>;
 
 export type TripFormData = Omit<FormData<Trip>, "stops"> & {
   stops: TripStopFormData[];
-};
-
-// Geocoding v6 reverse response: each feature carries a formatted streetAddress in
-// `properties`. `full_address` = name + place context; `name` is the bare
-// street line. See https://docs.mapbox.com/api/search/geocoding/#reverse-geocoding
-export type GeocodeResponse = {
-  features?: { properties?: GeocodeFeatures }[];
-};
-
-export type GeocodeFeatures = {
-  full_address?: string;
-  name?: string;
-  name_preferred?: string;
-  place_formatted?: string;
 };
