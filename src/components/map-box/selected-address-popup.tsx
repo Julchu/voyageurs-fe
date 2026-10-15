@@ -3,18 +3,20 @@ import {
   CurrentLocationIcon,
   MapPinIcon,
 } from "@/components/ui/icons/map-pins";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "@/components/ui/icons/close-icons";
-import { openPlacePopup } from "@/components/map-box/map-components";
+import { openPlacePopup } from "@/components/map-box/place-popup-handle";
 import {
-  fetchGooglePlaceDetails,
-  googleResolvePlace,
-  needsGooglePlaceLookup,
-} from "@/components/map-box/utils/google-places";
+  getMapboxPlacePreview,
+  resolveMapboxPlace,
+  needsMapboxPlaceLookup,
+  placeRecord,
+} from "@/components/map-box/utils/place-geocoding";
 import type { Place, PlacePhoto } from "@/utils/interfaces";
 import Image from "next/image";
 
+// TODO: check if this is needed
 const dedupePhotos = (
   ...groups: (PlacePhoto[] | undefined)[]
 ): PlacePhoto[] => {
@@ -32,32 +34,22 @@ const dedupePhotos = (
 
 const PlaceCard = ({ payload }: { payload: Place }) => {
   const addStop = useTripStore(({ addStop }) => addStop);
-  const rememberPlace = useTripStore(({ rememberPlace }) => rememberPlace);
-  const getRememberedPlace = useTripStore(
-    ({ getRememberedPlace }) => getRememberedPlace,
-  );
-  const [initialPlace] = useState(() => getRememberedPlace(payload));
+  const [initialPlace] = useState(() => getMapboxPlacePreview(payload));
   const [place, setPlace] = useState(initialPlace);
   const [lookingUp, setLookingUp] = useState(() =>
-    needsGooglePlaceLookup(initialPlace),
+    needsMapboxPlaceLookup(initialPlace),
   );
   const [lookupError, setLookupError] = useState(false);
   const [lookupAttempt, setLookupAttempt] = useState(0);
-  const [detailsError, setDetailsError] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const controllerRef = useRef<AbortController | null>(null);
-
-  // State is reset per place by remounting via `key` in the parent; here we
-  // only need to abort any in-flight request when the card unmounts.
-  useEffect(() => () => controllerRef.current?.abort(), []);
+  const [failedPhotos, setFailedPhotos] = useState<string[]>([]);
 
   // Fetch missing metadata on open, even when an older stop already has an id.
-  // Reopening a saved stop (or its basemap POI) reuses the remembered data.
+  // Reopening a place reuses temporary Mapbox data rather than saved Google data.
   useEffect(() => {
-    if (!needsGooglePlaceLookup(initialPlace)) return;
+    if (!needsMapboxPlaceLookup(initialPlace)) return;
     const controller = new AbortController();
-    void googleResolvePlace(initialPlace, controller.signal).then((next) => {
+    void resolveMapboxPlace(initialPlace, controller.signal).then((next) => {
       if (controller.signal.aborted) return;
       setLookingUp(false);
       if (!next) {
@@ -65,41 +57,14 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
         return;
       }
       setPlace(next);
-      // TODO: think of a better way than rememberPlace for temp info
-      rememberPlace(next);
     });
     return () => controller.abort();
-  }, [initialPlace, lookupAttempt, rememberPlace]);
-
-  const loadDetails = () => {
-    setExpanded(true);
-    if (!place.mapboxId || lookingUp || loading || place.details) return;
-    controllerRef.current?.abort();
-    const controller = new AbortController();
-    controllerRef.current = controller;
-    setLoading(true);
-    setDetailsError(false);
-    void fetchGooglePlaceDetails(place.mapboxId, controller.signal).then(
-      (next) => {
-        if (controller.signal.aborted) return;
-        setLoading(false);
-        if (!next) {
-          setDetailsError(true);
-          return;
-        }
-        const updated = {
-          ...place,
-          photos: dedupePhotos(place.photos, next.photos),
-          details: next,
-        };
-        setPlace(updated);
-        rememberPlace(updated);
-      },
-    );
-  };
+  }, [initialPlace, lookupAttempt]);
 
   const details = place.details;
-  const photos = dedupePhotos(place.photos, details?.photos);
+  const photos = dedupePhotos(place.photos, details?.photos).filter(
+    (photo) => !failedPhotos.includes(photo.url),
+  );
   const addressPending = lookingUp && !place.streetAddress;
 
   return (
@@ -109,7 +74,10 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
           <Dialog.Title className="text-base font-bold">
             {place.name}
           </Dialog.Title>
-          <Dialog.Close className={"outline-none"}>
+          <Dialog.Close
+            aria-label="Close place card"
+            className={"outline-none"}
+          >
             <XIcon
               className={"h-5 w-5 cursor-pointer fill-blue-500 stroke-blue-500"}
             />
@@ -125,15 +93,15 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
           />
           {addressPending
             ? "Loading place…"
-            : place.streetAddress || "No address yet"}
+            : place.streetAddress || "Street address unavailable"}
         </Dialog.Description>
         <Dialog.Description className="text-sm text-neutral-600">
-          {addressPending
+          {lookingUp && !place.areaAddress
             ? "Loading place…"
-            : place.areaAddress || "No address yet"}
+            : place.areaAddress || "Area address unavailable"}
         </Dialog.Description>
         <Dialog.Description className="text-sm text-neutral-600">
-          {place.category || "No category"}
+          {place.category.replaceAll("_", " ") || "Category unavailable"}
         </Dialog.Description>
       </div>
 
@@ -146,15 +114,26 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
             >
               <Image
                 src={photo.url}
+                unoptimized
                 alt={place.name}
                 fill
                 sizes="128px"
                 className="object-cover"
+                onError={() =>
+                  setFailedPhotos((failed) => [...failed, photo.url])
+                }
               />
             </div>
           ))}
         </div>
-      ) : null}
+      ) : (
+        <div
+          role="status"
+          className="flex h-24 items-center justify-center rounded-lg bg-neutral-100 text-sm text-neutral-500"
+        >
+          {lookingUp ? "Loading photo…" : "No photo available"}
+        </div>
+      )}
 
       {expanded && details ? (
         <dl className="flex flex-col gap-1 text-sm text-neutral-600">
@@ -198,10 +177,6 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
         </dl>
       ) : null}
 
-      {loading ? (
-        <p className="text-sm text-neutral-500">Loading details…</p>
-      ) : null}
-
       {lookupError ? (
         <p role="status" className="text-sm text-neutral-500">
           Couldn’t load place information.{" "}
@@ -218,30 +193,23 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
           </button>
         </p>
       ) : null}
-      {detailsError ? (
-        <p role="status" className="text-sm text-neutral-500">
-          Couldn’t load details.
-        </p>
-      ) : null}
-
       <div className="flex justify-between gap-3">
-        {place.mapboxId &&
-        !lookingUp &&
-        !lookupError &&
-        (!expanded || detailsError) ? (
+        {details ? (
           <button
             type="button"
-            onClick={loadDetails}
+            onClick={() => setExpanded((value) => !value)}
+            aria-expanded={expanded}
             className="flex h-8 cursor-pointer items-center justify-center rounded-lg px-3 text-sm leading-none font-normal whitespace-nowrap text-blue-600 select-none hover:bg-neutral-100 active:bg-neutral-200"
           >
-            {detailsError ? "Retry details" : "See more details"}
+            {expanded ? "Hide details" : "More details"}
           </button>
         ) : (
           <span />
         )}
         <Dialog.Close
           onClick={() => {
-            addStop(place);
+            // Enrichment stays temporary; the trip keeps its core stop fields.
+            addStop(placeRecord(place));
           }}
           disabled={lookingUp}
           className="flex h-8 cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 text-sm leading-none font-normal whitespace-nowrap text-white select-none hover:not-data-disabled:bg-neutral-100 active:not-data-disabled:bg-neutral-200 disabled:border-neutral-500 disabled:text-neutral-500 data-disabled:border-neutral-500 data-disabled:text-neutral-500 dark:hover:not-data-disabled:bg-neutral-800 dark:active:not-data-disabled:bg-neutral-700 dark:data-disabled:border-neutral-400 dark:data-disabled:text-neutral-400"

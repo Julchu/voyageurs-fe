@@ -5,12 +5,12 @@ import { ResetIcon } from "@/components/ui/icons/reset-icons";
 import { MapSaveIcon } from "@/components/ui/icons/map-form-icons";
 import { Cursor, DragEndEvent } from "@dnd-kit/dom";
 import { useMapHook } from "@/hooks/use-map-hook";
-import { RefObject } from "react";
+import { RefObject, useState } from "react";
 import type { Map } from "mapbox-gl";
-import { TripSelector } from "@/components/trips/trip-selector";
 import { isSortable } from "@dnd-kit/react/sortable";
 import { DragDropProvider } from "@dnd-kit/react";
 import { DraggableTripStops } from "@/components/trips/draggable-trip-stops";
+import { TripSelector } from "@/components/trips/trip-selector";
 
 export const TripForm = ({ map }: { map: RefObject<Map | null> }) => {
   const { currentTrip, resetDraft } = useTripStore(
@@ -19,6 +19,8 @@ export const TripForm = ({ map }: { map: RefObject<Map | null> }) => {
       resetDraft,
     })),
   );
+
+  const [isEditing, setIsEditing] = useState(false);
 
   // TODO:
   const onSaveHandler = () => {
@@ -40,6 +42,7 @@ export const TripForm = ({ map }: { map: RefObject<Map | null> }) => {
             {/* TODO: autocomplete/combobox to search user's/store's trips */}
 
             <TripSelector />
+            {/*<TripCombobox />*/}
 
             {currentTrip.stops.length === 0 ? (
               <p className="text-sm text-neutral-500">

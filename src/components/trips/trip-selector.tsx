@@ -1,9 +1,9 @@
 "use client";
 
 import { ComponentProps, useId, useMemo, useState } from "react";
-import { Combobox } from "@base-ui/react/combobox";
 import { useShallow } from "zustand/react/shallow";
 import { useTripStore } from "@/providers/trip-store-provider";
+import { Select } from "@base-ui/react/select";
 
 /**
  * A single option in the trip dropdown.
@@ -36,13 +36,15 @@ export const TripSelector = () => {
   const inputId = useId();
   const { trips, currentTrip, selectTrip, createTrip, renameTrip } =
     useTripStore(
-      useShallow((store) => ({
-        trips: store.trips,
-        currentTrip: store.currentTrip,
-        selectTrip: store.selectTrip,
-        createTrip: store.createTrip,
-        renameTrip: store.renameTrip,
-      })),
+      useShallow(
+        ({ trips, currentTrip, selectTrip, createTrip, renameTrip }) => ({
+          trips,
+          currentTrip,
+          selectTrip,
+          createTrip,
+          renameTrip,
+        }),
+      ),
     );
 
   // Controlled input. Passing `inputValue` sets Base UI's `hasInputValue`, which
@@ -130,92 +132,15 @@ export const TripSelector = () => {
   };
 
   return (
-    <Combobox.Root<TripOption>
-      items={items}
-      value={selectedOption}
-      onValueChange={handleValueChange}
-      inputValue={query}
-      onInputValueChange={setQuery}
-      onOpenChange={(nextOpen) => {
-        // Restore the trip name if the user cleared the input but closed without
-        // picking anything, so the field always reflects the current trip.
-        if (!nextOpen) setQuery(currentTrip?.name ?? "");
-      }}
-      itemToStringLabel={(option) => option.label}
-      isItemEqualToValue={(a, b) => a.value === b.value}
+    <Select.Root
+      items={[
+        { value: "cheese", label: "c h e e s e" },
+        { value: "tomato", label: "t o m a t o" },
+      ]}
+      data-base-ui-swipe-ignore
     >
-      <Combobox.InputGroup className="relative flex w-full items-center">
-        <Combobox.Input
-          id={inputId}
-          aria-label="Trip name"
-          placeholder="e.g. Tour de France"
-          className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 pr-9 text-sm font-normal text-neutral-950 outline-none any-pointer-coarse:text-base"
-        />
-
-        <div className="absolute right-0 bottom-0 flex h-full items-center justify-center text-neutral-500 dark:text-neutral-400">
-          <Combobox.Clear
-            className="combobox-clear flex h-full w-6 items-center justify-center border-0 bg-transparent p-0 text-neutral-950"
-            aria-label="Clear selection"
-          >
-            <XIcon />
-          </Combobox.Clear>
-          <Combobox.Trigger
-            className="flex h-full w-6 items-center justify-center border-0 bg-transparent p-0 text-neutral-950"
-            aria-label="Open trips list"
-          >
-            <CaretDownIcon />
-          </Combobox.Trigger>
-        </div>
-      </Combobox.InputGroup>
-
-      <Combobox.Portal>
-        <Combobox.Positioner className="z-50 outline-none" sideOffset={4}>
-          <Combobox.Popup className="max-h-[min(var(--available-height),20rem)] w-[var(--anchor-width)] max-w-[var(--available-width)] origin-[var(--transform-origin)] overflow-y-auto overscroll-contain rounded-md border border-gray-200 bg-white py-1 text-sm text-neutral-950 shadow-lg">
-            <Combobox.Empty>
-              <span className="block px-3 py-2 text-sm text-neutral-500">
-                No trips found.
-              </span>
-            </Combobox.Empty>
-            <Combobox.List>
-              {(item: TripOption) => (
-                <Combobox.Item
-                  key={item.value}
-                  value={item}
-                  className="grid cursor-default grid-cols-[1.25rem_1fr] items-center gap-2 px-3 py-2 outline-none select-none data-highlighted:bg-neutral-100"
-                >
-                  {item.create ? (
-                    <>
-                      <span className="col-start-1 flex justify-center text-neutral-500">
-                        <PlusIcon />
-                      </span>
-                      <span className="col-start-2">
-                        Create &ldquo;{item.create}&rdquo;
-                      </span>
-                    </>
-                  ) : item.rename ? (
-                    <>
-                      <span className="col-start-1 flex justify-center text-neutral-500">
-                        <PencilIcon />
-                      </span>
-                      <span className="col-start-2">
-                        Rename to &ldquo;{item.rename}&rdquo;
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Combobox.ItemIndicator className="col-start-1 flex justify-center">
-                        <CheckIcon />
-                      </Combobox.ItemIndicator>
-                      <span className="col-start-2">{item.label}</span>
-                    </>
-                  )}
-                </Combobox.Item>
-              )}
-            </Combobox.List>
-          </Combobox.Popup>
-        </Combobox.Positioner>
-      </Combobox.Portal>
-    </Combobox.Root>
+      <Select.Value placeholder="Select fruit" />
+    </Select.Root>
   );
 };
 
