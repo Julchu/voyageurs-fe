@@ -1,26 +1,37 @@
 "use client";
 
-import { PersonIcon } from "@radix-ui/react-icons";
 import { useUserStore } from "@/providers/user-store-provider";
 import Image from "next/image";
+import { Avatar } from "@base-ui/react/avatar";
+import { PersonIcon } from "@radix-ui/react-icons";
 
-// TODO: replace with BaseUI Avatar
 export const UserAvatar = () => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
+  const [firstName, lastName] = userInfo?.name?.split(" ") ?? [];
 
-  const imageUrl = userInfo?.image;
-
-  if (!userInfo?.image)
-    return <PersonIcon className={"size-1/2 rounded-full"} />;
+  if (!userInfo) return <PersonIcon className="size-1/2 rounded-full" />;
 
   return (
-    <>
-      <Image
-        src={imageUrl!}
-        alt={"User avatar"}
-        fill
-        className={"rounded-full object-cover"}
-      />
-    </>
+    <Avatar.Root>
+      <Avatar.Fallback>
+        <p className={"tracking-widest"}>
+          {firstName[0]}
+          {lastName[0]}
+        </p>
+      </Avatar.Fallback>
+      {userInfo?.image ? (
+        <Avatar.Image
+          keepMounted
+          render={
+            <Image
+              src={userInfo?.image}
+              fill
+              alt="Voyageur"
+              className={"rounded-full object-cover"}
+            />
+          }
+        />
+      ) : null}
+    </Avatar.Root>
   );
 };
