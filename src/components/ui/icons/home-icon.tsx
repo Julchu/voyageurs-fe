@@ -31,7 +31,7 @@ export const AnimatedHomeIcon = ({
   className,
   ...svgProps
 }: SVGProps<SVGSVGElement>) => {
-  const shared = cn("h-6 w-6 stroke-[1.5]", className);
+  const shared = cn("h-10 w-10 stroke-[1.5]", className);
 
   return (
     <div className="relative h-6 w-6">

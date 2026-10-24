@@ -11,7 +11,6 @@ export const LocationIcon = (props: SVGProps<SVGSVGElement>) => (
   >
     <g
       fill="none"
-      stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={"1.5"}
@@ -33,7 +32,6 @@ export const NorthIcon = (props: SVGProps<SVGSVGElement>) => (
   >
     <path
       fill="none"
-      stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={"1.5"}
@@ -48,7 +46,6 @@ export const PowerIcon = (props: SVGProps<SVGSVGElement>) => (
     fill="none"
     viewBox="0 0 24 24"
     strokeWidth={1.5}
-    stroke="currentColor"
     {...props}
   >
     <path
@@ -65,7 +62,6 @@ export const NoPowerIcon = (props: SVGProps<SVGSVGElement>) => (
     fill="none"
     viewBox="0 0 24 24"
     strokeWidth={1.5}
-    stroke="currentColor"
     {...props}
   >
     <path
@@ -88,17 +84,16 @@ export const NightIcon = (props: SVGProps<SVGSVGElement>) => {
     >
       <path
         fill="none"
-        stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth={"1.5"}
+        strokeWidth={"1.7"}
         d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992zm5 1a2 2 0 0 0 2 2a2 2 0 0 0-2 2a2 2 0 0 0-2-2a2 2 0 0 0 2-2m2 7h2m-1-1v2"
       />
     </svg>
   );
 };
 
-// tabler:sunrise-filled
+// tabler:sunrise
 export const DawnIcon = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
@@ -108,15 +103,17 @@ export const DawnIcon = (props: SVGProps<SVGSVGElement>) => {
       viewBox="0 0 24 24"
       {...props}
     >
-      <g fill="currentColor">
-        <path d="M4 16a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2zm8-4a5 5 0 0 1 5 5a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1a5 5 0 0 1 5-5m9 4a1 1 0 0 1 0 2h-1a1 1 0 0 1 0-2zM6.307 9.893l.7.7a1 1 0 0 1-1.414 1.414l-.7-.7a1 1 0 0 1 1.414-1.414m12.8 0a1 1 0 0 1 0 1.414l-.7.7a1 1 0 0 1-1.414-1.414l.7-.7a1 1 0 0 1 1.414 0m-6.4-7.6l3 3a1 1 0 1 1-1.414 1.414L13 5.415V9a1 1 0 0 1-.883.993L12 10a1 1 0 0 1-1-1V5.414L9.707 6.707a1 1 0 0 1-1.414-1.414l2.958-2.96a1 1 0 0 1 .15-.135l.127-.08l.068-.033l.11-.041l.12-.029c.3-.055.627.024.881.278M3 20h18a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2" />
-        <path d="M12 12a5 5 0 0 1 4.583 7.002H7.417A5 5 0 0 1 12 12" />
-      </g>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+        d="M3 17h1m16 0h1M5.6 10.6l.7.7m12.1-.7l-.7.7M8 17a4 4 0 0 1 8 0M3 21h18M12 9V3l3 3M9 6l3-3"
+      />
     </svg>
   );
 };
 
-// tabler: sun - filled;
+// tabler:sun-high
 export const DayIcon = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
@@ -127,14 +124,16 @@ export const DayIcon = (props: SVGProps<SVGSVGElement>) => {
       {...props}
     >
       <path
-        fill="currentColor"
-        d="M12 19a1 1 0 0 1 .993.883L13 20v1a1 1 0 0 1-1.993.117L11 21v-1a1 1 0 0 1 1-1m6.313-2.09l.094.083l.7.7a1 1 0 0 1-1.32 1.497l-.094-.083l-.7-.7a1 1 0 0 1 1.218-1.567zm-11.306.083a1 1 0 0 1 .083 1.32l-.083.094l-.7.7a1 1 0 0 1-1.497-1.32l.083-.094l.7-.7a1 1 0 0 1 1.414 0M4 11a1 1 0 0 1 .117 1.993L4 13H3a1 1 0 0 1-.117-1.993L3 11zm17 0a1 1 0 0 1 .117 1.993L21 13h-1a1 1 0 0 1-.117-1.993L20 11zM6.213 4.81l.094.083l.7.7a1 1 0 0 1-1.32 1.497l-.094-.083l-.7-.7A1 1 0 0 1 6.11 4.74zm12.894.083a1 1 0 0 1 .083 1.32l-.083.094l-.7.7a1 1 0 0 1-1.497-1.32l.083-.094l.7-.7a1 1 0 0 1 1.414 0M12 2a1 1 0 0 1 .993.883L13 3v1a1 1 0 0 1-1.993.117L11 4V3a1 1 0 0 1 1-1m0 5a5 5 0 1 1-4.995 5.217L7 12l.005-.217A5 5 0 0 1 12 7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+        d="M14.828 14.828a4 4 0 1 0-5.656-5.656a4 4 0 0 0 5.656 5.656m-8.485 2.829l-1.414 1.414M6.343 6.343L4.929 4.929m12.728 1.414l1.414-1.414m-1.414 12.728l1.414 1.414M4 12H2m10-8V2m8 10h2m-10 8v2"
       />
     </svg>
   );
 };
 
-// tabler:sunset-filled
+// tabler:sunse
 export const DuskIcon = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
@@ -145,8 +144,10 @@ export const DuskIcon = (props: SVGProps<SVGSVGElement>) => {
       {...props}
     >
       <path
-        fill="currentColor"
-        d="M4 16a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2zm17 0a1 1 0 0 1 0 2h-1a1 1 0 0 1 0-2zM6.307 9.893l.7.7a1 1 0 0 1-1.414 1.414l-.7-.7a1 1 0 0 1 1.414-1.414m12.8 0a1 1 0 0 1 0 1.414l-.7.7a1 1 0 0 1-1.414-1.414l.7-.7a1 1 0 0 1 1.414 0M12 2a1 1 0 0 1 1 1v3.584l1.293-1.291a1 1 0 0 1 1.32-.083l.094.083a1 1 0 0 1 0 1.414l-3 3a.98.98 0 0 1-.767.293l-.124-.017l-.127-.032l-.104-.04l-.115-.063a1 1 0 0 1-.151-.114L8.293 6.707a1 1 0 0 1 1.414-1.414L11 6.585V3a1 1 0 0 1 1-1M3 20h18a1 1 0 0 1 0 2H3a1 1 0 0 1 0-2m9-8a5 5 0 0 1 4.583 7.002H7.417A5 5 0 0 1 12 12"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+        d="M3 17h1m16 0h1M5.6 10.6l.7.7m12.1-.7l-.7.7M8 17a4 4 0 0 1 8 0M3 21h18M12 3v6l3-3M9 6l3 3"
       />
     </svg>
   );

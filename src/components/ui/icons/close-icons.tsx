@@ -1,6 +1,6 @@
-// tabler:circle-x
 import { SVGProps } from "react";
 
+// tabler:circle-x
 export const CircleCloseIcon = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
