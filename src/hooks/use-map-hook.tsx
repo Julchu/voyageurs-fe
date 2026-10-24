@@ -9,7 +9,7 @@ import {
 import { Map, Marker } from "mapbox-gl";
 import { Coordinates, MapTimeType } from "@/utils/interfaces";
 import { renderToStaticMarkup } from "react-dom/server";
-import { CurrentLocationPinIcon } from "@/components/ui/icons/map-pins";
+import { CurrentLocationPinIcon } from "@/components/ui/icons/pin-icons";
 import { AnimatedHomeIcon } from "@/components/ui/icons/home-icon";
 
 type MapMethods = {
@@ -31,6 +31,13 @@ type MapMethods = {
   markers: Record<string, string>;
   setLightMode: (toMapTime: MapTimeType) => void;
 };
+
+export const MarkerEnum = {
+  LOCATION: "location",
+  HOME: "home",
+} as const;
+// export const MarkerValues = [MarkerEnum.LOCATION, MarkerEnum.HOME];
+// export type MarkerType = (typeof MarkerValues)[number];
 
 export const useMapHook = ({
   map,
@@ -79,10 +86,12 @@ export const useMapHook = ({
 
   const markers = useMemo(() => {
     return {
-      location: renderToStaticMarkup(
-        <CurrentLocationPinIcon className={"stroke-blue-500"} />,
+      [MarkerEnum.LOCATION]: renderToStaticMarkup(
+        <CurrentLocationPinIcon
+          className={"h-10 w-10 fill-blue-500 stroke-blue-500"}
+        />,
       ),
-      home: renderToStaticMarkup(
+      [MarkerEnum.HOME]: renderToStaticMarkup(
         <AnimatedHomeIcon className={"fill-blue-500 stroke-blue-500"} />,
       ),
     };
@@ -135,16 +144,14 @@ export const useMapHook = ({
 
   const togglePerformanceLayer = useCallback<
     MapMethods["togglePerformanceLayer"]
-  >(
-    (toggleOn) => {
-      if (map?.current && !mapLoading) {
-        if (!toggleOn && map.current.getLayer("add-3d-buildings"))
-          removePerformanceLayer();
-        else if (toggleOn) addPerformanceLayer();
-      }
-    },
-    [addPerformanceLayer, map, mapLoading, removePerformanceLayer],
-  );
+  >((toggleOn) => {
+    // if (map?.current && !mapLoading) {
+    //   if (!toggleOn && map.current.getLayer("add-3d-buildings"))
+    //     removePerformanceLayer();
+    //   else if (toggleOn) addPerformanceLayer();
+    // }
+    console.log(toggleOn);
+  }, []);
 
   // TODO: move geolocator function from map.tsx
   const triggerGeolocator = useCallback<MapMethods["triggerGeolocator"]>(() => {

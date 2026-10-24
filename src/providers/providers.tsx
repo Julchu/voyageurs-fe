@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { TravelLoader } from "@/components/trips/travel-loader";
+import { TravelLoader } from "@/components/trips-drawer/travel-loader";
 import { TripStoreProvider } from "@/providers/trip-store-provider";
 import { UserStoreProvider } from "@/providers/user-store-provider";
 import { serverFetch } from "@/utils/server-actions/server-fetch";

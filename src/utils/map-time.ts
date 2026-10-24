@@ -13,8 +13,8 @@ const localHour = (date: Date) =>
 export const mapTimeFromDate = (date: Date = new Date()): MapTimeType => {
   const hour = localHour(date);
 
-  if (hour >= NIGHT_START || hour < DAWN_START) return MapTimeEnum.night;
-  if (hour < DAY_START) return MapTimeEnum.dawn;
-  if (hour < DUSK_START) return MapTimeEnum.day;
-  return MapTimeEnum.dusk;
+  if (hour >= NIGHT_START || hour < DAWN_START) return MapTimeEnum.NIGHT;
+  if (hour < DAY_START) return MapTimeEnum.DAWN;
+  if (hour < DUSK_START) return MapTimeEnum.DAY;
+  return MapTimeEnum.DUSK;
 };

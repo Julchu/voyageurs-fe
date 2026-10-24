@@ -23,6 +23,7 @@ export const TravelLoader = () => {
   );
 
   useEffect(() => {
+    if (!userInfo) return;
     if (tripsLoadState === "idle") void fetchTrips();
     if (searchesLoadState === "idle") void fetchSearches();
   }, [fetchSearches, fetchTrips, searchesLoadState, tripsLoadState, userInfo]);

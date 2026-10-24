@@ -45,6 +45,7 @@ export const createUserStore = (initialState: UserState = defaultInitState) => {
             }
           : state.userInfo,
       })),
+    // TODO: Reset all active user stores on logout, including when the request fails.
     logout: async () => {
       try {
         await fetch("/api/logout", { method: "POST" });

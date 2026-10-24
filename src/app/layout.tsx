@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Providers } from "@/providers/providers";
 import "./globals.css";
 import { PropsWithChildren } from "react";
-import { montserrat } from "@/components/fonts";
+import { montserrat } from "@/components/ui/fonts";
 import { Header } from "@/components/header/header";
 import Script from "next/script";
 import { AppShell } from "@/components/map-box/app-shell";

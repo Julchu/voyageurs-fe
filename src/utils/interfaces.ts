@@ -22,16 +22,16 @@ export type UserPreferences = {
 };
 
 export const MapTimeEnum = {
-  night: "night",
-  dawn: "dawn",
-  day: "day",
-  dusk: "dusk",
+  NIGHT: "night",
+  DAWN: "dawn",
+  DAY: "day",
+  DUSK: "dusk",
 } as const;
 export const MapTimeValues = [
-  MapTimeEnum.night,
-  MapTimeEnum.dawn,
-  MapTimeEnum.day,
-  MapTimeEnum.dusk,
+  MapTimeEnum.NIGHT,
+  MapTimeEnum.DAWN,
+  MapTimeEnum.DAY,
+  MapTimeEnum.DUSK,
 ];
 export type MapTimeType = (typeof MapTimeValues)[number];
 export type MapTime = (typeof MapTimeEnum)[keyof typeof MapTimeEnum];
