@@ -8,7 +8,10 @@ import {
 
 const finishLogin = (req: NextRequest, failed: boolean) => {
   const base = process.env.VOYAGEURS_BASE_URL ?? req.nextUrl.origin;
-  const destination = new URL(failed ? "/?login=failed" : "/", base);
+
+  // ?login=failed query param for showing “Sign-in failed” msg if needed
+  // const destination = new URL(failed ? "/?login=failed" : "/", base);
+  const destination = new URL(failed ? "/" : "/", base);
   const response = NextResponse.redirect(destination);
   const clearOptions = oauthCookieClearOptions();
   response.cookies.set(OAUTH_STATE_COOKIE, "", clearOptions);
