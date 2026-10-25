@@ -5,6 +5,7 @@ import {
   sessionCookieClearOptions,
 } from "@/utils/server-actions/session-token";
 
+// TODO: Clear auth cookies even when the backend logout request fails.
 export async function POST() {
   try {
     const accessToken = await getAccessToken();
