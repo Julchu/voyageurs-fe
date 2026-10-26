@@ -9,8 +9,7 @@ type BackendPayload = {
 
 export const proxyJson = async (
   path: string,
-  init: RequestInit | undefined,
-  dataKey: string,
+  init?: RequestInit,
 ) => {
   const token = await getAccessToken();
   if (!token) {
@@ -30,7 +29,7 @@ export const proxyJson = async (
   });
 
   const payload = (await response.json()) as BackendPayload;
-  if (!payload.success) {
+  if (!response.ok || !payload.success) {
     return NextResponse.json(
       { error: payload.error ?? "Request failed" },
       { status: response.status },
@@ -38,7 +37,7 @@ export const proxyJson = async (
   }
 
   return NextResponse.json(
-    { [dataKey]: payload.data ?? null },
+    payload.data,
     { status: response.status },
   );
 };
