@@ -1,38 +1,53 @@
 import type { GeoJSONSource, Map as MapboxMap } from "mapbox-gl";
+import { MapTimeEnum, type MapTimeType } from "@/utils/interfaces";
 
 const SOURCE_ID = "voyageurs-route";
 const LINE_ID = "voyageurs-route-line";
 const ARROW_ID = "voyageurs-route-arrows";
 const ARROW_IMAGE = "voyageurs-arrow";
+const LINE_WIDTH = 4;
+
+// Tailwind v4 palette equivalents for Mapbox's color values.
+const ROUTE_COLORS: Record<MapTimeType, string> = {
+  [MapTimeEnum.DAWN]: "#312c85", // bg-indigo-900
+  [MapTimeEnum.DAY]: "#312c85", // bg-cyan-400
+  [MapTimeEnum.DUSK]: "#9ae600", // bg-lime-400
+  [MapTimeEnum.NIGHT]: "#9ae600",
+};
+
+const routeColor = (map: MapboxMap) => {
+  const mapTime = map.getConfigProperty(
+    "basemap",
+    "lightPreset",
+  ) as MapTimeType;
+  return ROUTE_COLORS[mapTime] ?? ROUTE_COLORS[MapTimeEnum.DAY];
+};
 
 const emptyLine = {
   type: "Feature" as const,
   properties: {},
-  geometry: { type: "LineString" as const, coordinates: [] as [number, number][] },
+  geometry: {
+    type: "LineString" as const,
+    coordinates: [] as [number, number][],
+  },
 };
 
-const ensureArrow = (map: MapboxMap) => {
-  if (map.hasImage(ARROW_IMAGE)) return;
-  const size = 24;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const context = canvas.getContext("2d");
-  if (!context) return;
-  context.fillStyle = "#1d4ed8";
-  context.beginPath();
-  context.moveTo(12, 3);
-  context.lineTo(21, 20);
-  context.lineTo(12, 15);
-  context.lineTo(3, 20);
-  context.closePath();
-  context.fill();
-  const image = context.getImageData(0, 0, size, size);
-  map.addImage(ARROW_IMAGE, image, { pixelRatio: 2 });
+export const updateRouteAppearance = (map: MapboxMap) => {
+  // // Lighting changes can mark the style as pending; existing layers stay editable.
+  // // Clear the previous arrow layer when updating an already mounted map.
+  // if (map.getLayer(ARROW_ID)) map.removeLayer(ARROW_ID);
+  // if (map.hasImage(ARROW_IMAGE)) map.removeImage(ARROW_IMAGE);
+  if (map.getLayer(LINE_ID)) {
+    map.setPaintProperty(LINE_ID, "line-color", routeColor(map));
+    map.setPaintProperty(LINE_ID, "line-width", LINE_WIDTH);
+    map.setPaintProperty(LINE_ID, "line-opacity", 0.85);
+    map.setPaintProperty(LINE_ID, "line-emissive-strength", 0.85);
+  }
 };
 
 export const drawRoute = (map: MapboxMap, coordinates: [number, number][]) => {
   if (!map.isStyleLoaded()) return;
+  updateRouteAppearance(map);
   const data = {
     ...emptyLine,
     geometry: { type: "LineString" as const, coordinates },
@@ -44,29 +59,21 @@ export const drawRoute = (map: MapboxMap, coordinates: [number, number][]) => {
   }
   if (coordinates.length < 2) return;
 
-  ensureArrow(map);
   map.addSource(SOURCE_ID, { type: "geojson", data });
   map.addLayer({
     id: LINE_ID,
     type: "line",
     source: SOURCE_ID,
+    // top layer for full route line visibility, middle
+    // for building occlusion to hide lines depending on tilt
     slot: "top",
     layout: { "line-cap": "round", "line-join": "round" },
-    paint: { "line-color": "#1d4ed8", "line-width": 4, "line-opacity": 0.85 },
-  });
-  map.addLayer({
-    id: ARROW_ID,
-    type: "symbol",
-    source: SOURCE_ID,
-    slot: "top",
-    layout: {
-      "symbol-placement": "line",
-      "symbol-spacing": 80,
-      "icon-image": ARROW_IMAGE,
-      "icon-size": 0.75,
-      "icon-rotation-alignment": "map",
-      "icon-allow-overlap": true,
-      "icon-ignore-placement": true,
+    paint: {
+      "line-color": routeColor(map),
+      "line-width": LINE_WIDTH,
+      "line-opacity": 0.85,
+      // Keep route colors visible under Standard's night lighting.
+      "line-emissive-strength": 0.85,
     },
   });
 };

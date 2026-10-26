@@ -253,7 +253,7 @@ export const AddressSearch = ({
         />
       </div>
 
-      <div className="absolute bottom-full mb-2 flex w-full flex-col gap-2">
+      <div className="absolute bottom-full mb-2 flex w-full flex-col gap-2 sm:mb-4 sm:gap-4">
         {showRecent || showHits ? (
           <ul
             ref={listRef}
@@ -261,7 +261,7 @@ export const AddressSearch = ({
             role="listbox"
             aria-label="Location suggestions"
             className={
-              "relative flex flex-col gap-1 overflow-hidden rounded-lg bg-white p-1 text-base text-neutral-950 shadow"
+              "relative flex h-40 flex-col gap-1 overflow-x-hidden overflow-y-auto rounded-lg bg-white p-1 text-base text-neutral-950 shadow sm:h-38 [&>li]:shrink-0"
             }
           >
             {showRecent

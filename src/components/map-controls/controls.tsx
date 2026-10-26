@@ -90,13 +90,13 @@ export const Controls = ({
   if (mapLoading)
     return (
       <div className="absolute top-1/2 right-1/2 bottom-1/2 left-1/2 bg-none">
-        <Spinner className="h-6 w-6 animate-spin fill-blue-500" />
+        <Spinner className="h-10 w-10 animate-spin fill-blue-500" />
       </div>
     );
 
   return (
     <Toolbar.Root orientation="vertical" className="absolute bottom-4 left-4">
-      <Toolbar.Group className="flex flex-col gap-2">
+      <Toolbar.Group className="flex flex-col gap-4">
         <Toolbar.Button
           className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50"
           onClick={triggerGeolocator}

@@ -16,19 +16,17 @@ export const nextLoadStateForFetch = (
 
 export const fetchCollection = async <T>(
   path: string,
-  key: string,
   errorLabel: string,
-): Promise<T> => {
+): Promise<T[]> => {
   const response = await fetch(path);
   if (!response.ok) {
     throw new Error(`${errorLabel} fetch failed (${response.status})`);
   }
 
-  const body = (await response.json()) as Record<string, unknown>;
-  const value = body[key];
-  if (!Array.isArray(value)) {
+  const body: unknown = await response.json();
+  if (!Array.isArray(body)) {
     throw new Error(`Invalid ${errorLabel} response`);
   }
 
-  return value as T;
+  return body as T[];
 };
