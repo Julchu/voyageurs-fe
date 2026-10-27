@@ -1,5 +1,3 @@
-"use client";
-
 import {
   type Dispatch,
   type RefObject,
@@ -31,10 +29,8 @@ export const Controls = ({
   setMapLoading,
   locationLoading,
   triggerGeolocator,
-  shouldUseDarkMode,
   currentMapTimeMode,
   setCurrentMapTimeMode,
-  mapFocus,
 }: {
   map: RefObject<Map | null>;
   mapLoading: boolean;

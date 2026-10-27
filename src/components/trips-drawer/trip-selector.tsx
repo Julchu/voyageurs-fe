@@ -45,7 +45,7 @@ export const TripSelector = () => {
       items={selectValues}
       value={currentTrip?.publicId ?? currentTrip?.clientId ?? null}
     >
-      <Select.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-md bg-blue-500 p-2 text-xl font-bold tracking-widest text-white">
+      <Select.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-2xl bg-blue-500 p-2 pl-4 text-xl font-bold tracking-widest text-white">
         <Select.Value
           className="data-placeholder:text-neutral-500"
           placeholder="Select trip"

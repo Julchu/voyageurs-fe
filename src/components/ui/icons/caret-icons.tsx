@@ -13,7 +13,7 @@ export const CaretCircleDownIcon = (props: SVGProps<SVGSVGElement>) => {
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="1.5"
+        strokeWidth="2"
         d="m15 11l-3 3l-3-3m12 1a9 9 0 1 0-18 0a9 9 0 0 0 18 0"
       />
     </svg>

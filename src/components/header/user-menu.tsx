@@ -21,10 +21,10 @@ export const UserMenu = () => {
 
   return (
     <Menu.Portal>
-      <Menu.Positioner side={"bottom"} sideOffset={10} align={"end"}>
+      <Menu.Positioner side={"bottom"} sideOffset={16} align={"end"}>
         <Menu.Popup
           className={
-            "relative min-w-40 origin-(--transform-origin) rounded-lg bg-white p-1 tracking-widest text-neutral-950 shadow-[0px_10px_38px_-10px_rgba(22,23,24,0.35),0px_10px_20px_-15px_rgba(22,23,24,0.2)] outline-hidden transition-[opacity,scale] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] select-none data-ending-style:scale-90 data-ending-style:opacity-0 data-ending-style:transition-[opacity,scale] data-ending-style:duration-150 data-ending-style:ease-[ease] data-starting-style:scale-90 data-starting-style:opacity-0"
+            "relative min-w-40 origin-(--transform-origin) rounded-xl bg-white p-1 tracking-widest text-neutral-950 shadow-[0px_10px_38px_-10px_rgba(22,23,24,0.35),0px_10px_20px_-15px_rgba(22,23,24,0.2)] outline-hidden transition-[opacity,scale] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)] select-none data-ending-style:scale-90 data-ending-style:opacity-0 data-ending-style:transition-[opacity,scale] data-ending-style:duration-150 data-ending-style:ease-[ease] data-starting-style:scale-90 data-starting-style:opacity-0"
           }
         >
           <Menu.Arrow
@@ -38,24 +38,28 @@ export const UserMenu = () => {
               Trips
             </Menu.GroupLabel>
 
-            {/* TODO: add another trigger/drawer for list of trips to select/load from */}
-            <Drawer.Trigger
-              handle={visitDrawerHandle}
-              className={
-                "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-lg py-4 pr-[5px] pl-[25px] leading-none outline-none hover:bg-blue-500 hover:text-white"
-              }
-            >
-              Calendar
-            </Drawer.Trigger>
+            <Menu.Item>
+              {/* TODO: add another trigger/drawer for list of trips to select/load from */}
+              <Drawer.Trigger
+                handle={visitDrawerHandle}
+                className={
+                  "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-lg py-4 pr-[5px] pl-[25px] leading-none outline-none hover:bg-blue-500 hover:text-white"
+                }
+              >
+                Calendar
+              </Drawer.Trigger>
+            </Menu.Item>
 
-            <Drawer.Trigger
-              handle={tripDrawerHandle}
-              className={
-                "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-lg py-4 pr-[5px] pl-[25px] leading-none outline-none hover:bg-blue-500 hover:text-white"
-              }
-            >
-              Trip
-            </Drawer.Trigger>
+            <Menu.Item>
+              <Drawer.Trigger
+                handle={tripDrawerHandle}
+                className={
+                  "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-lg py-4 pr-[5px] pl-[25px] leading-none outline-none hover:bg-blue-500 hover:text-white"
+                }
+              >
+                Trip
+              </Drawer.Trigger>
+            </Menu.Item>
           </Menu.Group>
 
           <Menu.Group>

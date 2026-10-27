@@ -24,7 +24,7 @@ export const TripContent = ({ map, onFlyTo }: MapNavigation) => {
           ) : (
             <p
               className={
-                "flex w-full cursor-pointer rounded-md bg-blue-500 px-4 py-2 text-2xl font-bold tracking-widest text-white"
+                "flex w-full cursor-pointer rounded-2xl bg-blue-500 px-4 py-2 text-2xl font-bold tracking-widest text-white"
               }
             >
               My Trip
@@ -34,7 +34,7 @@ export const TripContent = ({ map, onFlyTo }: MapNavigation) => {
           <div className="group flex flex-row justify-end">
             <Drawer.Close
               className={
-                "flex cursor-pointer rounded-md bg-blue-500 p-2 text-xl font-bold tracking-widest text-white group-hover:bg-red-500"
+                "flex cursor-pointer rounded-2xl bg-blue-500 p-2 text-xl font-bold tracking-widest text-white group-hover:bg-red-500"
               }
             >
               <CircleCloseIcon className={"fill-none stroke-white"} />
