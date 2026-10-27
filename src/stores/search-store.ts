@@ -6,7 +6,7 @@ import {
   fetchCollection,
   loadStateFromServer,
   nextLoadStateForFetch,
-} from "@/stores/collection-load";
+} from "@/stores/utils/collection-load";
 
 export type SearchState = {
   searches: PlaceSearch[];
@@ -45,9 +45,8 @@ export const createSearchStore = (initialState: SearchState) => {
           if (!next.shouldFetch) return;
           set({ searchesLoadState: next.loadState });
           try {
-            const searches = await fetchCollection<PlaceSearch[]>(
+            const searches = await fetchCollection<PlaceSearch>(
               "/api/searches",
-              "searches",
               "Search",
             );
             set({ searches, searchesLoadState: "loaded", error: null });
@@ -91,14 +90,12 @@ export const createSearchStore = (initialState: SearchState) => {
               }));
               return;
             }
-            const body = (await response.json()) as {
-              search?: PlaceSearch;
-              error?: string;
-            };
-            const search = body.search;
-            if (!response.ok || !search) {
+            const body = await response.json();
+            if (!response.ok) {
               throw new Error(body.error ?? "Unable to log search");
             }
+            const search = body as PlaceSearch;
+            if (!search?.publicId) throw new Error("Invalid search response");
             set((state) => ({
               searches: [search, ...state.searches].slice(0, 100),
             }));
