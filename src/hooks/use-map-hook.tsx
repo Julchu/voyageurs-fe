@@ -1,16 +1,10 @@
-import {
-  type Dispatch,
-  type RefObject,
-  type SetStateAction,
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
+import { type RefObject, useCallback, useMemo, useState } from "react";
 import { Map, Marker } from "mapbox-gl";
 import { Coordinates, MapTimeType } from "@/utils/interfaces";
 import { renderToStaticMarkup } from "react-dom/server";
 import { CurrentLocationPinIcon } from "@/components/ui/icons/pin-icons";
 import { AnimatedHomeIcon } from "@/components/ui/icons/home-icon";
+import { darkMode } from "@/utils/map-time";
 
 type MapMethods = {
   triggerGeolocator: () => void;
@@ -30,6 +24,7 @@ type MapMethods = {
   mapStyles: Record<string, string>;
   markers: Record<string, string>;
   setLightMode: (toMapTime: MapTimeType) => void;
+  shouldUseDarkMode: boolean;
 };
 
 export const MarkerEnum = {
@@ -41,19 +36,13 @@ export const MarkerEnum = {
 
 export const useMapHook = ({
   map,
-  mapLoading,
-  setMapLoading: _setMapLoading,
-  shouldUseDarkMode,
-  currentMapTimeMode,
 }: {
   map?: RefObject<Map | null>;
-  mapLoading?: boolean;
-  setMapLoading?: Dispatch<SetStateAction<boolean>>;
-  shouldUseDarkMode?: boolean;
-  currentMapTimeMode?: MapTimeType;
 }): [MapMethods, boolean, Error | undefined] => {
   const [userLoading] = useState(false);
   const [error] = useState<Error>();
+  const shouldUseDarkMode = darkMode();
+
   // const { performanceMode, setPerformanceMode } = useUserStore(
   //   useShallow(({ performanceMode, setPerformanceMode }) => ({
   //     performanceMode,
@@ -88,11 +77,11 @@ export const useMapHook = ({
     return {
       [MarkerEnum.LOCATION]: renderToStaticMarkup(
         <CurrentLocationPinIcon
-          className={"h-10 w-10 fill-blue-500 stroke-blue-500"}
+          className={"h-10 w-10 fill-white stroke-blue-500"}
         />,
       ),
       [MarkerEnum.HOME]: renderToStaticMarkup(
-        <AnimatedHomeIcon className={"fill-blue-500 stroke-blue-500"} />,
+        <AnimatedHomeIcon className={"fill-blue-500 stroke-white"} />,
       ),
     };
   }, []);
@@ -122,21 +111,23 @@ export const useMapHook = ({
     [map],
   );
 
+  // TODO: check if need to check if map is loading
+  // (as well as for removePerformanceLayer, togglePerformanceLayer,
+  // triggerNorth, and setLightMode)
   const flyTo = useCallback<MapMethods["flyTo"]>(
     (coords, zoom = 15) => {
-      if (map?.current && !mapLoading)
+      if (map?.current)
         map.current.flyTo({ center: [coords.lng, coords.lat], zoom });
     },
-    [map, mapLoading],
+    [map],
   );
 
   // TODO: fix performance layer actions
   const removePerformanceLayer = useCallback<
     MapMethods["removePerformanceLayer"]
   >(() => {
-    if (map?.current && !mapLoading)
-      map.current.removeLayer("add-3d-buildings");
-  }, [map, mapLoading]);
+    if (map?.current) map.current.removeLayer("add-3d-buildings");
+  }, [map]);
 
   const addPerformanceLayer = useCallback<
     MapMethods["addPerformanceLayer"]
@@ -153,27 +144,27 @@ export const useMapHook = ({
     console.log(toggleOn);
   }, []);
 
-  // TODO: move geolocator function from map.tsx
-  const triggerGeolocator = useCallback<MapMethods["triggerGeolocator"]>(() => {
-    return;
-  }, []);
-
-  const triggerNorth = useCallback<MapMethods["triggerNorth"]>(() => {
-    if (map?.current && !mapLoading) map.current.resetNorth({ duration: 2000 });
-  }, [map, mapLoading]);
-
   const updatePerformance = useCallback<
     MapMethods["updatePerformance"]
   >(async () => {
     // setPerformanceMode(!performanceMode);
   }, []);
 
+  // TODO: move geolocator function from map.tsx
+  const triggerGeolocator = useCallback<MapMethods["triggerGeolocator"]>(() => {
+    return;
+  }, []);
+
+  const triggerNorth = useCallback<MapMethods["triggerNorth"]>(() => {
+    if (map?.current) map.current.resetNorth({ duration: 2000 });
+  }, [map]);
+
   const setLightMode = useCallback(
     (mapTime: MapTimeType) => {
-      if (map?.current && !mapLoading)
+      if (map?.current)
         map.current.setConfigProperty("basemap", "lightPreset", mapTime);
     },
-    [map, mapLoading],
+    [map],
   );
 
   return [
@@ -189,6 +180,7 @@ export const useMapHook = ({
       mapStyles,
       markers,
       setLightMode,
+      shouldUseDarkMode,
     },
     userLoading,
     error,

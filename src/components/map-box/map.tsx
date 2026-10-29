@@ -2,24 +2,29 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
 import mapBoxGL, { type Map as MapboxMap, type Marker } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
-import { Controls } from "@/components/map-box/controls";
-import { googleRouteForStops } from "@/components/map-box/utils/google-directions";
+import { Controls } from "@/components/map-controls/controls";
+import { routeForStops } from "@/components/map-box/utils/directions";
 import { placeFromFeature } from "@/components/map-box/utils/place-geocoding";
-import { useMapHook } from "@/hooks/use-map-hook";
+import { MarkerEnum, useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
-import { Coordinates, TripStop } from "@/utils/interfaces";
-import { mapTimeFromDate } from "@/utils/map-time";
+import { Coordinates } from "@/utils/interfaces";
 import {
   applyStandardOverrides,
   buildStandardStyle,
-} from "@/components/map-box/utils/standard-overrides";
-import { drawRoute } from "@/components/map-box/utils/route-layer";
-import { TripDrawer } from "@/components/trips/trip-drawer";
+} from "@/components/map-box/utils/mapbox-standard-styling";
+import {
+  drawRoute,
+  updateRouteAppearance,
+} from "@/components/map-box/utils/route-layer";
 import { useShallow } from "zustand/react/shallow";
-import { openPlacePopup } from "@/components/map-box/map-components";
+import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
+import { AddressSearch } from "@/components/location-search-box/address-search";
+import { TripDrawer } from "@/components/trips-drawer/trip-drawer";
+import { useTripStore } from "@/providers/trip-store-provider";
 
 const stopMarker = (index: number, visited: boolean) => {
-  const element = document.createElement("div");
+  const element = document.createElement("button");
+  element.type = "button";
   element.className =
     "w-7 h-7 rounded-full flex items-center justify-center bg-blue-500 text-xs font-medium border-white border-2";
   element.textContent = String(index + 1);
@@ -35,15 +40,9 @@ export type MapFocus = {
 
 // TODO: switch loading state to loaded state and move up 1
 export const MapAndControls = ({
-  shouldUseDarkMode,
   initialCoords,
-  focus,
-  stops,
 }: {
-  shouldUseDarkMode: boolean;
   initialCoords: Coordinates;
-  focus: MapFocus | null;
-  stops: TripStop[];
 }) => {
   const { lastLocation, setLastLocation } = useUserStore(
     useShallow(({ lastLocation, setLastLocation }) => ({
@@ -51,26 +50,25 @@ export const MapAndControls = ({
       setLastLocation,
     })),
   );
+
+  const currentTrip = useTripStore(({ currentTrip }) => currentTrip);
+
   const map = useRef<MapboxMap | null>(null);
-  const [mapLoading, setMapLoading] = useState(true);
   const mapContainer = useRef<HTMLDivElement>(null);
+  const [mapLoading, setMapLoading] = useState(true);
   const [locationLoading, setLocationLoading] = useState(false);
   const [currentMarker, setCurrentMarker] = useState<Marker>();
   const stopMarkers = useRef<globalThis.Map<string, Marker>>(
     new globalThis.Map(),
   );
 
-  const [currentMapTimeMode, setCurrentMapTimeMode] = useState(() =>
-    mapTimeFromDate(),
-  );
+  const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
 
-  const [{ markers, addMarker, flyTo }] = useMapHook({
+  const [{ markers, addMarker, flyTo, shouldUseDarkMode }] = useMapHook({
     map,
-    mapLoading,
-    setMapLoading,
-    shouldUseDarkMode,
   });
 
+  // Initial map load
   useEffect(() => {
     if (!map.current && mapContainer.current !== null) {
       try {
@@ -90,7 +88,15 @@ export const MapAndControls = ({
             applyStandardOverrides(map.current);
             map.current.resize();
           })
-          .on("idle", () => setMapLoading(false))
+          .on("idle", () => {
+            const lat = map.current?.getCenter().lat;
+            const lng = map.current?.getCenter().lng;
+            if (lat && lng) {
+              setMapFocus({ token: Date.now(), coordinates: { lat, lng } });
+            }
+
+            setMapLoading(false);
+          })
           .on("moveend", () => {
             setLocationLoading(false);
           });
@@ -106,12 +112,7 @@ export const MapAndControls = ({
     };
   }, [initialCoords.lat, initialCoords.lng]);
 
-  // TODO: test streetAddress search flies map
-  useEffect(() => {
-    if (!focus || mapLoading) return;
-    flyTo(focus.coordinates, 15);
-  }, [focus, flyTo, mapLoading]);
-
+  // Adding onClick interaction to retrieve PoI info
   useEffect(() => {
     const mapInstance = map.current;
     if (!mapInstance || mapLoading) return;
@@ -172,12 +173,13 @@ export const MapAndControls = ({
     };
   }, [mapLoading]);
 
+  // Adds markers for current trip's stops
   useEffect(() => {
     const mapInstance = map.current;
     if (!mapInstance || mapLoading) return;
 
     const seen = new Set<string>();
-    stops.forEach((stop, index) => {
+    currentTrip?.stops.forEach((stop, index) => {
       const key =
         stop.clientId ??
         stop.publicId ??
@@ -186,7 +188,13 @@ export const MapAndControls = ({
       const existing = stopMarkers.current.get(key);
       if (existing) {
         existing.setLngLat([stop.coordinates.lng, stop.coordinates.lat]);
+
+        // TODO: reuse addMarker and markers from useMapHook
         const element = existing.getElement();
+        element.setAttribute(
+          "aria-label",
+          `Open stop ${index + 1}: ${stop.name}`,
+        );
         element.textContent = String(index + 1);
         element.style.background = stop.visited ? "#15803d" : "#1d4ed8";
         // Re-bind so the handler always references the current stop data.
@@ -198,6 +206,10 @@ export const MapAndControls = ({
       }
 
       const element = stopMarker(index, stop.visited);
+      element.setAttribute(
+        "aria-label",
+        `Open stop ${index + 1}: ${stop.name}`,
+      );
       // The popup reuses saved metadata and fetches anything missing.
       element.style.cursor = "pointer";
       element.onclick = (event) => {
@@ -216,8 +228,9 @@ export const MapAndControls = ({
       marker.remove();
       stopMarkers.current.delete(publicId);
     }
-  }, [mapLoading, stops]);
+  }, [mapLoading, currentTrip?.stops]);
 
+  // Remove all stop markers when the map component unmounts
   useEffect(() => {
     const markersOnMap = stopMarkers.current;
     return () => {
@@ -227,7 +240,9 @@ export const MapAndControls = ({
   }, []);
 
   // Metadata enrichment mustn't trigger another billed directions request.
-  const stopKey = JSON.stringify(stops.map((stop) => stop.coordinates));
+  const stopKey = JSON.stringify(
+    currentTrip?.stops.map((stop) => stop.coordinates) ?? [],
+  );
 
   useEffect(() => {
     const mapInstance = map.current;
@@ -243,7 +258,7 @@ export const MapAndControls = ({
     }
 
     const timer = window.setTimeout(() => {
-      void googleRouteForStops(coordinates).then((route) => {
+      void routeForStops(coordinates).then((route) => {
         if (cancelled || !map.current) return;
         drawRoute(map.current, route.line);
       });
@@ -255,6 +270,12 @@ export const MapAndControls = ({
     };
   }, [mapLoading, stopKey]);
 
+  useEffect(() => {
+    if (!map.current || mapLoading) return;
+    updateRouteAppearance(map.current);
+  }, [mapLoading]);
+
+  // TODO: extract to MapHooks
   const flyAndUpdateUser = () => {
     setLocationLoading(true);
 
@@ -269,7 +290,7 @@ export const MapAndControls = ({
 
         if (map.current)
           addMarker(
-            markers["location"],
+            markers[MarkerEnum.HOME],
             currentMarker,
             setCurrentMarker,
             coords,
@@ -291,7 +312,7 @@ export const MapAndControls = ({
   useEffect(() => {
     if (map.current && lastLocation)
       addMarker(
-        markers["home"],
+        markers[MarkerEnum.HOME],
         currentMarker,
         setCurrentMarker,
         lastLocation,
@@ -316,12 +337,13 @@ export const MapAndControls = ({
       <Controls
         map={map}
         mapLoading={mapLoading}
-        setMapLoading={setMapLoading}
         locationLoading={locationLoading}
         triggerGeolocator={flyAndUpdateUser}
-        shouldUseDarkMode={shouldUseDarkMode}
-        currentMapTimeMode={currentMapTimeMode}
-        setCurrentMapTimeMode={setCurrentMapTimeMode}
+      />
+
+      <AddressSearch
+        provider="mapbox"
+        proximity={mapFocus?.coordinates ?? initialCoords}
       />
 
       <TripDrawer map={map} />

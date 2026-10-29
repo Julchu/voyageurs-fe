@@ -1,9 +1,4 @@
-import {
-  type Dispatch,
-  type RefObject,
-  type SetStateAction,
-  useCallback,
-} from "react";
+import { type RefObject, useCallback, useState } from "react";
 import type { Map } from "mapbox-gl";
 import {
   DawnIcon,
@@ -18,43 +13,35 @@ import { Spinner } from "@/components/ui/icons/spinner";
 import { useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
 import { useShallow } from "zustand/react/shallow";
-import { MapTimeEnum, MapTimeType, MapTimeValues } from "@/utils/interfaces";
-import { MapFocus } from "@/components/map-box/map";
+import { MapTimeEnum, MapTimeValues } from "@/utils/interfaces";
 import { Toolbar } from "@base-ui/react/toolbar";
 import { cn } from "cn";
+import { mapTimeFromDate } from "@/utils/map-time";
 
 export const Controls = ({
   map,
   mapLoading,
-  setMapLoading,
   locationLoading,
   triggerGeolocator,
-  currentMapTimeMode,
-  setCurrentMapTimeMode,
 }: {
   map: RefObject<Map | null>;
   mapLoading: boolean;
-  setMapLoading: Dispatch<SetStateAction<boolean>>;
   locationLoading: boolean;
   triggerGeolocator: () => void;
-  shouldUseDarkMode: boolean;
-  currentMapTimeMode: MapTimeType;
-  setCurrentMapTimeMode: Dispatch<SetStateAction<MapTimeType>>;
-  mapFocus: MapFocus | null;
 }) => {
   const { userInfo } = useUserStore(
     useShallow(({ userInfo }) => ({
       userInfo,
     })),
   );
-  const [{ updatePerformance, triggerNorth, setLightMode, flyTo }] = useMapHook(
-    {
-      map,
-      mapLoading,
-      setMapLoading,
-      currentMapTimeMode,
-    },
+
+  const [currentMapTimeMode, setCurrentMapTimeMode] = useState(() =>
+    mapTimeFromDate(),
   );
+
+  const [{ updatePerformance, triggerNorth, setLightMode }] = useMapHook({
+    map,
+  });
 
   const updatePerformanceCallback = useCallback(async () => {
     await updatePerformance();

@@ -18,3 +18,9 @@ export const mapTimeFromDate = (date: Date = new Date()): MapTimeType => {
   if (hour < DUSK_START) return MapTimeEnum.DAY;
   return MapTimeEnum.DUSK;
 };
+
+export const darkMode = (date: Date = new Date()): boolean => {
+  const hour = localHour(date);
+
+  return hour >= DUSK_START || hour < DAY_START;
+};
