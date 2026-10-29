@@ -79,6 +79,7 @@ export type Place = {
   // A successful lookup may legitimately return no photos or address.
   placeInfoLoaded?: boolean;
   details?: PlaceDetails;
+  googleAttributions?: { provider: string; uri?: string }[];
 };
 
 export type TripStop = Place & {
