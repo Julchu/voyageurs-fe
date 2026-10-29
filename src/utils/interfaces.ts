@@ -51,6 +51,8 @@ export type PlacePhoto = {
   url: string;
   width?: number | null;
   height?: number | null;
+  googleMapsUri?: string;
+  googleAuthors?: { name: string; uri?: string; photoUri?: string }[];
 };
 
 export type PlaceDetails = {

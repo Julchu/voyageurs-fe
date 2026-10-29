@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { googlePersistableTrip } from "@/utils/google-place-persistence";
 import {
   reconcileSavedTrip,
   requestTripSave,
@@ -16,7 +17,7 @@ import {
   fetchCollection,
   loadStateFromServer,
   nextLoadStateForFetch,
-} from "@/stores/collection-load";
+} from "@/stores/utils/collection-load";
 
 export type TripState = {
   trips: Trip[];
@@ -29,9 +30,9 @@ export type TripActions = {
   fetchTrips: () => Promise<void>;
   syncTrips: (tripFormData: TripFormData) => Promise<void>;
   addStop: (stop: Place) => void;
-  // Fill in a stop that was saved before its place lookup finished.
-  rememberPlace: (place: Place) => void;
-  getRememberedPlace: (place: Place) => Place;
+  // Fill in a Google stop that was saved before its place lookup finished.
+  googleRememberPlace: (place: Place) => void;
+  googleGetRememberedPlace: (place: Place) => Place;
   removeStop: (clientOrPublicId?: string) => void;
   reorderStops: (from: number, to: number) => void;
   renameTrip: (name: string) => void;
@@ -75,6 +76,9 @@ const newStop = ({
   ...(place.mapboxId ? { mapboxId: place.mapboxId } : {}),
   ...(place.photos ? { photos: place.photos } : {}),
   ...(place.placeInfoLoaded ? { placeInfoLoaded: true } : {}),
+  ...(place.googleAttributions
+    ? { googleAttributions: place.googleAttributions }
+    : {}),
   ...(place.details ? { details: place.details } : {}),
   position,
   visited: false,
@@ -105,15 +109,20 @@ const addStop = ({
   };
 };
 
-const samePoint = (a: Place["coordinates"], b: Place["coordinates"]) =>
+const googleSamePoint = (a: Place["coordinates"], b: Place["coordinates"]) =>
   Math.abs(a.lat - b.lat) < 1e-5 && Math.abs(a.lng - b.lng) < 1e-5;
 
-const samePlace = (a: Place, b: Place) =>
+const googleSamePlace = (a: Place, b: Place) =>
   (a.mapboxId && a.mapboxId === b.mapboxId) ||
-  (a.name === b.name && samePoint(a.coordinates, b.coordinates));
+  (a.name === b.name && googleSamePoint(a.coordinates, b.coordinates));
 
-const withPlaceInfo = <T extends Place>(original: T, place: Place): T => ({
+const googleWithPlaceInfo = <T extends Place>(
+  original: T,
+  place: Place,
+): T => ({
   ...original,
+  name: place.name || original.name,
+  coordinates: place.coordinates,
   mapboxId: place.mapboxId ?? original.mapboxId,
   streetAddress: place.streetAddress || original.streetAddress,
   areaAddress: place.areaAddress || original.areaAddress,
@@ -121,11 +130,12 @@ const withPlaceInfo = <T extends Place>(original: T, place: Place): T => ({
   photos: place.photos ?? original.photos,
   placeInfoLoaded: place.placeInfoLoaded ?? original.placeInfoLoaded,
   details: place.details ?? original.details,
+  googleAttributions: place.googleAttributions ?? original.googleAttributions,
 });
 
 // Save both basic and expanded details, including on stops that already have
 // an id. Retain each stop's identity, position, and visited state.
-const applyRememberedPlace = ({
+const googleApplyRememberedPlace = ({
   currentTrip,
   place,
 }: {
@@ -135,8 +145,8 @@ const applyRememberedPlace = ({
   if (!place.mapboxId) return currentTrip;
   let changed = false;
   const stops = currentTrip.stops.map((stop) => {
-    if (!samePlace(stop, place)) return stop;
-    const next = withPlaceInfo(stop, place);
+    if (!googleSamePlace(stop, place)) return stop;
+    const next = googleWithPlaceInfo(stop, place);
     if (
       Object.keys(next).every(
         (key) =>
@@ -284,13 +294,13 @@ export const createTripStore = (initialState: TripState) => {
             tripVersion: tripVersion + 1,
           }));
         },
-        // TODO: rework remember Place for temp stop info
-        rememberPlace: (place) => {
+        // TODO: rework temporary Google stop info.
+        googleRememberPlace: (place) => {
           set(({ currentTrip, trips, tripVersion }) => {
             if (!currentTrip) return {};
-            const next = applyRememberedPlace({ currentTrip, place });
+            const next = googleApplyRememberedPlace({ currentTrip, place });
             const nextTrips = trips.map((trip) =>
-              applyRememberedPlace({ currentTrip: trip, place }),
+              googleApplyRememberedPlace({ currentTrip: trip, place }),
             );
             if (
               next === currentTrip &&
@@ -304,14 +314,16 @@ export const createTripStore = (initialState: TripState) => {
             };
           });
         },
-        getRememberedPlace: (place) => {
+        googleGetRememberedPlace: (place) => {
           const state = get();
           const stop =
-            state.currentTrip?.stops.find((stop) => samePlace(stop, place)) ??
+            state.currentTrip?.stops.find((stop) =>
+              googleSamePlace(stop, place),
+            ) ??
             state.trips
               .flatMap((trip) => trip.stops)
-              .find((stop) => samePlace(stop, place));
-          return stop ? withPlaceInfo(place, stop) : place;
+              .find((stop) => googleSamePlace(stop, place));
+          return stop ? googleWithPlaceInfo(place, stop) : place;
         },
         removeStop: (clientOrPublicId) => {
           if (!clientOrPublicId) return;
@@ -373,7 +385,9 @@ export const createTripStore = (initialState: TripState) => {
       {
         name: "voyageurs-trips",
         partialize: ({ currentTrip, tripVersion }) => ({
-          currentTrip,
+          currentTrip: currentTrip
+            ? googlePersistableTrip(currentTrip)
+            : undefined,
           tripVersion,
         }),
         merge: (persisted, current) => {
