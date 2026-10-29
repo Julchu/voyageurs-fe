@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Trip } from "@/utils/interfaces";
 import { sameTrip, tripSaveBody } from "@/utils/trip-sync";
+import { googlePersistableTrip } from "@/utils/google-place-persistence";
 
 export const useTripDirty = (
   currentTrip?: Trip,
@@ -17,8 +18,8 @@ const isTripDirty = (currentTrip?: Trip, serverTrip?: Trip) => {
   if (!serverTrip || !sameTrip(currentTrip, serverTrip)) return true;
 
   // Match the save payload so temporary place details don't mark a trip dirty.
-  const draft = tripSaveBody(currentTrip);
-  const saved = tripSaveBody(serverTrip);
+  const draft = tripSaveBody(googlePersistableTrip(currentTrip));
+  const saved = tripSaveBody(googlePersistableTrip(serverTrip));
 
   return (
     draft.name !== saved.name ||
