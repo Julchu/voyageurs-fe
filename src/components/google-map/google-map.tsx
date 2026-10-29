@@ -124,7 +124,6 @@ export const GoogleMap = ({
               coordinates: event.position
                 ? { lat: event.position.lat, lng: event.position.lng }
                 : origin.current,
-              placeInfoProvider: "google",
             });
           },
           { signal: events.signal },
@@ -245,7 +244,8 @@ export const GoogleMap = ({
             : "Couldn’t load Google Maps. Check the browser key and Maps JavaScript API access, then reload."}
         </div>
       ) : null}
-      <TripDrawer onFlyTo={googleFlyTo} />
+      {/* onFlyTo={googleFlyTo} */}
+      <TripDrawer />
     </>
   );
 };
