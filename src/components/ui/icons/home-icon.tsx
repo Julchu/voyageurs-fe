@@ -35,8 +35,8 @@ export const AnimatedHomeIcon = ({
 
   return (
     <div className="relative h-6 w-6">
-      <HomeIconUnfilled className={cn("absolute", shared)} {...svgProps} />
-      <HomeIconUnfilled className={cn("animate-ping", shared)} {...svgProps} />
+      <HomeIcon className={cn("absolute", shared)} {...svgProps} />
+      <HomeIcon className={cn("animate-ping", shared)} {...svgProps} />
     </div>
   );
 };

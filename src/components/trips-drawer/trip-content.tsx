@@ -1,19 +1,12 @@
 import { Drawer } from "@base-ui/react/drawer";
 import { TripForm } from "@/components/trips-drawer/trip-form";
 import { CircleCloseIcon } from "@/components/ui/icons/close-icons";
-import { RefObject } from "react";
-import type { Map } from "mapbox-gl";
-import type { Coordinates } from "@/utils/interfaces";
 import { useUserStore } from "@/providers/user-store-provider";
 import { TripSelector } from "@/components/trips-drawer/trip-selector";
 import { Separator } from "@base-ui/react";
+import { MapNavigation } from "@/components/trips-drawer/types";
 
-type MapNavigation = {
-  map?: RefObject<Map | null>;
-  onFlyTo?: (coordinates: Coordinates, zoom?: number) => void;
-};
-
-export const TripContent = ({ map, onFlyTo }: MapNavigation) => {
+export const TripContent = ({ map }: MapNavigation) => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
   return (
     <div className={"flex min-h-0 w-full flex-auto flex-col"}>
@@ -45,7 +38,7 @@ export const TripContent = ({ map, onFlyTo }: MapNavigation) => {
 
       <Separator className={"h-px bg-gray-200"} />
 
-      <TripForm map={map} onFlyTo={onFlyTo} />
+      <TripForm map={map} />
     </div>
   );
 };
