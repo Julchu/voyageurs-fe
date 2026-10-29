@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { googlePersistablePlace } from "@/utils/google-place-persistence";
 import type { PlaceSearch, PlaceSearchInput } from "@/utils/interfaces";
 import {
   type CollectionLoadState,
@@ -81,7 +82,7 @@ export const createSearchStore = (initialState: SearchState) => {
             const response = await fetch("/api/searches", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(entry),
+              body: JSON.stringify(googlePersistablePlace(entry)),
             });
             if (response.status === 401) {
               set((state) => ({
@@ -106,7 +107,9 @@ export const createSearchStore = (initialState: SearchState) => {
       }),
       {
         name: "voyageurs-searches",
-        partialize: ({ searches }) => ({ searches }),
+        partialize: ({ searches }) => ({
+          searches: searches.map(googlePersistablePlace),
+        }),
         merge: (persisted, current) => {
           const saved = persisted as Partial<Pick<SearchState, "searches">>;
           return {
