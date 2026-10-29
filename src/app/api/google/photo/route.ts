@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Place Photo (New) proxy for `next/image`.
- *
- * The client `src` is this route (`?name=<photo resource name>&w=<px>`). The
- * image optimizer loads that path internally and only accepts a 2xx image
- * body — it does not follow redirects — so we resolve the media URL here and
- * return the bytes. The API key stays on the server. The Photo SKU is billed
- * per upstream fetch; callers only build URLs for photos they render.
+ * Resolve a photo without exposing the server key. Unoptimized images follow
+ * the redirect straight to Google's CDN, avoiding a second server fetch.
+ * Neither photo resource names nor the redirect are durably cached.
  */
 export const GET = async (request: NextRequest) => {
   const key = process.env.GOOGLE_MAPS_API_KEY;
@@ -36,6 +32,7 @@ export const GET = async (request: NextRequest) => {
     const meta = await fetch(upstream, {
       headers: { "X-Goog-Api-Key": key },
       cache: "no-store",
+      signal: request.signal,
     });
     if (!meta.ok) {
       return NextResponse.json(
@@ -48,25 +45,15 @@ export const GET = async (request: NextRequest) => {
       return NextResponse.json({ error: "No photo" }, { status: 404 });
     }
 
-    // Fetch the CDN URL without the API key. `photoUri` is short-lived, so
-    // this response is not cached here; `next/image` caches the optimized result.
-    const image = await fetch(body.photoUri, { cache: "no-store" });
-    if (!image.ok) {
+    if (new URL(body.photoUri).protocol !== "https:") {
       return NextResponse.json(
         { error: "Photo lookup failed" },
-        { status: image.status },
+        { status: 502 },
       );
     }
-    const contentType = image.headers.get("content-type") ?? "";
-    if (!contentType.startsWith("image/")) {
-      return NextResponse.json({ error: "Photo lookup failed" }, { status: 502 });
-    }
-
-    return new NextResponse(await image.arrayBuffer(), {
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=86400",
-      },
+    return NextResponse.redirect(body.photoUri, {
+      status: 307,
+      headers: { "Cache-Control": "private, no-store" },
     });
   } catch {
     return NextResponse.json(

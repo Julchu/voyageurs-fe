@@ -5,13 +5,13 @@ import { googleProxy } from "@/utils/google-maps-server";
  * line, so the field mask requests nothing but the encoded polyline — the
  * cheapest Routes tier. The client posts an already-shaped Routes request body.
  */
-const FIELD_MASK = "routes.polyline.encodedPolyline";
+const GOOGLE_DIRECTIONS_FIELD_MASK = "routes.polyline.encodedPolyline";
 
 export const POST = async (request: Request) => {
   const body = await request.text();
   return googleProxy(
     "https://routes.googleapis.com/directions/v2:computeRoutes",
-    FIELD_MASK,
-    { method: "POST", body },
+    GOOGLE_DIRECTIONS_FIELD_MASK,
+    { method: "POST", body, signal: request.signal },
   );
 };

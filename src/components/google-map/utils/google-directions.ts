@@ -9,14 +9,14 @@ import type { RouteKind } from "@/components/map-box/utils/directions";
  */
 
 // Routes API allows up to 25 intermediate waypoints; match the Mapbox cap.
-const MAX_DIRECTION_STOPS = 25;
+const GOOGLE_MAX_DIRECTION_STOPS = 25;
 
-type ComputeRoutesResponse = {
+type GoogleComputeRoutesResponse = {
   routes?: { polyline?: { encodedPolyline?: string } }[];
 };
 
 /** Decode a Google encoded polyline (precision 5) to `[lat, lng]` pairs. */
-const decodePolyline = (encoded: string): [number, number][] => {
+const googleDecodePolyline = (encoded: string): [number, number][] => {
   const coordinates: [number, number][] = [];
   let index = 0;
   let lat = 0;
@@ -47,7 +47,7 @@ const decodePolyline = (encoded: string): [number, number][] => {
   return coordinates;
 };
 
-const latLng = (point: Coordinates) => ({
+const googleRouteWaypoint = (point: Coordinates) => ({
   location: { latLng: { latitude: point.lat, longitude: point.lng } },
 });
 
@@ -58,18 +58,20 @@ const latLng = (point: Coordinates) => ({
  */
 export const googleRouteForStops = async (
   coordinates: Coordinates[],
+  signal?: AbortSignal,
 ): Promise<{ kind: RouteKind; line: [number, number][] }> => {
   const line = coordinates.map(
     (point) => [point.lng, point.lat] as [number, number],
   );
   if (line.length < 2) return { kind: "empty", line };
-  if (line.length > MAX_DIRECTION_STOPS) return { kind: "straight", line };
+  if (line.length > GOOGLE_MAX_DIRECTION_STOPS)
+    return { kind: "straight", line };
 
   const payload = {
-    origin: latLng(coordinates[0]),
-    destination: latLng(coordinates[coordinates.length - 1]),
+    origin: googleRouteWaypoint(coordinates[0]),
+    destination: googleRouteWaypoint(coordinates[coordinates.length - 1]),
     ...(coordinates.length > 2
-      ? { intermediates: coordinates.slice(1, -1).map(latLng) }
+      ? { intermediates: coordinates.slice(1, -1).map(googleRouteWaypoint) }
       : {}),
     travelMode: "DRIVE",
     polylineQuality: "OVERVIEW",
@@ -80,14 +82,15 @@ export const googleRouteForStops = async (
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      signal,
     });
     if (!response.ok) return { kind: "straight", line };
-    const body = (await response.json()) as ComputeRoutesResponse;
+    const body = (await response.json()) as GoogleComputeRoutesResponse;
     const encoded = body.routes?.[0]?.polyline?.encodedPolyline;
     if (!encoded) return { kind: "straight", line };
 
     // Google returns [lat, lng]; flip to [lng, lat] for GeoJSON / Mapbox.
-    const routed = decodePolyline(encoded).map(
+    const routed = googleDecodePolyline(encoded).map(
       ([lat, lng]) => [lng, lat] as [number, number],
     );
     if (routed.length < 2) return { kind: "straight", line };
