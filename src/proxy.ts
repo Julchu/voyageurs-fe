@@ -5,8 +5,12 @@ const accessTokenStale = (token: string) => {
     const part = token.split(".")[1];
     if (!part) return true;
     const padded = part.replace(/-/g, "+").replace(/_/g, "/");
-    const payload = JSON.parse(atob(padded)) as { exp?: unknown };
+    const payload = JSON.parse(atob(padded)) as {
+      exp?: unknown;
+      sid?: unknown;
+    };
     return (
+      typeof payload.sid !== "string" ||
       typeof payload.exp !== "number" ||
       payload.exp * 1000 <= Date.now() + 30_000
     );
@@ -57,7 +61,8 @@ export async function proxy(req: NextRequest) {
   const shouldRefresh =
     Boolean(refreshToken) &&
     (!accessToken || accessTokenStale(accessToken)) &&
-    !req.nextUrl.pathname.startsWith("/api/login");
+    !req.nextUrl.pathname.startsWith("/api/login") &&
+    req.nextUrl.pathname !== "/api/logout";
 
   if (shouldRefresh && accessTokenKey && refreshTokenKey && refreshToken) {
     try {
