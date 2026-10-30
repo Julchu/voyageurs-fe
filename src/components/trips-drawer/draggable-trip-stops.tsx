@@ -1,7 +1,8 @@
 import { useSortable } from "@dnd-kit/react/sortable";
-import { Coordinates, TripStopFormData } from "@/utils/interfaces";
+import type { Coordinates } from "@/utils/interfaces";
+import type { TripStopDraft } from "@/types/trip-draft";
 import { MoveDownArrow, MoveUpArrow } from "@/components/ui/icons/move-icons";
-import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
+import { PinArrowIcon, PinRemoveIcon } from "@/components/ui/icons/pin-icons";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 import { cn } from "cn";
 import { Menu } from "@base-ui/react/menu";
@@ -20,7 +21,7 @@ export const DraggableTripStops = ({
 }: {
   id: string;
   index: number;
-  stop: TripStopFormData;
+  stop: TripStopDraft;
   onClickHandler: (coords: Coordinates, zoom?: number) => void;
 }) => {
   const { ref, isDragging } = useSortable({
@@ -59,11 +60,21 @@ export const DraggableTripStops = ({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm text-wrap">{stop.name}</span>
+          <span className="block truncate text-xs text-wrap text-neutral-500 capitalize">
+            {stop.streetAddress || "No address"}
+          </span>
+          <span className="block truncate text-xs text-neutral-500 capitalize">
+            {stop.areaAddress || "No address"}
+          </span>
         </span>
       </div>
 
       <div className={"ml-auto shrink-0"}>
-        <PlaceActionsMenu index={index} stop={stop} />
+        <PlaceActionsMenu
+          index={index}
+          stop={stop}
+          onJumpToLocation={() => onClickHandler(stop.coordinates)}
+        />
       </div>
     </li>
   );
@@ -72,9 +83,11 @@ export const DraggableTripStops = ({
 export const PlaceActionsMenu = ({
   stop,
   index,
+  onJumpToLocation,
 }: {
-  stop: TripStopFormData;
+  stop: TripStopDraft;
   index: number;
+  onJumpToLocation: () => void;
 }) => {
   const { currentTrip, removeStop, reorderStops } = useTripStore(
     useShallow(({ currentTrip, removeStop, reorderStops }) => ({
@@ -100,9 +113,17 @@ export const PlaceActionsMenu = ({
         >
           <Menu.Popup
             className={
-              "flex origin-[var(--transform-origin)] flex-col border border-gray-200 p-2 text-black shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] outline-hidden transition-[scale,opacity] duration-100 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-100 data-starting-style:scale-[0.98] data-starting-style:opacity-0"
+              "flex origin-[var(--transform-origin)] flex-col rounded-2xl bg-white p-2 text-black shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] outline-hidden transition-[scale,opacity] duration-100 ease-out data-ending-style:scale-100 data-ending-style:opacity-100 data-starting-style:scale-100 data-starting-style:opacity-0"
             }
           >
+            <MenuItem onClick={onJumpToLocation}>
+              <PinArrowIcon
+                aria-hidden="true"
+                className="h-6 w-6 fill-none stroke-blue-500 group-hover:stroke-white"
+              />
+              Jump to location
+            </MenuItem>
+
             {index !== 0 ? (
               <MenuItem
                 aria-label={`Move ${stop.name} up`}
