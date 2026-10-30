@@ -43,7 +43,7 @@ const SearchesPage = () => {
             >
               {search.name}
             </Link>
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-neutral-500 capitalize">
               {search.streetAddress || search.query}
             </p>
             <p className="text-xs text-neutral-400">
