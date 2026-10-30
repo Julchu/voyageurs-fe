@@ -1,22 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { GoogleIcon } from "@/components/ui/icons/google-icon";
 import { useUserStore } from "@/providers/user-store-provider";
+import { useTripStore } from "@/providers/trip-store-provider";
 import { tripDrawerHandle } from "@/components/trips-drawer/trip-drawer";
 import { Drawer } from "@base-ui/react/drawer";
 import { useShallow } from "zustand/react/shallow";
 import { visitDrawerHandle } from "@/components/visits-drawer/visit-drawer";
 
 export const UserMenu = () => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { userInfo, logout } = useUserStore(
     useShallow(({ userInfo, logout }) => ({ userInfo, logout })),
   );
 
-  const logoutHandler = () => {
-    void logout();
-    // TODO: clear trips and other user data
+  const clearTrips = useTripStore(({ clearTrips }) => clearTrips);
+
+  const logoutHandler = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Unable to logout", error);
+    } finally {
+      clearTrips();
+      // TODO: Clear saved searches from memory and browser storage on logout,
+      // and ignore search responses started before logout.
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -38,27 +53,25 @@ export const UserMenu = () => {
               Trips
             </Menu.GroupLabel>
 
-            <Menu.Item>
+            <Menu.Item
+              nativeButton
+              render={<Drawer.Trigger handle={visitDrawerHandle} />}
+              className={
+                "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-lg py-4 pr-[5px] pl-[25px] leading-none outline-none data-[highlighted]:bg-blue-500 data-[highlighted]:text-white"
+              }
+            >
               {/* TODO: add another trigger/drawer for list of trips to select/load from */}
-              <Drawer.Trigger
-                handle={visitDrawerHandle}
-                className={
-                  "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-lg py-4 pr-[5px] pl-[25px] leading-none outline-none hover:bg-blue-500 hover:text-white"
-                }
-              >
-                Calendar
-              </Drawer.Trigger>
+              Calendar
             </Menu.Item>
 
-            <Menu.Item>
-              <Drawer.Trigger
-                handle={tripDrawerHandle}
-                className={
-                  "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-lg py-4 pr-[5px] pl-[25px] leading-none outline-none hover:bg-blue-500 hover:text-white"
-                }
-              >
-                Trip
-              </Drawer.Trigger>
+            <Menu.Item
+              nativeButton
+              render={<Drawer.Trigger handle={tripDrawerHandle} />}
+              className={
+                "text-md relative flex h-6 w-full cursor-pointer content-center items-center rounded-lg py-4 pr-[5px] pl-[25px] leading-none outline-none data-[highlighted]:bg-blue-500 data-[highlighted]:text-white"
+              }
+            >
+              Trip
             </Menu.Item>
           </Menu.Group>
 
@@ -68,6 +81,8 @@ export const UserMenu = () => {
             </Menu.GroupLabel>
 
             <Menu.Item
+              onClick={userInfo ? logoutHandler : undefined}
+              disabled={isLoggingOut}
               className={
                 "text-md relative flex h-6 content-center items-center rounded-lg py-4 leading-none outline-none data-[highlighted]:bg-blue-500 data-[highlighted]:text-white"
               }
