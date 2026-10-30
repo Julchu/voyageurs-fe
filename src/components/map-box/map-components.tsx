@@ -17,7 +17,7 @@ export const MapComponents = ({
     <div className="relative h-full w-full">
       <MapAndControls initialCoords={initialCoords ?? DEFAULT_COORDS} />
 
-      <SelectedAddressPopup provider="mapbox" />
+      <SelectedAddressPopup />
       {/*<GooglePlacePopup />*/}
 
       {/*Visit checklist stays closed until openVisitDrawer() is called.*/}
