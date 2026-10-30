@@ -45,7 +45,7 @@ export const LinksNavigationMenu = () => {
         <NavigationMenu.Item>
           <NavigationMenu.Trigger
             className={
-              "flex cursor-pointer items-center rounded-2xl bg-blue-500/50 px-4 py-2 text-2xl font-bold tracking-widest text-white"
+              "flex cursor-pointer items-center rounded-xl bg-blue-500/50 px-4 py-2 text-2xl font-bold tracking-widest text-white"
             }
           >
             Voyageurs
@@ -56,7 +56,7 @@ export const LinksNavigationMenu = () => {
                 <li key={link.href}>
                   <NavigationMenu.Link
                     className={
-                      "group initialCoords-visible:-outline-offset-1 initialCoords-visible:outline-blue-500 relative block h-full w-full rounded-md p-2 text-left text-inherit no-underline hover:bg-blue-500 hover:text-white focus-visible:outline-2"
+                      "group initialCoords-visible:-outline-offset-1 initialCoords-visible:outline-blue-500 relative block h-full w-full rounded-lg p-2 text-left text-inherit no-underline hover:bg-blue-500 hover:text-white focus-visible:outline-2"
                     }
                     closeOnClick
                     render={<NextLink href={link.href} />}
@@ -87,7 +87,7 @@ export const LinksNavigationMenu = () => {
             ["--easing" as string]: "cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
-          <NavigationMenu.Popup className="relative h-[var(--popup-height)] w-[var(--popup-width)] origin-[var(--transform-origin)] rounded-md bg-white text-neutral-950 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] transition-[scale,opacity] duration-100 ease-out outline-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0">
+          <NavigationMenu.Popup className="relative h-[var(--popup-height)] w-[var(--popup-width)] origin-[var(--transform-origin)] rounded-xl bg-white text-neutral-950 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] transition-[scale,opacity] duration-100 ease-out outline-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0">
             <NavigationMenu.Arrow className="relative block h-1.5 w-3 overflow-clip transition-[left,right] duration-[var(--duration)] ease-[var(--easing)] before:absolute before:bottom-0 before:left-1/2 before:h-[calc(6px*sqrt(2))] before:w-[calc(6px*sqrt(2))] before:[transform:translate(-50%,50%)_rotate(45deg)] before:bg-white before:content-[''] data-[side=bottom]:top-[-6px] data-[side=left]:right-[-9px] data-[side=left]:rotate-90 data-[side=right]:left-[-9px] data-[side=right]:-rotate-90 data-[side=top]:bottom-[-6px] data-[side=top]:rotate-180" />
             <NavigationMenu.Viewport className="relative h-full w-full overflow-hidden" />
           </NavigationMenu.Popup>
