@@ -144,3 +144,20 @@ export const PencilPinIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M12 22q-4.025-3.425-6.012-6.362T4 10.2q0-3.75 2.413-5.975T12 2q.675 0 1.338.113t1.287.312L13 4.075q-.25-.05-.488-.062T12 4Q9.475 4 7.738 5.738T6 10.2q0 1.775 1.475 4.063T12 19.35q3.05-2.8 4.525-5.087T18 10.2q0-.3-.025-.6t-.075-.575l1.65-1.65q.225.65.338 1.35T20 10.2q0 2.5-1.987 5.438T12 22m6.35-18.15L17.2 2.7L11 8.9V11h2.1l6.2-6.2zM20 4.1l.7-.7q.275-.275.275-.7T20.7 2l-.7-.7q-.275-.275-.7-.275t-.7.275l-.7.7z" />
   </svg>
 );
+
+// tabler:map-pin-share
+// Pin with arrow bottom right, pointing top right
+export const PinArrowIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="32"
+    height="32"
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <g strokeLinecap="round" strokeLinejoin="round" stroke-width="2">
+      <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0-6 0" />
+      <path d="M12.02 21.485a2 2 0 0 1-1.433-.585l-4.244-4.243a8 8 0 1 1 13.403-3.651M16 22l5-5m0 4.5V17h-4.5" />
+    </g>
+  </svg>
+);
