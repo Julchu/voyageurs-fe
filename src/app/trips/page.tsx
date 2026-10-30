@@ -62,7 +62,8 @@ const TripsPage = () => {
             ) : (
               <ol className="mt-3 flex flex-col gap-2">
                 {currentTrip.stops.map((stop, index) => (
-                  <li key={stop.publicId} className="text-sm">
+                  // TODO: why did AI suggest to use clientId only?
+                  <li key={stop.publicId ?? stop.clientId} className="text-sm">
                     <Link
                       href={`/?lat=${stop.coordinates.lat}&lng=${stop.coordinates.lng}`}
                       className="hover:underline"
@@ -95,11 +96,7 @@ const TripsPage = () => {
           <p className="text-sm text-neutral-500">No previous trips.</p>
         ) : null}
         {trips
-          .filter(
-            ({ publicId, clientId }) =>
-              publicId !== currentTrip?.publicId &&
-              clientId !== currentTrip?.clientId,
-          )
+          .filter(({ publicId }) => publicId !== currentTrip?.publicId)
           .map((trip) => (
             <article
               key={trip.publicId}
