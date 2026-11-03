@@ -1,38 +1,32 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebouncedValue } from "@/hooks/use-debounced-state";
-import type { Coordinates, Place } from "@/utils/interfaces";
+import type { Coordinates, PlaceSearch } from "@/utils/interfaces";
+import { useSearchStore } from "@/providers/search-store-provider";
 import {
   createSearchBoxSessionToken,
+  placeRecord,
   searchBoxRetrieve,
   searchBoxSuggest,
   type SearchSuggestion,
 } from "@/components/map-box/utils/place-geocoding";
-import { useSearchStore } from "@/providers/search-store-provider";
-import {
-  googleCreateSessionToken,
-  googleResolvePlace,
-  googleRetrieve,
-  googleSuggest,
-} from "@/components/google-map/utils/google-places";
-import { MapSearchIcon } from "@/components/ui/icons/map-icons";
-import { Input } from "@base-ui/react/input";
-import { Button } from "@base-ui/react";
+import { AddressCombobox, type AddressComboboxItem } from "./address-combobox";
 import { DESKTOP_SEARCH_COLUMN } from "@/components/map-box/map-panel-layout";
+import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
+import { useShallow } from "zustand/react/shallow";
 
-const SEARCH_RESULT_LIMIT = 3;
+const MAPBOX_SUGGESTION_LIMIT = 10;
 
-export const AddressSearch = ({
-  onSelect,
-  proximity,
-  provider = "mapbox",
-}: {
-  onSelect: (place: Place, query: string, log: boolean) => void;
-  proximity: Coordinates;
-  provider?: "mapbox" | "google";
-}) => {
-  const listId = useId();
-  const listRef = useRef<HTMLUListElement | null>(null);
-  const searches = useSearchStore(({ searches }) => searches);
+type AddressOption = AddressComboboxItem &
+  (
+    | { kind: "result"; mapboxId: string; sessionToken: string }
+    | { kind: "recent"; search: PlaceSearch }
+  );
+
+export const AddressSearch = ({ proximity }: { proximity: Coordinates }) => {
+  const { lat, lng } = proximity;
+  const { searches, logSearch } = useSearchStore(
+    useShallow(({ searches, logSearch }) => ({ searches, logSearch })),
+  );
   const sessionRef = useRef<{
     token: string;
     startedAt: number;
@@ -48,11 +42,13 @@ export const AddressSearch = ({
   const [results, setResults] = useState<{
     query: string;
     hits: SearchSuggestion[];
+    sessionToken: string;
     error?: string;
   } | null>(null);
-  const [retrieving, setRetrieving] = useState(false);
-  const [retrieveError, setRetrieveError] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1);
+  const [retrieveStatus, setRetrieveStatus] = useState<
+    "idle" | "loading" | "error"
+  >("idle");
+  const [selected, setSelected] = useState<AddressOption | null>(null);
 
   useEffect(() => () => retrieveAbortRef.current?.abort(), []);
 
@@ -63,15 +59,11 @@ export const AddressSearch = ({
     // Mapbox ends a session after retrieval, 180 seconds, or 50 suggestions.
     if (
       !sessionRef.current ||
-      (provider === "mapbox" &&
-        (Date.now() - sessionRef.current.startedAt >= 170_000 ||
-          sessionRef.current.requests >= 50))
+      Date.now() - sessionRef.current.startedAt >= 170_000 ||
+      sessionRef.current.requests >= 50
     ) {
       sessionRef.current = {
-        token:
-          provider === "google"
-            ? googleCreateSessionToken()
-            : createSearchBoxSessionToken(),
+        token: createSearchBoxSessionToken(),
         startedAt: Date.now(),
         requests: 0,
       };
@@ -81,277 +73,124 @@ export const AddressSearch = ({
 
     const controller = new AbortController();
     suggestAbortRef.current = controller;
-    const suggest = provider === "google" ? googleSuggest : searchBoxSuggest;
-    void suggest(trimmed, {
+    void searchBoxSuggest(trimmed, {
       sessionToken: session.token,
-      proximity,
+      proximity: { lat, lng },
       types:
         "poi,address,street,place,locality,neighborhood,postcode,region,country",
-      limit: SEARCH_RESULT_LIMIT,
+      limit: MAPBOX_SUGGESTION_LIMIT,
       signal: controller.signal,
     })
       .then((hits) => {
-        if (!controller.signal.aborted) setResults({ query: trimmed, hits });
+        if (!controller.signal.aborted)
+          setResults({ query: trimmed, hits, sessionToken: session.token });
       })
       .catch(() => {
         if (!controller.signal.aborted)
           setResults({
             query: trimmed,
             hits: [],
+            sessionToken: session.token,
             error: "Couldn’t load suggestions. Try typing again.",
           });
       });
     return () => controller.abort();
-  }, [debounced, query, open, proximity, provider]);
+  }, [debounced, query, open, lat, lng]);
 
-  const selectSuggestion = (hit: SearchSuggestion) => {
-    const session = sessionRef.current;
-    if (!session) return;
+  const selectOption = (option: AddressOption) => {
+    if (retrieveAbortRef.current && !retrieveAbortRef.current.signal.aborted)
+      return;
     const searchQuery = query.trim();
-    setQuery(hit.name);
+    setSelected(option);
+    setQuery(option.name);
     setOpen(false);
-    setActiveIndex(-1);
     setResults(null);
-    setRetrieveError(false);
+    setRetrieveStatus("idle");
     suggestAbortRef.current?.abort();
-    retrieveAbortRef.current?.abort();
+
+    if (option.kind === "recent") {
+      openPlacePopup.openWithPayload(option.search);
+      return;
+    }
+
     const controller = new AbortController();
     retrieveAbortRef.current = controller;
-    setRetrieving(true);
+    setRetrieveStatus("loading");
 
-    const retrieve = provider === "google" ? googleRetrieve : searchBoxRetrieve;
-    void retrieve(hit.mapboxId, {
-      sessionToken: session.token,
-      attributeSets: ["photos"],
+    sessionRef.current = null;
+    void searchBoxRetrieve(option.mapboxId, {
+      sessionToken: option.sessionToken,
       signal: controller.signal,
     }).then((place) => {
       if (controller.signal.aborted) return;
-      setRetrieving(false);
-      sessionRef.current = null;
-      if (place) onSelect(place, searchQuery, true);
-      else setRetrieveError(true);
+      retrieveAbortRef.current = null;
+      setRetrieveStatus(place ? "idle" : "error");
+      if (place) {
+        openPlacePopup.openWithPayload(place);
+        void logSearch({ ...placeRecord(place), query: searchQuery });
+      }
     });
   };
 
-  const recent = searches.slice(0, SEARCH_RESULT_LIMIT);
   const trimmedQuery = query.trim();
-  const showRecent = open && trimmedQuery.length < 2 && recent.length > 0;
-  const showHits = open && trimmedQuery.length >= 2;
-  const pending = results?.query !== trimmedQuery;
-  const hits = pending ? [] : results.hits.slice(0, SEARCH_RESULT_LIMIT);
-  const visibleCount = showRecent ? recent.length : showHits ? hits.length : 0;
-
-  useEffect(() => {
-    const list = listRef.current;
-    if (list) list.scrollTop = list.scrollHeight;
-  }, [showRecent, showHits, results, searches]);
-
-  useEffect(() => {
-    const list = listRef.current;
-    const option = list?.querySelector<HTMLElement>('[aria-selected="true"]');
-    if (!list || !option) return;
-
-    const bottom = option.offsetTop + option.offsetHeight;
-    if (option.offsetTop < list.scrollTop) list.scrollTop = option.offsetTop;
-    else if (bottom > list.scrollTop + list.clientHeight)
-      list.scrollTop = bottom - list.clientHeight;
-  }, [activeIndex, showRecent, showHits, results, searches]);
-
-  const selectRecent = (index: number) => {
-    const search = recent[index];
-    if (!search) return;
-    setQuery(
-      search.mapboxId?.startsWith("google:") ? search.query : search.name,
-    );
-    setOpen(false);
-    setActiveIndex(-1);
-    setResults(null);
-    setRetrieveError(false);
-    if (provider !== "google") {
-      onSelect(search, search.query, false);
-      return;
-    }
-    retrieveAbortRef.current?.abort();
-    const controller = new AbortController();
-    retrieveAbortRef.current = controller;
-    setRetrieving(true);
-    void googleResolvePlace(search, controller.signal).then((place) => {
-      if (controller.signal.aborted) return;
-      setRetrieving(false);
-      if (place) onSelect(place, search.query, false);
-      else setRetrieveError(true);
-    });
-  };
+  const pending =
+    open && trimmedQuery.length >= 2 && results?.query !== trimmedQuery;
+  const hits: AddressOption[] =
+    results?.query === trimmedQuery
+      ? results.hits.map((hit) => ({
+          ...hit,
+          id: hit.mapboxId,
+          kind: "result",
+          sessionToken: results.sessionToken,
+        }))
+      : [];
+  const recentByPlace = new Map<string, PlaceSearch>();
+  for (const search of searches) {
+    const id =
+      search.mapboxId ??
+      `${search.name}:${search.coordinates.lat}:${search.coordinates.lng}`;
+    if (!recentByPlace.has(id)) recentByPlace.set(id, search);
+  }
+  const recent: AddressOption[] = Array.from(recentByPlace, ([id, search]) => ({
+    id: `recent:${id}`,
+    name: search.name === "Saved place" ? search.query : search.name,
+    streetAddress: search.streetAddress,
+    areaAddress: search.areaAddress,
+    kind: "recent",
+    search,
+  }));
 
   return (
     <div
       className={`pointer-events-auto absolute right-4 bottom-4 left-18 sm:right-auto ${DESKTOP_SEARCH_COLUMN}`}
     >
-      <div
-        className={
-          "flex flex-row gap-2 rounded-lg bg-white px-2 shadow has-[:disabled]:cursor-not-allowed has-[:disabled]:bg-neutral-100 has-[:disabled]:opacity-70"
-        }
-      >
-        <div className={"flex shrink-0 items-center"}>
-          <MapSearchIcon className={"h-6 w-6 stroke-blue-500"} />
-        </div>
-        <Input
-          className="h-10 w-full min-w-0 pr-4 text-base text-neutral-950 outline-none"
-          value={query}
-          role="combobox"
-          aria-autocomplete="list"
-          aria-expanded={showRecent || showHits}
-          aria-controls={listId}
-          aria-activedescendant={
-            activeIndex >= 0 && activeIndex < visibleCount
-              ? `${listId}-${activeIndex}`
-              : undefined
-          }
-          aria-busy={retrieving || (showHits && pending)}
-          aria-label="Search places and addresses"
-          placeholder="Search places and addresses"
-          disabled={retrieving}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            suggestAbortRef.current?.abort();
-            setResults(null);
-            setRetrieveError(false);
-            setActiveIndex(-1);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          onBlur={() => {
-            setOpen(false);
-            setActiveIndex(-1);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setOpen(false);
-              setActiveIndex(-1);
-            } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-              event.preventDefault();
-              setOpen(true);
-              const count =
-                trimmedQuery.length < 2 ? recent.length : hits.length;
-              if (count)
-                setActiveIndex((index) =>
-                  event.key === "ArrowUp"
-                    ? index < 0 || index >= count
-                      ? 0
-                      : (index + 1) % count
-                    : index < 0 || index >= count
-                      ? count - 1
-                      : (index - 1 + count) % count,
-                );
-            } else if (event.key === "Enter" && open && visibleCount) {
-              event.preventDefault();
-              const index = Math.max(0, activeIndex);
-              if (showRecent) selectRecent(index);
-              else if (hits[index]) selectSuggestion(hits[index]);
-            }
-          }}
-        />
-      </div>
-
-      <div className="absolute bottom-full mb-2 flex w-full flex-col gap-2 sm:mb-4 sm:gap-4">
-        {showRecent || showHits ? (
-          <ul
-            ref={listRef}
-            id={listId}
-            role="listbox"
-            aria-label="Location suggestions"
-            className={
-              "relative flex h-40 flex-col gap-1 overflow-x-hidden overflow-y-auto rounded-lg bg-white p-1 text-base text-neutral-950 shadow sm:h-38 [&>li]:shrink-0"
-            }
-          >
-            {showRecent
-              ? recent
-                  .map((search, index) => (
-                    <li
-                      key={
-                        search.publicId ??
-                        search.clientId ??
-                        `${search.name}:${index}`
-                      }
-                      id={`${listId}-${index}`}
-                      role="option"
-                      aria-selected={activeIndex === index}
-                      className="group"
-                    >
-                      <Button
-                        tabIndex={-1}
-                        className={`flex h-10 w-full flex-col justify-center rounded-lg pl-4 text-left tracking-widest group-hover:bg-blue-500 group-hover:text-white ${activeIndex === index ? "bg-blue-500 text-white" : ""}`}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => selectRecent(index)}
-                      >
-                        <span className="block w-full truncate">
-                          {search.mapboxId?.startsWith("google:")
-                            ? search.query
-                            : search.name}
-                        </span>
-                        <span
-                          className={`block w-full truncate text-xs group-hover:text-white ${activeIndex === index ? "text-white" : "text-neutral-500"}`}
-                        >
-                          {search.streetAddress || search.query}
-                        </span>
-                      </Button>
-                    </li>
-                  ))
-                  .reverse()
-              : null}
-            {showHits && pending ? (
-              <li className="flex min-h-10 items-center px-3 py-2 text-neutral-500">
-                Searching
-              </li>
-            ) : null}
-            {showHits && !pending && hits.length === 0 ? (
-              <li
-                role="presentation"
-                className="flex min-h-10 items-center px-3 py-2 text-neutral-500"
-              >
-                {results?.error ?? "No matches"}
-              </li>
-            ) : null}
-            {showHits && !pending
-              ? hits
-                  .map((hit, index) => (
-                    <li
-                      key={hit.mapboxId}
-                      id={`${listId}-${index}`}
-                      role="option"
-                      aria-selected={activeIndex === index}
-                    >
-                      <Button
-                        tabIndex={-1}
-                        className={`flex h-10 w-full flex-col justify-center px-3 text-left hover:bg-neutral-100 disabled:opacity-50 ${activeIndex === index ? "bg-neutral-100" : ""}`}
-                        disabled={retrieving}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => selectSuggestion(hit)}
-                      >
-                        <span className="block w-full truncate">
-                          {hit.name}
-                        </span>
-                        <span className="block w-full truncate text-xs text-neutral-500 hover:text-white">
-                          {[hit.streetAddress, hit.areaAddress]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </span>
-                      </Button>
-                    </li>
-                  ))
-                  .reverse()
-              : null}
-          </ul>
-        ) : null}
-        {retrieveError ? (
-          <p
-            role="status"
-            className="rounded-lg bg-white p-3 text-base text-neutral-600 shadow"
-          >
-            Couldn’t load that location. Try selecting it again.
-          </p>
-        ) : null}
-      </div>
+      <AddressCombobox
+        query={query}
+        results={trimmedQuery === "" ? recent : hits}
+        selected={selected}
+        open={open}
+        loading={pending}
+        disabled={retrieveStatus === "loading"}
+        error={results?.query === trimmedQuery ? results.error : undefined}
+        onQueryChange={(value) => {
+          setQuery(value);
+          setSelected(null);
+          suggestAbortRef.current?.abort();
+          setResults(null);
+          setRetrieveStatus("idle");
+          setOpen(true);
+        }}
+        onOpenChange={setOpen}
+        onSelect={selectOption}
+      />
+      {retrieveStatus === "error" ? (
+        <p
+          role="status"
+          className="absolute bottom-full mb-4 w-full rounded-xl bg-white p-2 text-base text-neutral-600 shadow"
+        >
+          Error searching that location.
+        </p>
+      ) : null}
     </div>
   );
 };

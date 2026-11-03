@@ -104,6 +104,7 @@ export const TripContent = ({ map }: MapNavigation) => {
         <div className="px-4 pb-4">
           <Input
             type="text"
+            placeholder={"Name your trip"}
             key={currentTrip.clientId}
             ref={tripNameRef}
             aria-label="Trip name"

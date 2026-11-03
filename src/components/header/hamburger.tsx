@@ -8,7 +8,7 @@ export const Hamburger = () => {
       <Menu.Trigger
         openOnHover
         className={
-          "relative inline-flex aspect-square h-full cursor-pointer items-center justify-center rounded-full bg-blue-500 font-bold text-white opacity-80 select-none hover:opacity-100 focus-visible:opacity-100 motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out"
+          "relative inline-flex aspect-square h-full cursor-pointer items-center justify-center rounded-full bg-blue-500 font-bold text-white opacity-80 select-none hover:opacity-100 focus-visible:opacity-100 data-popup-open:opacity-100 motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out"
         }
         aria-label="User menu"
       >
