@@ -1,7 +1,7 @@
 // Google address-search alternative, saved for later.
 // Uncomment this file and swap AddressSearch for GoogleAddressSearch in map.tsx.
 // Keep the Google API routes and GOOGLE_MAPS_API_KEY configured when enabling it.
-// Restore the Google credits in selected-address-popup.tsx if using Google photos.
+// Use the components in ../place-info-card/google-place-credits.tsx for Google credits.
 // The active Mapbox implementation lives in address-search.tsx.
 //
 // import { useEffect, useRef, useState } from "react";
