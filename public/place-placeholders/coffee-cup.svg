@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Coffee cup illustration</title>
+  <path fill="#edf5f2" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#d7e8df"/>
+  <path d="M0 404h1200v76H0z" fill="#edf5f2" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#8eb7a8" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#28594e" opacity=".08"/>
+<ellipse cx="590" cy="367" rx="155" ry="24" fill="#8eb7a8"/>
+  <ellipse cx="590" cy="359" rx="133" ry="16" fill="#fffdf7"/>
+  <path d="M686 232h30c63 0 61 84 2 84h-25" stroke="#28594e" stroke-width="22"/>
+  <path d="M474 217h223v70c0 43-34 70-77 70h-68c-45 0-78-29-78-70z" fill="#fffdf7"/>
+  <ellipse cx="585" cy="217" rx="111" ry="22" fill="#28594e"/>
+  <ellipse cx="585" cy="217" rx="90" ry="14" fill="#d5a678"/>
+  <path d="M562 212c15-18 43-18 52 0-8 11-21 17-27 20-7-4-19-11-25-20" fill="#fffdf7"/>
+  <path d="M541 177c-27-27 22-32 0-60m61 60c-27-27 22-32 0-60" stroke="#8eb7a8" stroke-width="8" stroke-linecap="round"/>
+  <path d="M760 351l59-14m-58 26 60-15" stroke="#28594e" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="395" cy="353" rx="22" ry="14" fill="#d5a678" transform="rotate(-25 395 353)"/>
+  <path d="M377 360l37-14" stroke="#fffdf7" stroke-width="3"/>
+</svg>

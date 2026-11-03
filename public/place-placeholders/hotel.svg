@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Hotel illustration</title>
+  <path fill="#f2eff9" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#e0d9ef"/>
+  <path d="M0 404h1200v76H0z" fill="#f2eff9" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#b1a0cb" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#5c477d" opacity=".08"/>
+<rect x="459" y="123" width="282" height="277" rx="7" fill="#fffdf7"/><rect x="447" y="116" width="306" height="18" rx="3" fill="#5c477d"/>
+  <rect x="489" y="79" width="222" height="39" rx="5" fill="#5c477d"/>
+  <path d="M572 89v20m0-10h16m0-10v20m14-10h28" stroke="#fffdf7" stroke-width="4"/>
+  <rect x="490" y="158" width="34" height="40" rx="3" fill="#b1a0cb"/><rect x="583" y="158" width="34" height="40" rx="3" fill="#b1a0cb"/><rect x="676" y="158" width="34" height="40" rx="3" fill="#b1a0cb"/><rect x="490" y="229" width="34" height="40" rx="3" fill="#b1a0cb"/><rect x="583" y="229" width="34" height="40" rx="3" fill="#b1a0cb"/><rect x="676" y="229" width="34" height="40" rx="3" fill="#b1a0cb"/>
+  <rect x="553" y="309" width="94" height="91" rx="5" fill="#5c477d"/><rect x="563" y="321" width="74" height="61" rx="2" fill="#b1a0cb"/>
+  <path d="M600 321v61" stroke="#fffdf7" stroke-width="5"/>
+  <path d="m534 306 18-22h96l18 22z" fill="#d7ac91"/>
+  <rect x="396" y="362" width="36" height="38" rx="4" fill="#d7ac91"/><ellipse cx="414" cy="316" rx="27" ry="49" fill="#b1a0cb"/>
+  <rect x="768" y="362" width="36" height="38" rx="4" fill="#d7ac91"/><ellipse cx="786" cy="316" rx="27" ry="49" fill="#b1a0cb"/>
+</svg>

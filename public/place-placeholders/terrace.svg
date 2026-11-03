@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Outdoor dining terrace illustration</title>
+  <path fill="#fff3e8" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#f4dfc7"/>
+  <path d="M0 404h1200v76H0z" fill="#fff3e8" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#dca877" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#854d36" opacity=".08"/>
+<path d="M600 146v196" stroke="#854d36" stroke-width="8"/>
+  <path d="M411 229c21-71 93-111 189-111s168 40 189 111z" fill="#db815d"/>
+  <path d="M600 118c-45 27-70 67-75 111h150c-5-44-30-84-75-111" fill="#fffdf7"/>
+  <ellipse cx="600" cy="311" rx="119" ry="22" fill="#854d36"/>
+  <path d="M600 328v67m-49 0h98" stroke="#854d36" stroke-width="10" stroke-linecap="round"/>
+  <path d="M441 310v71h77m-77-17h77m-68 17-12 20m67-20 10 20M759 310v71h-77m77-17h-77m68 17 12 20m-67-20-10 20" stroke="#dca877" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="572" y="284" width="20" height="24" rx="3" fill="#fffdf7"/><rect x="631" y="282" width="15" height="28" rx="3" fill="#fffdf7"/>
+  <path d="M619 303v-35m0 7-12-12m12 21 12-12" stroke="#dca877" stroke-width="4"/>
+</svg>

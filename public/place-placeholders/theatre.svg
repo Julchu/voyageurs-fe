@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Theatre stage illustration</title>
+  <path fill="#f5eef5" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#e6d9e8"/>
+  <path d="M0 404h1200v76H0z" fill="#f5eef5" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#ba9cbd" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#714f75" opacity=".08"/>
+<rect x="414" y="147" width="372" height="253" rx="6" fill="#714f75"/>
+  <rect x="435" y="169" width="330" height="215" rx="3" fill="#ba9cbd"/>
+  <path d="M435 170h135c-5 81-47 123-135 136zm330 0H630c5 81 47 123 135 136z" fill="#d9a486"/>
+  <path d="M435 297c37 1 55 7 69 22l-20 65h-49zm330 0c-37 1-55 7-69 22l20 65h49z" fill="#d9a486"/>
+  <path d="M448 291h38m228 0h38" stroke="#fffdf7" stroke-width="7" stroke-linecap="round"/>
+  <rect x="430" y="117" width="340" height="41" rx="4" fill="#fffdf7"/>
+  <circle cx="453" cy="137" r="5" fill="#d9a486"/><circle cx="495" cy="137" r="5" fill="#d9a486"/><circle cx="537" cy="137" r="5" fill="#d9a486"/><circle cx="579" cy="137" r="5" fill="#d9a486"/><circle cx="621" cy="137" r="5" fill="#d9a486"/><circle cx="663" cy="137" r="5" fill="#d9a486"/><circle cx="705" cy="137" r="5" fill="#d9a486"/><circle cx="747" cy="137" r="5" fill="#d9a486"/>
+  <path d="m600 221-52 114h104z" fill="#fffdf7" opacity=".4"/>
+  <rect x="392" y="398" width="416" height="13" rx="4" fill="#d9a486"/>
+</svg>

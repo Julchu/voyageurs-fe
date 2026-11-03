@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Café storefront illustration</title>
+  <path fill="#edf5f2" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#d7e8df"/>
+  <path d="M0 404h1200v76H0z" fill="#edf5f2" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#8eb7a8" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#28594e" opacity=".08"/>
+<rect x="410" y="184" width="380" height="216" rx="8" fill="#fffdf7"/>
+  <rect x="436" y="148" width="328" height="58" rx="6" fill="#28594e"/>
+  <path d="M565 165h48v18a16 16 0 0 1-16 16h-16a16 16 0 0 1-16-16z" fill="#fffdf7"/>
+  <path d="M613 169h7a8 8 0 0 1 0 16h-7" stroke="#fffdf7" stroke-width="5"/>
+  <rect x="400" y="208" width="400" height="40" rx="4" fill="#d5a678"/>
+  <path d="M432 208v40m56-40v40m56-40v40m56-40v40m56-40v40m56-40v40m56-40v40" stroke="#fffdf7" stroke-width="24"/>
+  <rect x="440" y="272" width="142" height="98" rx="3" fill="#8eb7a8"/><rect x="616" y="270" width="126" height="130" rx="4" fill="#28594e"/>
+  <path d="M511 272v98m-71-49h142" stroke="#fffdf7" stroke-width="7"/>
+  <rect x="629" y="283" width="100" height="72" rx="2" fill="#8eb7a8"/>
+  <circle cx="720" cy="374" r="4" fill="#d5a678"/>
+  <rect x="365" y="349" width="28" height="51" rx="5" fill="#d5a678"/><path d="M379 351v-56m0 37c-26 0-37-18-27-30 20-3 27 11 27 30m0-14c24-6 33-24 19-34-15 0-21 16-19 34" fill="#8eb7a8" stroke="#28594e" stroke-width="4"/>
+</svg>

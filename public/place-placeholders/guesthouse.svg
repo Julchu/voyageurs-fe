@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Guesthouse illustration</title>
+  <path fill="#f2eff9" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#e0d9ef"/>
+  <path d="M0 404h1200v76H0z" fill="#f2eff9" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#b1a0cb" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#5c477d" opacity=".08"/>
+<rect x="445" y="213" width="310" height="187" rx="5" fill="#fffdf7"/>
+  <path d="m419 215 181-101 181 101z" fill="#5c477d"/>
+  <rect x="685" y="117" width="30" height="63" rx="2" fill="#d7ac91"/>
+  <rect x="482" y="249" width="62" height="65" rx="3" fill="#b1a0cb"/><rect x="656" y="249" width="62" height="65" rx="3" fill="#b1a0cb"/>
+  <path d="M513 249v65m174-65v65m-205-32h62m112 0h62" stroke="#fffdf7" stroke-width="5"/>
+  <path d="M569 400v-98a31 31 0 0 1 62 0v98" fill="#d7ac91"/>
+  <circle cx="601" cy="182" r="21" fill="#fffdf7"/><circle cx="601" cy="182" r="12" fill="#b1a0cb"/>
+  <path d="M432 337h336v15H432z" fill="#5c477d"/>
+  <path d="M450 349v51m300-51v51" stroke="#5c477d" stroke-width="9"/>
+  <path d="M530 353v47m140-47v47" stroke="#b1a0cb" stroke-width="6"/>
+</svg>

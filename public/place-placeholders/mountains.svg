@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Mountain lake illustration</title>
+  <path fill="#edf4e8" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#d8e6ca"/>
+  <path d="M0 404h1200v76H0z" fill="#edf4e8" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#9ebc8a" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#3f654a" opacity=".08"/>
+<path d="m331 354 182-219 190 219z" fill="#9ebc8a"/>
+  <path d="m493 354 214-265 196 265z" fill="#3f654a"/>
+  <path d="m513 135-53 64 42-9 25 23 22-24 20 11z" fill="#fffdf7"/>
+  <path d="m707 89-64 79 37-10 30 31 27-29 27 8z" fill="#fffdf7"/>
+  <path d="M272 352c155-32 231 29 346 8 145-27 212-29 315 2v118H272z" fill="#9ebc8a"/>
+  <path d="M409 390h170m73 25h153m-264 26h147" stroke="#fffdf7" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+  <path d="m373 363-42-83-41 83zm473 14 38-88 39 88z" fill="#3f654a"/>
+  <circle cx="452" cy="111" r="28" fill="#e1b876"/>
+</svg>

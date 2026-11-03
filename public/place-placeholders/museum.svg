@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Columned museum illustration</title>
+  <path fill="#f5eef5" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#e6d9e8"/>
+  <path d="M0 404h1200v76H0z" fill="#f5eef5" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#ba9cbd" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#714f75" opacity=".08"/>
+<path d="m399 206 201-105 201 105z" fill="#714f75"/>
+  <path d="m450 191 150-64 150 64z" fill="#ba9cbd"/>
+  <circle cx="600" cy="166" r="15" fill="#fffdf7"/>
+  <rect x="411" y="210" width="378" height="21" rx="3" fill="#d9a486"/>
+  <rect x="447" y="243" width="42" height="125" rx="3" fill="#fffdf7"/><rect x="442" y="237" width="52" height="12" rx="2" fill="#ba9cbd"/><rect x="442" y="362" width="52" height="12" rx="2" fill="#ba9cbd"/><path d="M468 257v91" stroke="#e6d9e8" stroke-width="6"/><rect x="535" y="243" width="42" height="125" rx="3" fill="#fffdf7"/><rect x="530" y="237" width="52" height="12" rx="2" fill="#ba9cbd"/><rect x="530" y="362" width="52" height="12" rx="2" fill="#ba9cbd"/><path d="M556 257v91" stroke="#e6d9e8" stroke-width="6"/><rect x="623" y="243" width="42" height="125" rx="3" fill="#fffdf7"/><rect x="618" y="237" width="52" height="12" rx="2" fill="#ba9cbd"/><rect x="618" y="362" width="52" height="12" rx="2" fill="#ba9cbd"/><path d="M644 257v91" stroke="#e6d9e8" stroke-width="6"/><rect x="711" y="243" width="42" height="125" rx="3" fill="#fffdf7"/><rect x="706" y="237" width="52" height="12" rx="2" fill="#ba9cbd"/><rect x="706" y="362" width="52" height="12" rx="2" fill="#ba9cbd"/><path d="M732 257v91" stroke="#e6d9e8" stroke-width="6"/>
+  <rect x="416" y="375" width="368" height="14" rx="2" fill="#714f75"/><rect x="397" y="391" width="406" height="15" rx="2" fill="#ba9cbd"/>
+</svg>

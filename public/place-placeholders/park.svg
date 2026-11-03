@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Park and bench illustration</title>
+  <path fill="#edf4e8" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#d8e6ca"/>
+  <path d="M0 404h1200v76H0z" fill="#edf4e8" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#9ebc8a" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#3f654a" opacity=".08"/>
+<path d="M600 480c-40-51-44-80-2-102 38-21 29-47-18-61" stroke="#fffdf7" stroke-width="56"/>
+  <path d="M442 368V213m303 155V195" stroke="#3f654a" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="442" cy="210" r="70" fill="#9ebc8a"/><circle cx="414" cy="175" r="41" fill="#9ebc8a"/><circle cx="470" cy="183" r="47" fill="#9ebc8a"/>
+  <circle cx="745" cy="184" r="74" fill="#3f654a"/><circle cx="712" cy="147" r="43" fill="#3f654a"/><circle cx="772" cy="154" r="48" fill="#3f654a"/>
+  <path d="M442 299v-86m0 37-27-29m27 54 31-30m272 40v-94m0 48-26-30" stroke="#fffdf7" stroke-opacity=".5" stroke-width="5"/>
+  <rect x="510" y="303" width="182" height="13" rx="3" fill="#e1b876"/><rect x="510" y="327" width="182" height="13" rx="3" fill="#e1b876"/><rect x="500" y="350" width="202" height="14" rx="4" fill="#3f654a"/>
+  <path d="M526 364v31m149-31v31" stroke="#3f654a" stroke-width="9"/>
+</svg>

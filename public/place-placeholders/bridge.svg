@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Bridge over water illustration</title>
+  <path fill="#edf3f9" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#d9e5ef"/>
+  <path d="M0 404h1200v76H0z" fill="#edf3f9" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#9ab5cf" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#456583" opacity=".08"/>
+<path d="M285 373c120-38 187 25 309 0 127-26 232-26 325 0v107H285z" fill="#9ab5cf"/>
+  <path d="M359 287h482v33H359z" fill="#456583"/>
+  <path d="M393 320v70h31v-40a55 55 0 0 1 110 0v40h32v-40a55 55 0 0 1 110 0v40h32v-40a55 55 0 0 1 110 0v40h23v-70z" fill="#fffdf7"/>
+  <path d="M440 292V169m320 123V169m-320 3c101 92 219 92 320 0" stroke="#456583" stroke-width="9" stroke-linecap="round"/>
+  <path d="M480 205v82m60-46v46m60-34v34m60-46v46m60-82v82" stroke="#456583" stroke-width="4"/>
+  <path d="M391 424h140m102 10h169m-242 24h120" stroke="#fffdf7" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="439" cy="158" r="8" fill="#e0b18c"/><circle cx="760" cy="158" r="8" fill="#e0b18c"/>
+</svg>

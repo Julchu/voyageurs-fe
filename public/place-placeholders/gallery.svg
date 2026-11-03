@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Art gallery illustration</title>
+  <path fill="#f5eef5" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#e6d9e8"/>
+  <path d="M0 404h1200v76H0z" fill="#f5eef5" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#ba9cbd" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#714f75" opacity=".08"/>
+<rect x="418" y="130" width="230" height="224" rx="5" fill="#714f75"/><rect x="433" y="145" width="200" height="194" rx="2" fill="#fffdf7"/>
+  <circle cx="565" cy="199" r="31" fill="#d9a486"/>
+  <path d="m445 325 72-97 104 97z" fill="#ba9cbd"/><path d="m524 325 57-67 40 67z" fill="#714f75"/>
+  <rect x="673" y="182" width="127" height="167" rx="5" fill="#d9a486"/><rect x="685" y="194" width="103" height="143" rx="2" fill="#fffdf7"/>
+  <path d="M705 309v-48a32 32 0 0 1 64 0v48z" fill="#ba9cbd"/><circle cx="736" cy="242" r="21" fill="#714f75"/>
+  <rect x="482" y="379" width="239" height="13" rx="5" fill="#714f75"/>
+  <path d="M508 392v17m187-17v17" stroke="#714f75" stroke-width="9"/>
+  <path d="M462 113h140m-70-16v16m171 51h65" stroke="#ba9cbd" stroke-width="5" stroke-linecap="round"/>
+</svg>

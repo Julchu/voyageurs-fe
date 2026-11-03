@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>City skyline illustration</title>
+  <path fill="#edf3f9" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#d9e5ef"/>
+  <path d="M0 404h1200v76H0z" fill="#edf3f9" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#9ab5cf" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#456583" opacity=".08"/>
+<rect x="418" y="219" width="126" height="181" rx="4" fill="#9ab5cf"/><rect x="559" y="120" width="126" height="280" rx="4" fill="#456583"/><rect x="700" y="182" width="108" height="218" rx="4" fill="#fffdf7"/>
+  <rect x="581" y="99" width="82" height="21" rx="3" fill="#9ab5cf"/>
+  <path d="M622 99V68" stroke="#456583" stroke-width="5" stroke-linecap="round"/>
+  <rect x="581" y="158" width="28" height="32" rx="2" fill="#d9e5ef"/><rect x="635" y="158" width="28" height="32" rx="2" fill="#d9e5ef"/><rect x="581" y="217" width="28" height="32" rx="2" fill="#d9e5ef"/><rect x="635" y="217" width="28" height="32" rx="2" fill="#d9e5ef"/><rect x="581" y="276" width="28" height="32" rx="2" fill="#d9e5ef"/><rect x="635" y="276" width="28" height="32" rx="2" fill="#d9e5ef"/>
+  <rect x="437" y="245" width="26" height="34" rx="2" fill="#fffdf7"/><rect x="495" y="245" width="26" height="34" rx="2" fill="#fffdf7"/><rect x="437" y="306" width="26" height="34" rx="2" fill="#fffdf7"/><rect x="495" y="306" width="26" height="34" rx="2" fill="#fffdf7"/>
+  <rect x="719" y="215" width="23" height="30" rx="2" fill="#9ab5cf"/><rect x="764" y="215" width="23" height="30" rx="2" fill="#9ab5cf"/><rect x="719" y="273" width="23" height="30" rx="2" fill="#9ab5cf"/><rect x="764" y="273" width="23" height="30" rx="2" fill="#9ab5cf"/><rect x="719" y="331" width="23" height="30" rx="2" fill="#9ab5cf"/><rect x="764" y="331" width="23" height="30" rx="2" fill="#9ab5cf"/>
+  <rect x="591" y="349" width="62" height="51" rx="3" fill="#e0b18c"/>
+  <path d="M378 397v-70m455 70v-70" stroke="#456583" stroke-width="7"/>
+  <circle cx="378" cy="314" r="27" fill="#9ab5cf"/><circle cx="833" cy="314" r="27" fill="#9ab5cf"/>
+</svg>

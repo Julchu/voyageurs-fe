@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" fill="none">
+  <title>Botanical greenhouse illustration</title>
+  <path fill="#edf4e8" d="M0 0h1200v480H0z"/>
+  <circle cx="928" cy="108" r="48" fill="#fffdf7" opacity=".8"/>
+  <path d="M0 350c168-56 293 36 439-3 147-39 242 34 377 0 145-36 251-25 384 3v130H0z" fill="#d8e6ca"/>
+  <path d="M0 404h1200v76H0z" fill="#edf4e8" opacity=".45"/>
+  <path d="M255 146h88m-63 18h37M895 286h62m-43 18h33" stroke="#9ebc8a" stroke-width="5" stroke-linecap="round" opacity=".4"/>
+  <ellipse cx="600" cy="406" rx="234" ry="14" fill="#3f654a" opacity=".08"/>
+<path d="M428 392V233l172-116 172 116v159z" fill="#fffdf7"/>
+  <path d="M441 380V241l159-108 159 108v139z" fill="#d8e6ca"/>
+  <path d="M600 132v258M428 233h344M451 218h298M481 199h238M493 188v204M707 188v204M428 300h344" stroke="#9ebc8a" stroke-width="6"/>
+  <path d="M428 392V233l172-116 172 116v159z" stroke="#3f654a" stroke-width="9" stroke-linejoin="round"/>
+  <rect x="560" y="297" width="80" height="95" rx="3" fill="#fffdf7"/><rect x="571" y="309" width="58" height="83" rx="2" fill="#9ebc8a"/>
+  <path d="M468 379v-51m0 26c-29-6-35-20-27-34 21-3 29 13 27 34m0-4c25-5 31-21 20-31-17 0-23 17-20 31m264 29v-51m0 26c-29-6-35-20-27-34 21-3 29 13 27 34m0-4c25-5 31-21 20-31-17 0-23 17-20 31" fill="#3f654a"/>
+</svg>
