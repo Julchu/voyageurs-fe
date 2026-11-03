@@ -1,330 +1,92 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
-import mapBoxGL, { type Map as MapboxMap, type Marker } from "mapbox-gl";
+import mapBoxGL, { type Map as MapboxMap } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import { Controls } from "@/components/map-controls/controls";
-import { routeForStops } from "@/components/map-box/utils/directions";
-import { placeFromFeature } from "@/components/map-box/utils/place-geocoding";
-import { MarkerEnum, useMapHook } from "@/hooks/use-map-hook";
-import { useUserStore } from "@/providers/user-store-provider";
-import { Coordinates } from "@/utils/interfaces";
+import type { Coordinates } from "@/utils/interfaces";
 import {
   applyStandardOverrides,
   buildStandardStyle,
 } from "@/components/map-box/utils/mapbox-standard-styling";
-import {
-  drawRoute,
-  updateRouteAppearance,
-} from "@/components/map-box/utils/route-layer";
-import { useShallow } from "zustand/react/shallow";
-import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
+import { addPoiInteractions } from "@/components/map-box/utils/poi-interactions";
 import { AddressSearch } from "@/components/location-search-box/address-search";
 import { TripDrawer } from "@/components/trips-drawer/trip-drawer";
-import { useTripStore } from "@/providers/trip-store-provider";
+import { useMapLocation } from "@/hooks/use-map-location";
+import { useTripMap } from "@/hooks/use-trip-map";
+import { darkMode } from "@/utils/map-time";
 
-const stopMarker = (index: number, visited: boolean) => {
-  const element = document.createElement("button");
-  element.type = "button";
-  element.className =
-    "w-7 h-7 rounded-full flex items-center justify-center bg-blue-500 text-xs font-medium border-white border-2";
-  element.textContent = String(index + 1);
-  element.style.background = visited ? "#15803d" : "#1d4ed8";
-  element.style.boxShadow = "0 1px 4px rgba(0,0,0,0.35)";
-  return element;
-};
-
-export type MapFocus = {
-  token: number;
-  coordinates: Coordinates;
-};
-
-// TODO: switch loading state to loaded state and move up 1
 export const MapAndControls = ({
   initialCoords,
 }: {
   initialCoords: Coordinates;
 }) => {
-  const { lastLocation, setLastLocation } = useUserStore(
-    useShallow(({ lastLocation, setLastLocation }) => ({
-      lastLocation,
-      setLastLocation,
-    })),
-  );
-
-  const currentTrip = useTripStore(({ currentTrip }) => currentTrip);
-
   const map = useRef<MapboxMap | null>(null);
   const mapContainer = useRef<HTMLDivElement>(null);
+  // The starting center is only used when mounting the map.
+  const initialCenter = useRef(initialCoords);
   const [mapLoading, setMapLoading] = useState(true);
-  const [locationLoading, setLocationLoading] = useState(false);
-  const [currentMarker, setCurrentMarker] = useState<Marker>();
-  const stopMarkers = useRef<globalThis.Map<string, Marker>>(
-    new globalThis.Map(),
-  );
+  const [mapFocus, setMapFocus] = useState<Coordinates | null>(null);
 
-  const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
-
-  const [{ markers, addMarker, flyTo, shouldUseDarkMode }] = useMapHook({
-    map,
-  });
-
-  // Initial map load
   useEffect(() => {
-    if (!map.current && mapContainer.current !== null) {
-      try {
-        mapBoxGL.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-        map.current = new mapBoxGL.Map({
-          attributionControl: false,
-          container: mapContainer.current,
-          center: [initialCoords.lng, initialCoords.lat],
-          zoom: 15.5,
-          antialias: true,
-          crossSourceCollisions: true,
-          performanceMetricsCollection: false,
-          style: buildStandardStyle,
-        })
-          .on("style.load", () => {
-            if (!map.current) return;
-            applyStandardOverrides(map.current);
-            map.current.resize();
-          })
-          .on("idle", () => {
-            const lat = map.current?.getCenter().lat;
-            const lng = map.current?.getCenter().lng;
-            if (lat && lng) {
-              setMapFocus({ token: Date.now(), coordinates: { lat, lng } });
-            }
+    if (!mapContainer.current) return;
+    let removeInteractions: (() => void) | undefined;
+    let cancelOverrides: (() => void) | undefined;
 
-            setMapLoading(false);
-          })
-          .on("moveend", () => {
-            setLocationLoading(false);
-          });
-      } catch (error) {
-        console.error("Map failed to start", error);
-        queueMicrotask(() => setMapLoading(false));
-      }
+    try {
+      mapBoxGL.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+      const { lng, lat } = initialCenter.current;
+      const mapInstance = new mapBoxGL.Map({
+        attributionControl: false,
+        container: mapContainer.current,
+        center: [lng, lat],
+        zoom: 15.5,
+        antialias: true,
+        crossSourceCollisions: true,
+        performanceMetricsCollection: false,
+        style: buildStandardStyle(),
+      });
+      map.current = mapInstance;
+
+      mapInstance.on("style.load", () => {
+        cancelOverrides?.();
+        cancelOverrides = applyStandardOverrides(mapInstance);
+        mapInstance.resize();
+      });
+      mapInstance.on("load", () => {
+        removeInteractions = addPoiInteractions(mapInstance);
+      });
+      mapInstance.on("idle", () => {
+        const { lat, lng } = mapInstance.getCenter();
+        setMapFocus((previous) =>
+          previous?.lat === lat && previous.lng === lng
+            ? previous
+            : { lat, lng },
+        );
+        setMapLoading(false);
+      });
+    } catch (error) {
+      console.error("Map failed to start", error);
+      queueMicrotask(() => setMapLoading(false));
     }
 
     return () => {
+      cancelOverrides?.();
+      removeInteractions?.();
       map.current?.remove();
       map.current = null;
     };
-  }, [initialCoords.lat, initialCoords.lng]);
-
-  // Adding onClick interaction to retrieve PoI info
-  useEffect(() => {
-    const mapInstance = map.current;
-    if (!mapInstance || mapLoading) return;
-
-    const ids: string[] = [];
-    const featuresets = ["poi", "landmark-icons"] as const;
-    let openedKey = "";
-
-    for (const featuresetId of featuresets) {
-      const target = { featuresetId, importId: "basemap" };
-
-      const clickId = `${featuresetId}-click`;
-      mapInstance.addInteraction(clickId, {
-        type: "click",
-        target,
-        handler: (e) => {
-          const place = e.feature ? placeFromFeature(e.feature) : null;
-          if (!place) return;
-          const key = `${place.name}:${place.coordinates.lat}:${place.coordinates.lng}`;
-          // poi and landmark-icons can both report one click. Ignore the
-          // duplicate in this turn, then allow the place to be opened again.
-          if (openedKey === key) return true;
-          openedKey = key;
-          queueMicrotask(() => {
-            if (openedKey === key) openedKey = "";
-          });
-          // The popup looks up address, photos, and category when the click
-          // doesn't already carry a saved place id.
-          openPlacePopup.openWithPayload(place);
-          return true; // stop lower-priority interactions
-        },
-      });
-      ids.push(clickId);
-
-      const enterId = `${featuresetId}-enter`;
-      mapInstance.addInteraction(enterId, {
-        type: "mouseenter",
-        target,
-        handler: () => {
-          mapInstance.getCanvas().style.cursor = "pointer";
-        },
-      });
-      ids.push(enterId);
-
-      const leaveId = `${featuresetId}-leave`;
-      mapInstance.addInteraction(leaveId, {
-        type: "mouseleave",
-        target,
-        handler: () => {
-          mapInstance.getCanvas().style.cursor = "";
-        },
-      });
-      ids.push(leaveId);
-    }
-
-    return () => {
-      for (const id of ids) mapInstance.removeInteraction(id);
-    };
-  }, [mapLoading]);
-
-  // Adds markers for current trip's stops
-  useEffect(() => {
-    const mapInstance = map.current;
-    if (!mapInstance || mapLoading) return;
-
-    const seen = new Set<string>();
-    currentTrip?.stops.forEach((stop, index) => {
-      const key =
-        stop.clientId ??
-        stop.publicId ??
-        `${stop.name}:${stop.coordinates.lat}:${stop.coordinates.lng}:${index}`;
-      seen.add(key);
-      const existing = stopMarkers.current.get(key);
-      if (existing) {
-        existing.setLngLat([stop.coordinates.lng, stop.coordinates.lat]);
-
-        // TODO: reuse addMarker and markers from useMapHook
-        const element = existing.getElement();
-        element.setAttribute(
-          "aria-label",
-          `Open stop ${index + 1}: ${stop.name}`,
-        );
-        element.textContent = String(index + 1);
-        element.style.background = stop.visited ? "#15803d" : "#1d4ed8";
-        // Re-bind so the handler always references the current stop data.
-        element.onclick = (event) => {
-          event.stopPropagation();
-          openPlacePopup.openWithPayload(stop);
-        };
-        return;
-      }
-
-      const element = stopMarker(index, stop.visited);
-      element.setAttribute(
-        "aria-label",
-        `Open stop ${index + 1}: ${stop.name}`,
-      );
-      // The popup reuses saved metadata and fetches anything missing.
-      element.style.cursor = "pointer";
-      element.onclick = (event) => {
-        event.stopPropagation();
-        openPlacePopup.openWithPayload(stop);
-      };
-
-      const marker = new mapBoxGL.Marker({ element })
-        .setLngLat([stop.coordinates.lng, stop.coordinates.lat])
-        .addTo(mapInstance);
-      stopMarkers.current.set(key, marker);
-    });
-
-    for (const [publicId, marker] of stopMarkers.current) {
-      if (seen.has(publicId)) continue;
-      marker.remove();
-      stopMarkers.current.delete(publicId);
-    }
-  }, [mapLoading, currentTrip?.stops]);
-
-  // Remove all stop markers when the map component unmounts
-  useEffect(() => {
-    const markersOnMap = stopMarkers.current;
-    return () => {
-      for (const marker of markersOnMap.values()) marker.remove();
-      markersOnMap.clear();
-    };
   }, []);
 
-  // Metadata enrichment mustn't trigger another billed directions request.
-  const stopKey = JSON.stringify(
-    currentTrip?.stops.map((stop) => stop.coordinates) ?? [],
+  const { locationLoading, triggerGeolocator } = useMapLocation(
+    map,
+    mapLoading,
   );
-
-  useEffect(() => {
-    const mapInstance = map.current;
-    if (!mapInstance || mapLoading) return;
-    let cancelled = false;
-    const coordinates = JSON.parse(stopKey) as Coordinates[];
-    drawRoute(mapInstance, []);
-    if (coordinates.length < 2) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      void routeForStops(coordinates).then((route) => {
-        if (cancelled || !map.current) return;
-        drawRoute(map.current, route.line);
-      });
-    }, 400);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [mapLoading, stopKey]);
-
-  useEffect(() => {
-    if (!map.current || mapLoading) return;
-    updateRouteAppearance(map.current);
-  }, [mapLoading]);
-
-  // TODO: extract to MapHooks
-  const flyAndUpdateUser = () => {
-    setLocationLoading(true);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const coords: Coordinates = {
-          lng: pos.coords.longitude,
-          lat: pos.coords.latitude,
-        };
-        flyTo(coords);
-        setLastLocation(coords);
-
-        if (map.current)
-          addMarker(
-            markers[MarkerEnum.HOME],
-            currentMarker,
-            setCurrentMarker,
-            coords,
-            true,
-          );
-
-        map.current?.once("movestart", () => {
-          setLocationLoading(true);
-        });
-      },
-      (error) => {
-        console.error("Error geolocating", error);
-        setLocationLoading(false);
-      },
-      { enableHighAccuracy: false },
-    );
-  };
-
-  useEffect(() => {
-    if (map.current && lastLocation)
-      addMarker(
-        markers[MarkerEnum.HOME],
-        currentMarker,
-        setCurrentMarker,
-        lastLocation,
-        true,
-      );
-    else {
-      currentMarker?.remove();
-      setCurrentMarker(undefined);
-    }
-  }, [addMarker, currentMarker, lastLocation, markers]);
+  useTripMap(map, mapLoading);
 
   return (
     <div
       className={`relative h-full w-full overflow-hidden drop-shadow-lg ${
-        shouldUseDarkMode ? "bg-slate-800" : "bg-gray-100"
+        darkMode() ? "bg-slate-800" : "bg-gray-100"
       }`}
     >
       <div
@@ -335,11 +97,9 @@ export const MapAndControls = ({
         map={map}
         mapLoading={mapLoading}
         locationLoading={locationLoading}
-        triggerGeolocator={flyAndUpdateUser}
+        triggerGeolocator={triggerGeolocator}
       />
-
-      <AddressSearch proximity={mapFocus?.coordinates ?? initialCoords} />
-
+      <AddressSearch proximity={mapFocus ?? initialCoords} />
       <TripDrawer map={map} />
     </div>
   );

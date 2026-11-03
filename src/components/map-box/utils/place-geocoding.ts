@@ -1,35 +1,24 @@
-import type { GeoJSONFeature } from "mapbox-gl";
-import {
-  Coordinates,
-  Place,
-  PlaceDetails,
-  PlacePhoto,
-} from "@/utils/interfaces";
+import type { TargetFeature } from "mapbox-gl";
+import type { Coordinates, Place, PlacePhoto } from "@/utils/interfaces";
+import type {
+  MapboxMetadata,
+  MapboxPlaceRecord,
+  MapboxSearchFeature,
+  MapboxSearchResponse,
+  MapboxSuggestion,
+} from "@/types/mapbox";
+
+export type { PlaceDetails } from "@/utils/interfaces";
 
 /* Current flows:
  * - Address bar type-ahead: Search Box /suggest + /retrieve (session_token)
- * - Map POI click enrichment: Search Box /reverse (+ /forward fallback)
- * - “See more details”: Places …/places/v1/details/retrieve/{mapbox_id}
+ * - Map POI click enrichment: Search Box /forward (+ address-only /reverse fallback)
+ * - Selected POI enrichment: Places API /places/v1/details/retrieve/{mapbox_id}
+ * - Photos: /retrieve attribute_sets=photos, or metadata returned by /forward
  * */
 
 /** UUID v4 for grouping `/suggest` and `/retrieve` into one billed session. */
 export const createSearchBoxSessionToken = (): string => crypto.randomUUID();
-
-type MapFeature = GeoJSONFeature & {
-  geometry: { type: string; coordinates: number[] };
-  properties?: Record<string, unknown> | null;
-  id: number;
-};
-
-const readFeature = (feature: GeoJSONFeature) => feature as MapFeature;
-
-const getFeatureProperty = (
-  feature: GeoJSONFeature,
-  key: string,
-): string | undefined => {
-  const value = readFeature(feature).properties?.[key];
-  return value == null ? undefined : String(value);
-};
 
 /**
  * Build a partial Place from a Standard-style featureset click (POI/landmark).
@@ -37,73 +26,65 @@ const getFeatureProperty = (
  * The featureset only exposes name/class/coordinates — no address, photos, or
  * Search Box `mapbox_id`. Those are filled in afterwards by `enrichPlace()`.
  */
-export const placeFromFeature = (feature: GeoJSONFeature): Place | null => {
-  const id = readFeature(feature).id;
-  const category = getFeatureProperty(feature, "class") ?? "";
-  const geometry = readFeature(feature).geometry;
+export const placeFromFeature = (feature: TargetFeature): Place | null => {
+  const { id, geometry, properties } = feature;
   if (geometry.type !== "Point") return null;
   const lng = geometry.coordinates[0];
   const lat = geometry.coordinates[1];
   if (typeof lng !== "number" || typeof lat !== "number") return null;
 
-  const name =
-    getFeatureProperty(feature, "name_en") ||
-    getFeatureProperty(feature, "name");
-  if (!name) return null;
+  const name = properties?.name_en || properties?.name;
+  if (typeof name !== "string" || !name) return null;
 
   return {
-    id,
+    id: typeof id === "number" ? id : undefined,
     name,
-    category,
+    category: typeof properties?.class === "string" ? properties.class : "",
     streetAddress: "",
     areaAddress: "",
     coordinates: { lat, lng },
   };
 };
 
-const isAbort = (error: unknown): boolean =>
-  error instanceof DOMException && error.name === "AbortError";
-
-// Shape of a Search Box search feature (forward/reverse; only the fields we read).
-type ForwardMetadata = {
-  primary_photo?: string;
-  photos?: { url?: string; width?: number | null; height?: number | null }[];
-};
-
-type ForwardFeature = {
-  properties?: {
-    mapbox_id?: string;
-    name?: string;
-    name_preferred?: string;
-    feature_type?: string;
-    address?: string;
-    place_formatted?: string;
-    maki?: string;
-    poi_category?: string[];
-    coordinates?: { longitude?: number; latitude?: number };
-    metadata?: ForwardMetadata;
-  } | null;
-  geometry?: { coordinates?: number[] };
-};
-
-type ForwardResponse = { features?: ForwardFeature[] };
-
-const photosFromMetadata = (metadata?: ForwardMetadata): PlacePhoto[] => {
-  if (!metadata) return [];
-  const mapped: PlacePhoto[] = (metadata.photos ?? []).flatMap((photo) =>
-    photo.url
-      ? [{ url: photo.url, width: photo.width, height: photo.height }]
-      : [],
-  );
-  // Surface the primary photo first if it isn't already in the list.
-  const primary = metadata.primary_photo;
-  if (primary && !mapped.some((photo) => photo.url === primary)) {
-    mapped.unshift({ url: primary });
+const mapboxRequest = async <T>(
+  path: string,
+  params: Record<string, string | number | undefined>,
+  signal?: AbortSignal,
+): Promise<T> => {
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  if (!token) throw new Error("Mapbox token is missing");
+  const url = new URL(path, "https://api.mapbox.com");
+  url.searchParams.set("access_token", token);
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) url.searchParams.set(key, String(value));
   }
-  return mapped;
+  const response = await fetch(url, { signal, cache: "no-store" });
+  if (!response.ok)
+    throw new Error(`Mapbox request failed (${response.status})`);
+  return response.json() as Promise<T>;
 };
 
-const placeFromForwardFeature = (feature: ForwardFeature): Place | null => {
+const photosFromMetadata = (metadata?: MapboxMetadata): PlacePhoto[] => {
+  if (!metadata) return [];
+  const primary = metadata.primary_photo;
+  const candidates = [
+    ...(Array.isArray(primary) ? primary : primary ? [primary] : []),
+    ...(metadata.photos ?? []),
+  ];
+  const seen = new Set<string>();
+  return candidates.flatMap((candidate) => {
+    const photo =
+      typeof candidate === "string" ? { url: candidate } : candidate;
+    if (!photo.url || !/^https?:\/\//i.test(photo.url) || seen.has(photo.url))
+      return [];
+    seen.add(photo.url);
+    return [{ url: photo.url, width: photo.width, height: photo.height }];
+  });
+};
+
+const placeFromForwardFeature = (
+  feature: MapboxSearchFeature,
+): Place | null => {
   const props = feature.properties;
   const lng =
     props?.coordinates?.longitude ?? feature.geometry?.coordinates?.[0];
@@ -112,74 +93,40 @@ const placeFromForwardFeature = (feature: ForwardFeature): Place | null => {
   const name = props?.name_preferred ?? props?.name;
   if (!name || typeof lng !== "number" || typeof lat !== "number") return null;
 
-  // Only POI features carry a Places-compatible `mapbox_id` (`urn:mbxpoi:…`) and
-  // a real `poi_category`. Address/other feature types use a different id scheme
-  // that the Places Details endpoint rejects with 422, and only expose a generic
-  // `maki` icon (e.g. "marker") — so don't surface either for non-POIs.
-  const isPoi = props?.feature_type === "poi";
-
   return {
-    mapboxId: isPoi ? props?.mapbox_id : undefined,
+    mapboxId: props?.mapbox_id,
     name,
-    category: props?.poi_category?.[0] ?? "",
-    streetAddress: props?.address ?? "",
+    category:
+      props?.poi_category_ids?.[0] ??
+      props?.poi_category?.[0] ??
+      props?.feature_type ??
+      "",
+    streetAddress:
+      props?.address ??
+      props?.context?.address?.name ??
+      props?.context?.street?.name ??
+      "",
     areaAddress: props?.place_formatted ?? "",
     coordinates: { lat, lng },
     photos: photosFromMetadata(props?.metadata),
+    // POI previews still need Places API photos and details when opened.
+    placeInfoLoaded: !isPlacesPoiId(props?.mapbox_id),
+    ...(props?.metadata?.website ||
+    props?.metadata?.phone ||
+    typeof props?.metadata?.opening_hours === "string"
+      ? {
+          details: {
+            website: props.metadata.website,
+            phone: props.metadata.phone,
+            openingHours:
+              typeof props.metadata.opening_hours === "string"
+                ? props.metadata.opening_hours
+                : undefined,
+            photos: [],
+          },
+        }
+      : {}),
   };
-};
-
-type PlacesDetailsResponse = {
-  website?: string;
-  phone?: string;
-  opening_hours?: string | null;
-  permanently_closed?: boolean | null;
-  score?: { popularity?: number | null };
-  photos?: { url?: string; width?: number | null; height?: number | null }[];
-};
-
-/** Rich, on-demand detail fields from the Places API Details endpoint. */
-export type { PlaceDetails } from "@/utils/interfaces";
-
-/**
- * Lazily fetch the full Places API record for a place.
- *
- * Called on demand (e.g. a "See more" action), not during search, so its
- * preview-tier quota isn't spent on every result. Requires a Places-compatible
- * `mapbox_id` — which `enrichPlace` / `searchBoxForward` already provide.
- */
-export const fetchPlaceDetails = async (
-  mapboxId: string,
-  signal?: AbortSignal,
-): Promise<PlaceDetails | undefined> => {
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  if (!token || !mapboxId) return;
-
-  const url = new URL(
-    `https://api.mapbox.com/places/v1/details/retrieve/${encodeURIComponent(mapboxId)}`,
-  );
-  url.searchParams.set("access_token", token);
-
-  try {
-    const response = await fetch(url, signal ? { signal } : undefined);
-    if (!response.ok) return;
-    const body = (await response.json()) as PlacesDetailsResponse;
-    return {
-      website: body.website,
-      phone: body.phone,
-      openingHours: body.opening_hours ?? undefined,
-      popularity: body.score?.popularity ?? null,
-      permanentlyClosed: body.permanently_closed ?? null,
-      photos: (body.photos ?? []).flatMap((photo) =>
-        photo.url
-          ? [{ url: photo.url, width: photo.width, height: photo.height }]
-          : [],
-      ),
-    };
-  } catch (error) {
-    if (isAbort(error)) return;
-    return;
-  }
 };
 
 export type BaseForwardOptions = {
@@ -204,19 +151,7 @@ export type SearchSuggestion = {
   category: string;
 };
 
-type SuggestItem = {
-  mapbox_id?: string;
-  name?: string;
-  name_preferred?: string;
-  feature_type?: string;
-  address?: string;
-  place_formatted?: string;
-  poi_category?: string[];
-};
-
-type SuggestResponse = { suggestions?: SuggestItem[] };
-
-const suggestionFromApi = (item: SuggestItem): SearchSuggestion | null => {
+const suggestionFromApi = (item: MapboxSuggestion): SearchSuggestion | null => {
   if (!item.mapbox_id || !item.name) return null;
   return {
     mapboxId: item.mapbox_id,
@@ -224,16 +159,13 @@ const suggestionFromApi = (item: SuggestItem): SearchSuggestion | null => {
     featureType: item.feature_type ?? "",
     streetAddress: item.address ?? "",
     areaAddress: item.place_formatted ?? "",
-    category: item.poi_category?.[0] ?? "",
+    category: item.poi_category_ids?.[0] ?? item.poi_category?.[0] ?? "",
   };
 };
 
-export type SuggestOptions = {
+export type SuggestOptions = BaseForwardOptions & {
   sessionToken: string;
   proximity?: Coordinates;
-  limit?: number;
-  types?: string;
-  signal?: AbortSignal;
 };
 
 /** Autocomplete dropdown: Search Box `/suggest` (no coordinates until `/retrieve`). */
@@ -241,38 +173,21 @@ export const searchBoxSuggest = async (
   query: string,
   options: SuggestOptions,
 ): Promise<SearchSuggestion[]> => {
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const trimmed = query.trim();
-  if (!token || trimmed.length < 1 || !options.sessionToken) return [];
-
-  const url = new URL("https://api.mapbox.com/search/searchbox/v1/suggest");
-  url.searchParams.set("q", trimmed);
-  url.searchParams.set("session_token", options.sessionToken);
-  url.searchParams.set("limit", String(options.limit ?? 5));
-  if (options.types) url.searchParams.set("types", options.types);
-  if (options.proximity) {
-    url.searchParams.set(
-      "proximity",
-      `${options.proximity.lng},${options.proximity.lat}`,
-    );
-  }
-  url.searchParams.set("access_token", token);
-
-  try {
-    const response = await fetch(
-      url,
-      options.signal ? { signal: options.signal } : undefined,
-    );
-    if (!response.ok) return [];
-    const body = (await response.json()) as SuggestResponse;
-    return (body.suggestions ?? []).flatMap((item) => {
-      const suggestion = suggestionFromApi(item);
-      return suggestion ? [suggestion] : [];
-    });
-  } catch (error) {
-    if (isAbort(error)) return [];
-    return [];
-  }
+  if (!trimmed || !options.sessionToken) return [];
+  const body = await mapboxRequest<{ suggestions?: MapboxSuggestion[] }>(
+    "/search/searchbox/v1/suggest",
+    {
+      q: trimmed,
+      session_token: options.sessionToken,
+      ...searchParams(options),
+    },
+    options.signal,
+  );
+  return (body.suggestions ?? []).flatMap((item) => {
+    const suggestion = suggestionFromApi(item);
+    return suggestion ? [suggestion] : [];
+  });
 };
 
 export type RetrieveOptions = {
@@ -289,32 +204,48 @@ export const searchBoxRetrieve = async (
   mapboxId: string,
   options: RetrieveOptions,
 ): Promise<Place | null> => {
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  if (!token || !mapboxId || !options.sessionToken) return null;
-
-  const url = new URL(
-    `https://api.mapbox.com/search/searchbox/v1/retrieve/${encodeURIComponent(mapboxId)}`,
-  );
-  url.searchParams.set("session_token", options.sessionToken);
-  if (options.attributeSets?.length) {
-    url.searchParams.set("attribute_sets", options.attributeSets.join(","));
-  }
-  url.searchParams.set("access_token", token);
-
+  if (!mapboxId || !options.sessionToken) return null;
   try {
-    const response = await fetch(
-      url,
-      options.signal ? { signal: options.signal } : undefined,
+    const body = await mapboxRequest<MapboxSearchResponse>(
+      `/search/searchbox/v1/retrieve/${encodeURIComponent(mapboxId)}`,
+      {
+        session_token: options.sessionToken,
+        attribute_sets: (options.attributeSets ?? ["photos"]).join(","),
+      },
+      options.signal,
     );
-    if (!response.ok) return null;
-    const body = (await response.json()) as ForwardResponse;
-    console.log("test retrieving photos", body);
     const feature = body.features?.[0];
-    if (!feature) return null;
-    return placeFromForwardFeature(feature);
-  } catch (error) {
-    if (isAbort(error)) return null;
+    return feature ? placeFromForwardFeature(feature) : null;
+  } catch {
     return null;
+  }
+};
+
+const searchParams = (options: ForwardOptions) => ({
+  limit: options.limit ?? 5,
+  types: options.types,
+  proximity: options.proximity
+    ? `${options.proximity.lng},${options.proximity.lat}`
+    : undefined,
+});
+
+const searchBoxPlaces = async (
+  endpoint: "forward" | "reverse",
+  params: Record<string, string | number | undefined>,
+  signal?: AbortSignal,
+): Promise<Place[]> => {
+  try {
+    const body = await mapboxRequest<MapboxSearchResponse>(
+      `/search/searchbox/v1/${endpoint}`,
+      params,
+      signal,
+    );
+    return (body.features ?? []).flatMap((feature) => {
+      const place = placeFromForwardFeature(feature);
+      return place ? [place] : [];
+    });
+  } catch {
+    return [];
   }
 };
 
@@ -323,38 +254,18 @@ export const searchBoxForward = async (
   query: string,
   options: ForwardOptions = {},
 ): Promise<Place[]> => {
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const trimmed = query.trim();
-  if (!token || trimmed.length < 1) return [];
-
-  const url = new URL("https://api.mapbox.com/search/searchbox/v1/forward");
-  url.searchParams.set("q", trimmed);
-  url.searchParams.set("limit", String(options.limit ?? 5));
-  if (options.autocomplete) url.searchParams.set("auto_complete", "true");
-  if (options.types) url.searchParams.set("types", options.types);
-  if (options.proximity) {
-    url.searchParams.set(
-      "proximity",
-      `${options.proximity.lng},${options.proximity.lat}`,
-    );
-  }
-  url.searchParams.set("access_token", token);
-
-  try {
-    const response = await fetch(
-      url,
-      options.signal ? { signal: options.signal } : undefined,
-    );
-    if (!response.ok) return [];
-    const body = (await response.json()) as ForwardResponse;
-    return (body.features ?? []).flatMap((feature) => {
-      const place = placeFromForwardFeature(feature);
-      return place ? [place] : [];
-    });
-  } catch (error) {
-    if (isAbort(error)) return [];
-    return [];
-  }
+  if (!trimmed) return [];
+  return searchBoxPlaces(
+    "forward",
+    {
+      q: trimmed,
+      exclude_fields: "reviews",
+      auto_complete: options.autocomplete ? "true" : undefined,
+      ...searchParams(options),
+    },
+    options.signal,
+  );
 };
 
 /** Coordinate lookup (map POI click): Search Box `/reverse`. */
@@ -362,32 +273,15 @@ export const searchBoxReverse = async (
   coordinates: Coordinates,
   options: BaseForwardOptions = {},
 ): Promise<Place[]> => {
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  if (!token) return [];
-
-  const url = new URL("https://api.mapbox.com/search/searchbox/v1/reverse");
-  url.searchParams.set("longitude", String(coordinates.lng));
-  url.searchParams.set("latitude", String(coordinates.lat));
-
-  url.searchParams.set("limit", String(options.limit ?? 5));
-  if (options.types) url.searchParams.set("types", options.types);
-  url.searchParams.set("access_token", token);
-
-  try {
-    const response = await fetch(
-      url,
-      options.signal ? { signal: options.signal } : undefined,
-    );
-    if (!response.ok) return [];
-    const body = (await response.json()) as ForwardResponse;
-    return (body.features ?? []).flatMap((feature) => {
-      const place = placeFromForwardFeature(feature);
-      return place ? [place] : [];
-    });
-  } catch (error) {
-    if (isAbort(error)) return [];
-    return [];
-  }
+  return searchBoxPlaces(
+    "reverse",
+    {
+      longitude: coordinates.lng,
+      latitude: coordinates.lat,
+      ...searchParams(options),
+    },
+    options.signal,
+  );
 };
 
 const enrichableFieldsFromMatch = (match: Place): Partial<Place> => ({
@@ -395,47 +289,192 @@ const enrichableFieldsFromMatch = (match: Place): Partial<Place> => ({
   streetAddress: match.streetAddress,
   areaAddress: match.areaAddress,
   photos: match.photos,
+  details: match.details,
   ...(match.category ? { category: match.category } : {}),
+});
+
+const isPlacesPoiId = (id?: string): id is string =>
+  Boolean(
+    id && (id.startsWith("urn:mbxpoi:") || id.startsWith("dXJuOm1ieHBvaTo")),
+  );
+
+/** New Places API: full POI record, including available photos by default. */
+export const fetchMapboxPlace = async (
+  mapboxId: string,
+  signal?: AbortSignal,
+): Promise<Place | undefined> => {
+  // Address/administrative and Google IDs are not valid Places POI IDs.
+  if (!isPlacesPoiId(mapboxId) || signal?.aborted) return;
+  const id = mapboxId.startsWith("urn:")
+    ? btoa(mapboxId).replace(/=+$/, "")
+    : mapboxId;
+  try {
+    const body = await mapboxRequest<MapboxPlaceRecord>(
+      `/places/v1/details/retrieve/${encodeURIComponent(id)}`,
+      {},
+      signal,
+    );
+
+    const lat = body.coordinates?.latitude;
+    const lng = body.coordinates?.longitude;
+    if (
+      !body.name ||
+      typeof lat !== "number" ||
+      typeof lng !== "number" ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      signal?.aborted
+    )
+      return;
+
+    const address = body.address;
+    const streetAddress =
+      address?.address_line_1?.trim() ||
+      joinAddress([address?.address_number, address?.street_name], " ");
+    const areaAddress = joinAddress([
+      address?.locality,
+      address?.city,
+      address?.postcode,
+    ]);
+    const photos = photosFromMetadata({ photos: body.photos });
+    return {
+      mapboxId: body.mapbox_id ?? id,
+      name: body.name,
+      coordinates: { lat, lng },
+      streetAddress,
+      areaAddress,
+      category: body.primary_category || body.categories?.[0] || "",
+      photos,
+      placeInfoLoaded: true,
+      details: {
+        ...(body.website ? { website: body.website } : {}),
+        ...(body.phone ? { phone: body.phone } : {}),
+        ...(body.opening_hours ? { openingHours: body.opening_hours } : {}),
+        permanentlyClosed: body.permanently_closed ?? null,
+        popularity: body.score?.popularity ?? null,
+        photos,
+      },
+    };
+  } catch {
+    // Preview access, quota, and network failures retain the Search Box result.
+    return;
+  }
+};
+
+const joinAddress = (parts: (string | undefined)[], separator = ", ") => {
+  const unique = new Map<string, string>();
+  for (const part of parts) {
+    const value = part?.trim();
+    if (value) unique.set(value.toLowerCase(), value);
+  }
+  return [...unique.values()].join(separator);
+};
+
+const withPlacesRecord = (place: Place, record: Partial<Place>): Place => ({
+  ...place,
+  mapboxId: record.mapboxId ?? place.mapboxId,
+  streetAddress: record.streetAddress || place.streetAddress,
+  areaAddress: record.areaAddress || place.areaAddress,
+  category: record.category || place.category,
+  photos: record.photos?.length ? record.photos : place.photos,
+  details: { ...place.details, ...record.details, photos: record.photos ?? [] },
+  placeInfoLoaded: true,
 });
 
 /**
  * Enrich a POI/landmark featureset click with address + photos + `mapbox_id`.
  *
- * `/reverse` returns the features at the click point ordered with the enclosing
- * address first, so a `limit: 1` lookup yields an address (wrong category, and a
- * `mapbox_id` the Places Details endpoint rejects with 422). Request several
- * results and keep the POI that matches the clicked feature, falling back to a
- * name + proximity `/forward` search when reverse surfaces no POI.
+ * Match by name and proximity, never by proximity alone. Reverse geocoding is
+ * only an address fallback; a neighboring business must not supply its photos.
  */
 export const enrichPlace = async (
-  place: Pick<Place, "name" | "coordinates">,
+  place: Pick<Place, "name" | "coordinates" | "mapboxId">,
   signal?: AbortSignal,
 ): Promise<Partial<Place> | undefined> => {
-  const target = place.name.trim().toLowerCase();
-  // Only POI matches carry a `mapboxId` (see `placeFromForwardFeature`); prefer
-  // the one whose name matches the clicked feature, else any POI in the results.
-  const pickPoi = (candidates: Place[]): Place | undefined =>
-    candidates.find(
-      (candidate) =>
-        candidate.mapboxId && candidate.name.trim().toLowerCase() === target,
-    ) ?? candidates.find((candidate) => candidate.mapboxId);
+  const normalize = (name: string) =>
+    name
+      .normalize("NFKD")
+      .replace(/\p{M}/gu, "")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]/gu, "");
+  const target = normalize(place.name);
+  const candidates = await searchBoxForward(place.name, {
+    proximity: place.coordinates,
+    limit: 5,
+    signal,
+  });
+  if (signal?.aborted) return;
 
-  let match = pickPoi(
-    await searchBoxReverse(place.coordinates, {
-      limit: 10,
-      types: "poi",
-      signal,
-    }),
-  );
-  match ??= pickPoi(
-    await searchBoxForward(place.name, {
-      proximity: place.coordinates,
-      limit: 5,
-      types: "poi",
-      signal,
-    }),
-  );
+  let match: Place | undefined;
+  let closestDistance = 1000;
+  for (const candidate of candidates) {
+    if (place.mapboxId && candidate.mapboxId === place.mapboxId) {
+      match = candidate;
+      break;
+    }
+    if (normalize(candidate.name) !== target) continue;
+    const distance = distanceMeters(place.coordinates, candidate.coordinates);
+    if (distance <= closestDistance) {
+      match = candidate;
+      closestDistance = distance;
+    }
+  }
+  if (match) return enrichableFieldsFromMatch(match);
 
-  if (!match) return;
-  return enrichableFieldsFromMatch(match);
+  const [address] = await searchBoxReverse(place.coordinates, {
+    limit: 1,
+    types: "address",
+    signal,
+  });
+  if (signal?.aborted || !address) return;
+  return {
+    streetAddress: address.streetAddress,
+    areaAddress: address.areaAddress,
+    photos: [],
+  };
+};
+
+const distanceMeters = (a: Coordinates, b: Coordinates) => {
+  const radians = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * radians;
+  const dLng = (b.lng - a.lng) * radians;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(a.lat * radians) *
+      Math.cos(b.lat * radians) *
+      Math.sin(dLng / 2) ** 2;
+  return 6371000 * 2 * Math.asin(Math.sqrt(Math.min(1, h)));
+};
+
+/** Strip display-only fields. Persisting the remaining Mapbox data still requires storage rights. */
+export const placeRecord = (place: Place): Place => ({
+  id: place.id,
+  mapboxId: place.mapboxId,
+  name: place.name,
+  category: place.category,
+  streetAddress: place.streetAddress,
+  areaAddress: place.areaAddress,
+  coordinates: place.coordinates,
+});
+
+export const resolveMapboxPlace = async (
+  place: Place,
+  signal?: AbortSignal,
+): Promise<Place | undefined> => {
+  if (signal?.aborted) return;
+  if (place.placeInfoLoaded) return place;
+  // Resolve a known POI directly before attempting a name/address fallback.
+  if (isPlacesPoiId(place.mapboxId)) {
+    const record = await fetchMapboxPlace(place.mapboxId, signal);
+    if (signal?.aborted) return;
+    if (record) return withPlacesRecord(place, record);
+  }
+  const fields = await enrichPlace(place, signal);
+  if (!fields || signal?.aborted) return;
+  const next = withPlacesRecord(place, fields);
+  if (!isPlacesPoiId(fields.mapboxId) || fields.mapboxId === place.mapboxId)
+    return next;
+  const record = await fetchMapboxPlace(fields.mapboxId, signal);
+  if (signal?.aborted) return;
+  return record ? withPlacesRecord(next, record) : next;
 };

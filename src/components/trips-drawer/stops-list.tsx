@@ -1,7 +1,6 @@
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useShallow } from "zustand/react/shallow";
 import { DragEndEvent } from "@dnd-kit/dom";
-import type { Coordinates } from "@/utils/interfaces";
 import { isSortable } from "@dnd-kit/react/sortable";
 import { DragDropProvider } from "@dnd-kit/react";
 import { DraggableTripStops } from "@/components/trips-drawer/draggable-trip-stops";
@@ -16,14 +15,7 @@ export const StopsList = ({ map }: MapNavigation) => {
     })),
   );
 
-  const [{ flyTo }] = useMapHook({ map });
-
-  const onClickHandler = (coordinates: Coordinates) => {
-    flyTo({
-      lat: coordinates.lat,
-      lng: coordinates.lng,
-    });
-  };
+  const { flyTo } = useMapHook({ map });
 
   const handleDragEnd = (event: DragEndEvent) => {
     if (event.canceled) return;
@@ -66,7 +58,7 @@ export const StopsList = ({ map }: MapNavigation) => {
                   index={index}
                   key={id}
                   stop={stop}
-                  onClickHandler={onClickHandler}
+                  onClickHandler={flyTo}
                 />
               );
             })}
