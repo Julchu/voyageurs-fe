@@ -45,7 +45,7 @@ export const TripSelector = () => {
 
   const handleValueChange = (tripId: string | null) => {
     if (!tripId) return;
-    if (tripId === "new-trip") createTrip("New Trip");
+    if (tripId === "new-trip") return createTrip("New Trip");
     selectTrip(tripId);
   };
 
@@ -74,7 +74,11 @@ export const TripSelector = () => {
             <Select.List className="relative flex max-h-[var(--available-height)] scroll-py-6 flex-col overflow-y-auto p-1 tracking-widest outline-hidden transition-[opacity,scale] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)]">
               {selectValues.map(({ label, value }) => (
                 <Select.Item
-                  key={value}
+                  key={
+                    !currentTrip?.publicId && value === currentTrip?.clientId
+                      ? "current-draft"
+                      : value
+                  }
                   value={value}
                   className="group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden transition-colors duration-150 select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
                 >
@@ -103,7 +107,7 @@ export const TripSelector = () => {
                   />
                 </Select.ItemIndicator>
                 <Select.ItemText className="col-start-2">
-                  New List
+                  New Trip
                 </Select.ItemText>
               </Select.Item>
             </Select.List>

@@ -363,11 +363,12 @@ export const createTripStore = (initialState: TripState) => {
           const { currentTrip: draft, tripVersion } =
             (persisted as Partial<TripState>) ?? {};
           const serverTrips = current.trips; // authoritative, never from storage
-          const resolved = resolveCurrentTrip(
-            serverTrips,
-            draft,
-            current.tripsLoadState === "loaded",
-          );
+          const resolved =
+            resolveCurrentTrip(
+              serverTrips,
+              draft,
+              current.tripsLoadState === "loaded",
+            ) ?? current.currentTrip;
           return {
             ...current,
             trips: serverTrips,

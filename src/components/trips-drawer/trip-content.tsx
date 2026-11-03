@@ -18,10 +18,12 @@ import { useRef, useState } from "react";
 export const TripContent = ({ map }: MapNavigation) => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
   const [isEditingTrip, setIsEditingTrip] = useState(false);
+  const [nameInputVersion, setNameInputVersion] = useState(0);
   const tripNameRef = useRef<HTMLInputElement>(null);
   const {
     trips,
     currentTrip,
+    renameTrip,
     resetDraft,
     syncTrips,
     tripSaveStatus,
@@ -33,6 +35,7 @@ export const TripContent = ({ map }: MapNavigation) => {
       ({
         trips,
         currentTrip,
+        renameTrip,
         resetDraft,
         syncTrips,
         tripSaveStatus,
@@ -42,6 +45,7 @@ export const TripContent = ({ map }: MapNavigation) => {
       }) => ({
         trips,
         currentTrip,
+        renameTrip,
         resetDraft,
         syncTrips,
         tripSaveStatus,
@@ -51,18 +55,21 @@ export const TripContent = ({ map }: MapNavigation) => {
       }),
     ),
   );
+
   const serverTrip = currentTrip?.publicId
     ? trips.find((trip) => trip.publicId === currentTrip.publicId)
     : undefined;
 
   const isDirty = useTripDirty(currentTrip, serverTrip);
 
+  const showNameInput =
+    !!currentTrip && (!userInfo || !currentTrip.publicId || isEditingTrip);
   const showActions = !!userInfo && (isEditingTrip || isDirty);
 
   const isSaving = tripSaveStatus === "saving";
 
   const onSaveHandler = () => {
-    if (!currentTrip || isSaving) return;
+    if (!userInfo || !currentTrip || isSaving) return;
     const tripFormData = {
       ...currentTrip,
       name: tripNameRef.current?.value.trim() ?? currentTrip.name,
@@ -75,6 +82,7 @@ export const TripContent = ({ map }: MapNavigation) => {
 
   const onResetHandler = () => {
     resetDraft();
+    setNameInputVersion((version) => version + 1);
     setIsEditingTrip(false);
   };
 
@@ -90,7 +98,7 @@ export const TripContent = ({ map }: MapNavigation) => {
                 "flex w-full cursor-pointer rounded-2xl bg-blue-500 px-4 py-2 text-2xl font-bold tracking-widest text-white"
               }
             >
-              My Trip
+              {currentTrip?.name.trim() || "My Trip"}
             </p>
           )}
 
@@ -100,15 +108,18 @@ export const TripContent = ({ map }: MapNavigation) => {
         </Drawer.Title>
       </div>
 
-      {isEditingTrip && currentTrip ? (
+      {showNameInput && currentTrip ? (
         <div className="px-4 pb-4">
           <Input
             type="text"
             placeholder={"Name your trip"}
-            key={currentTrip.clientId}
+            key={`${currentTrip.clientId}:${nameInputVersion}`}
             ref={tripNameRef}
             aria-label="Trip name"
             defaultValue={currentTrip.name}
+            onChange={(event) => {
+              if (!userInfo) renameTrip(event.target.value);
+            }}
             maxLength={255}
             disabled={isSaving}
             className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-neutral-950 outline-none"

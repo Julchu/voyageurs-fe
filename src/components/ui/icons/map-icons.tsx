@@ -122,7 +122,6 @@ export function FlyToIcon(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 24 24"
       {...props}
     >
-      {/* Icon from Tabler Icons by Paweł Kuna - https://github.com/tabler/tabler-icons/blob/master/LICENSE */}
       <g strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
         <path d="M21 13v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h9m4 2a2 2 0 1 0 4 0a2 2 0 1 0-4 0" />
         <path d="M10 11h4v4m-4 0l4-4" />

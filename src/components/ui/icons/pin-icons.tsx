@@ -1,4 +1,5 @@
 import { SVGProps } from "react";
+import { cn } from "cn";
 
 // tabler:map-pin-pin
 export const CurrentLocationPinIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -174,3 +175,32 @@ export function PinMenuButton(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+// tabler:map-pin-filled
+export function MapPinFilled(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path d="M18.364 4.636a9 9 0 0 1 .203 12.519l-.203.21l-4.243 4.242a3 3 0 0 1-4.097.135l-.144-.135l-4.244-4.243A9 9 0 0 1 18.364 4.636M12 8a3 3 0 1 0 0 6a3 3 0 0 0 0-6" />
+    </svg>
+  );
+}
+
+export const AnimatedPinFilledIcon = ({
+  className,
+  ...svgProps
+}: SVGProps<SVGSVGElement>) => {
+  const shared = cn("h-10 w-10 stroke-[1.5]", className);
+
+  return (
+    <>
+      <MapPinFilled className={cn("absolute", shared)} {...svgProps} />
+      <MapPinFilled className={cn("animate-ping", shared)} {...svgProps} />
+    </>
+  );
+};

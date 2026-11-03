@@ -1,8 +1,8 @@
 import { type RefObject, useEffect, useState } from "react";
 import { type Map as MapboxMap, Marker } from "mapbox-gl";
 import { renderToStaticMarkup } from "react-dom/server";
-import { AnimatedHomeIcon } from "@/components/ui/icons/home-icon";
 import { useUserStore } from "@/providers/user-store-provider";
+import { AnimatedPinFilledIcon } from "@/components/ui/icons/pin-icons";
 
 export const useMapLocation = (
   map: RefObject<MapboxMap | null>,
@@ -18,7 +18,7 @@ export const useMapLocation = (
     const element = document.createElement("div");
     element.className = "marker";
     element.innerHTML = renderToStaticMarkup(
-      <AnimatedHomeIcon className="fill-blue-500 stroke-white" />,
+      <AnimatedPinFilledIcon className="h-6 w-6 fill-blue-500 stroke-none" />,
     );
     const marker = new Marker({ element, clickTolerance: 40 })
       .setLngLat([lastLocation.lng, lastLocation.lat])

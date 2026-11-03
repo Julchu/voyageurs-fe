@@ -3,13 +3,14 @@
 import { useUserStore } from "@/providers/user-store-provider";
 import Image from "next/image";
 import { Avatar } from "@base-ui/react/avatar";
-import { PersonIcon } from "@radix-ui/react-icons";
+import { UserFilledIcon } from "@/components/ui/icons/person-icons";
 
 export const UserAvatar = () => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
   const [firstName, lastName] = userInfo?.name?.split(" ") ?? [];
 
-  if (!userInfo) return <PersonIcon className="size-1/2 rounded-full" />;
+  if (!userInfo)
+    return <UserFilledIcon className="size-1/2 rounded-full fill-white" />;
 
   return (
     <Avatar.Root>
