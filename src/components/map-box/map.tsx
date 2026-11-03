@@ -249,11 +249,8 @@ export const MapAndControls = ({
     if (!mapInstance || mapLoading) return;
     let cancelled = false;
     const coordinates = JSON.parse(stopKey) as Coordinates[];
-    const straight = coordinates.map(
-      (point) => [point.lng, point.lat] as [number, number],
-    );
-    drawRoute(mapInstance, straight);
-    if (straight.length < 2) {
+    drawRoute(mapInstance, []);
+    if (coordinates.length < 2) {
       return;
     }
 
@@ -341,10 +338,7 @@ export const MapAndControls = ({
         triggerGeolocator={flyAndUpdateUser}
       />
 
-      <AddressSearch
-        provider="mapbox"
-        proximity={mapFocus?.coordinates ?? initialCoords}
-      />
+      <AddressSearch proximity={mapFocus?.coordinates ?? initialCoords} />
 
       <TripDrawer map={map} />
     </div>
