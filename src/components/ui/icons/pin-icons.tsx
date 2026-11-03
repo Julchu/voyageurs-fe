@@ -71,26 +71,6 @@ export const PinAddIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-// tabler:map-2
-// Map icon with pin icon bottom right
-export const MapPinIcon = (props: SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="32"
-    height="32"
-    viewBox="0 0 24 24"
-    {...props}
-  >
-    <path
-      fill="none"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 18.5L9 17l-6 3V7l6-3l6 3l6-3v7.5M9 4v13m6-10v5.5m6.121 7.621a3 3 0 1 0-4.242 0Q17.506 20.749 19 22q1.577-1.335 2.121-1.879M19 18v.01"
-    />
-  </svg>
-);
-
 // lucide:map-pin-house
 // Pin with map icon bottom right
 export const PinMapIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -125,6 +105,22 @@ export const PinPencilIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// tabler:map-pin-check
+export const MapPinCheckIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="32"
+    height="32"
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <g strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+      <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0-6 0" />
+      <path d="M11.87 21.48a2 2 0 0 1-1.283-.58l-4.244-4.243a8 8 0 1 1 13.355-3.474M15 19l2 2l4-4" />
+    </g>
+  </svg>
+);
+
 // material-symbols:edit-location-alt-outline
 // Large pin with pencil top right
 export const PencilPinIcon = (props: SVGProps<SVGSVGElement>) => (
@@ -135,7 +131,10 @@ export const PencilPinIcon = (props: SVGProps<SVGSVGElement>) => (
     viewBox="0 0 24 24"
     {...props}
   >
-    <path d="M12 22q-4.025-3.425-6.012-6.362T4 10.2q0-3.75 2.413-5.975T12 2q.675 0 1.338.113t1.287.312L13 4.075q-.25-.05-.488-.062T12 4Q9.475 4 7.738 5.738T6 10.2q0 1.775 1.475 4.063T12 19.35q3.05-2.8 4.525-5.087T18 10.2q0-.3-.025-.6t-.075-.575l1.65-1.65q.225.65.338 1.35T20 10.2q0 2.5-1.987 5.438T12 22m6.35-18.15L17.2 2.7L11 8.9V11h2.1l6.2-6.2zM20 4.1l.7-.7q.275-.275.275-.7T20.7 2l-.7-.7q-.275-.275-.7-.275t-.7.275l-.7.7z" />
+    <path
+      strokeWidth={"1.5"}
+      d="M12 22q-4.025-3.425-6.012-6.362T4 10.2q0-3.75 2.413-5.975T12 2q.675 0 1.338.113t1.287.312L13 4.075q-.25-.05-.488-.062T12 4Q9.475 4 7.738 5.738T6 10.2q0 1.775 1.475 4.063T12 19.35q3.05-2.8 4.525-5.087T18 10.2q0-.3-.025-.6t-.075-.575l1.65-1.65q.225.65.338 1.35T20 10.2q0 2.5-1.987 5.438T12 22m6.35-18.15L17.2 2.7L11 8.9V11h2.1l6.2-6.2zM20 4.1l.7-.7q.275-.275.275-.7T20.7 2l-.7-.7q-.275-.275-.7-.275t-.7.275l-.7.7z"
+    />
   </svg>
 );
 
@@ -155,3 +154,23 @@ export const PinArrowIcon = (props: SVGProps<SVGSVGElement>) => (
     </g>
   </svg>
 );
+
+// tabler:filter-2-pin
+export function PinMenuButton(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M4 6h16M6 12h10m-7 6h3m7 0v.01m2.121 2.111a3.005 3.005 0 0 0-.454-4.616a3 3 0 0 0-3.334 0a3 3 0 0 0-.454 4.616Q17.506 20.749 19 22q1.577-1.335 2.121-1.879L19 18"
+      />
+    </svg>
+  );
+}

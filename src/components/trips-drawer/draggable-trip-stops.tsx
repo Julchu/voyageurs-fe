@@ -2,7 +2,7 @@ import { useSortable } from "@dnd-kit/react/sortable";
 import type { Coordinates } from "@/utils/interfaces";
 import type { TripStopDraft } from "@/types/trip-draft";
 import { MoveDownArrow, MoveUpArrow } from "@/components/ui/icons/move-icons";
-import { PinArrowIcon, PinRemoveIcon } from "@/components/ui/icons/pin-icons";
+import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 import { cn } from "cn";
 import { Menu } from "@base-ui/react/menu";
@@ -12,6 +12,7 @@ import {
   GripIcon,
   VerticalEllipsisIcon,
 } from "@/components/ui/icons/stop-card-icons";
+import { FlyToIcon } from "@/components/ui/icons/map-icons";
 
 export const DraggableTripStops = ({
   id,
@@ -63,7 +64,7 @@ export const DraggableTripStops = ({
           <span className="block truncate text-xs text-wrap text-neutral-500 capitalize">
             {stop.streetAddress || "No address"}
           </span>
-          <span className="block truncate text-xs text-neutral-500 capitalize">
+          <span className="hidden truncate text-xs text-neutral-500 capitalize sm:block">
             {stop.areaAddress || "No address"}
           </span>
         </span>
@@ -113,15 +114,15 @@ export const PlaceActionsMenu = ({
         >
           <Menu.Popup
             className={
-              "flex origin-[var(--transform-origin)] flex-col rounded-2xl bg-white p-2 text-black shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] outline-hidden transition-[scale,opacity] duration-100 ease-out data-ending-style:scale-100 data-ending-style:opacity-100 data-starting-style:scale-100 data-starting-style:opacity-0"
+              "flex origin-[var(--transform-origin)] flex-col rounded-2xl bg-white p-2 text-black shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] outline-hidden transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none"
             }
           >
             <MenuItem onClick={onJumpToLocation}>
-              <PinArrowIcon
+              <FlyToIcon
                 aria-hidden="true"
-                className="h-6 w-6 fill-none stroke-blue-500 group-hover:stroke-white"
+                className="h-6 w-6 fill-none stroke-blue-500 group-data-highlighted:stroke-white"
               />
-              Jump to location
+              Fly to location
             </MenuItem>
 
             {index !== 0 ? (
@@ -133,7 +134,7 @@ export const PlaceActionsMenu = ({
               >
                 <MoveUpArrow
                   className={
-                    "h-6 w-6 cursor-pointer stroke-blue-500 group-hover:stroke-white"
+                    "h-6 w-6 cursor-pointer stroke-blue-500 group-data-highlighted:stroke-white"
                   }
                 />
                 Move Up
@@ -149,7 +150,7 @@ export const PlaceActionsMenu = ({
               >
                 <MoveDownArrow
                   className={
-                    "h-6 w-6 cursor-pointer stroke-blue-500 group-hover:stroke-white"
+                    "h-6 w-6 cursor-pointer stroke-blue-500 group-data-highlighted:stroke-white"
                   }
                 />
                 Move Down
@@ -161,7 +162,7 @@ export const PlaceActionsMenu = ({
             >
               <PinRemoveIcon
                 className={
-                  "h-6 w-6 fill-none stroke-red-500 group-hover:stroke-white"
+                  "h-6 w-6 fill-none stroke-red-500 group-data-highlighted:stroke-white"
                 }
               />
               Remove
@@ -176,7 +177,7 @@ export const PlaceActionsMenu = ({
 const MenuItem = (props: Menu.Item.Props) => (
   <Menu.Item
     className={
-      "group flex cursor-pointer items-center gap-2 rounded-lg p-2 text-sm leading-4 text-black outline-hidden select-none hover:bg-blue-500 hover:text-white data-disabled:text-neutral-500 data-highlighted:relative"
+      "group flex cursor-pointer items-center gap-2 rounded-lg p-2 text-sm leading-4 text-black outline-hidden transition-colors duration-150 select-none data-disabled:text-neutral-500 data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
     }
     {...props}
   />

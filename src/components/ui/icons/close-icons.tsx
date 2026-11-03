@@ -34,7 +34,7 @@ export const XIcon = (props: SVGProps<SVGSVGElement>) => (
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth="2"
+      strokeWidth="1.5"
       d="M18 6L6 18M6 6l12 12"
     />
   </svg>
