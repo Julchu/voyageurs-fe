@@ -39,8 +39,9 @@ export type MapTime = (typeof MapTimeEnum)[keyof typeof MapTimeEnum];
 export type Coordinates = { lat: number; lng: number };
 
 export type UserInfo = {
-  id: number;
-  publicId?: string;
+  publicId: string;
+  createdAt: string | null;
+  updatedAt: string | null;
   email: string;
   name: string;
   image?: string | null;
@@ -65,7 +66,6 @@ export type PlaceDetails = {
 export type Place = {
   // Numeric feature id from the Standard style featureset (POI/landmark click).
   id?: number;
-  // Opaque provider id: Google place id, or a legacy Mapbox `urn:mbxpoi:...`.
   mapboxId?: string;
   name: string;
   category: string;
@@ -79,40 +79,15 @@ export type Place = {
   details?: PlaceDetails;
 };
 
-export type TripStop = Place & {
-  // Local clientId separate from server publicId for easy removals/re-orders
-  clientId?: string;
-  publicId?: string;
-  tripPublicId?: string;
-  // Position: order
-  position: number;
-  visited: boolean;
-  visitedAt: string | null;
-};
-
-export type Trip = {
-  // Local clientId for a draft trip before the server assigns a publicId
-  clientId?: string;
-  publicId?: string;
-  name: string;
-  stops: TripStop[];
-};
-
 export type PlaceSearch = Place & {
   clientId?: string;
   publicId?: string;
   query: string;
   searchedAt: string;
+  createdAt: string | null;
+  updatedAt: string | null;
 };
 
 export type PlaceSearchInput = Place & {
   query: string;
-};
-
-type FormData<T> = Omit<T, "userId" | "tripId" | "stopId">;
-
-export type TripStopFormData = FormData<TripStop>;
-
-export type TripFormData = Omit<FormData<Trip>, "stops"> & {
-  stops: TripStopFormData[];
 };

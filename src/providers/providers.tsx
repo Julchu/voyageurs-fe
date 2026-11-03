@@ -3,22 +3,22 @@ import { TravelLoader } from "@/components/trips-drawer/travel-loader";
 import { TripStoreProvider } from "@/providers/trip-store-provider";
 import { UserStoreProvider } from "@/providers/user-store-provider";
 import { serverFetch } from "@/utils/server-actions/server-fetch";
-import type { PlaceSearch, Trip, UserInfo } from "@/utils/interfaces";
+import type { PlaceSearch, UserInfo } from "@/utils/interfaces";
+import type { TripDto } from "@/types/trip-api";
 import { SearchStoreProvider } from "@/providers/search-store-provider";
 
 export const Providers = async ({ children }: PropsWithChildren) => {
   const userInfo = await serverFetch<UserInfo>({ endpoint: "user" });
 
-  const fetchedTrips = userInfo
-    ? await serverFetch<Trip[]>({ endpoint: "trips" })
-    : null;
+  const [fetchedTrips, fetchedSearches] = userInfo
+    ? await Promise.all([
+        serverFetch<TripDto[]>({ endpoint: "trips" }),
+        serverFetch<PlaceSearch[]>({ endpoint: "searches" }),
+      ])
+    : [null, null];
 
   const trips = fetchedTrips ?? [];
   const tripsServerLoaded = fetchedTrips !== null;
-
-  const fetchedSearches = userInfo
-    ? await serverFetch<PlaceSearch[]>({ endpoint: "searches" })
-    : null;
 
   const searches = fetchedSearches ?? [];
   const searchesServerLoaded = fetchedSearches !== null;

@@ -68,6 +68,8 @@ export const createSearchStore = (initialState: SearchState) => {
             areaAddress: entry.areaAddress,
             coordinates: entry.coordinates,
             searchedAt: new Date().toISOString(),
+            createdAt: null,
+            updatedAt: null,
           });
 
           // if (get().mode === "local") {

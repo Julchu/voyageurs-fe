@@ -76,7 +76,7 @@ export const TripSelector = () => {
                 <Select.Item
                   key={value}
                   value={value}
-                  className="group/item grid cursor-default grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden select-none data-highlighted:bg-blue-500 data-highlighted:text-white"
+                  className="group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden select-none data-highlighted:bg-blue-500 data-highlighted:text-white"
                 >
                   <Select.ItemIndicator className="col-start-1">
                     <MapPinCheckIcon
@@ -93,7 +93,7 @@ export const TripSelector = () => {
               <Select.Item
                 key="new-trip"
                 value={"new-trip"}
-                className="group/item grid cursor-default grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden select-none data-highlighted:bg-blue-500 data-highlighted:text-white"
+                className="group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden select-none data-highlighted:bg-blue-500 data-highlighted:text-white"
               >
                 <Select.ItemIndicator className="col-start-1">
                   <PinPencilIcon

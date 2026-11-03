@@ -8,13 +8,13 @@ import { MapSaveIcon } from "@/components/ui/icons/map-icons";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useShallow } from "zustand/react/shallow";
 import { Menu } from "@base-ui/react/menu";
-import { HamburgerMenuIcon } from "@radix-ui/react-icons";
 import { XIcon } from "@/components/ui/icons/close-icons";
 import { ResetIcon } from "@/components/ui/icons/reset-icons";
 import { Spinner } from "@/components/ui/icons/spinner";
 import { useTripDirty } from "@/hooks/use-trip-dirty";
 import { PencilPinIcon } from "@/components/ui/icons/pin-icons";
 import { useState } from "react";
+import { TablerMenuDeep } from "@/components/ui/icons/menu-icons";
 
 export const TripContent = ({ map }: MapNavigation) => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
@@ -74,8 +74,8 @@ export const TripContent = ({ map }: MapNavigation) => {
 
   return (
     <div className={"flex min-h-0 w-full flex-auto flex-col"}>
-      <div className={"shrink-0 p-4"}>
-        <Drawer.Title className={"flex flex-row justify-between gap-4"}>
+      <div className={"flex shrink-0 flex-row gap-2 p-4"}>
+        <Drawer.Title className={"flex w-full flex-row justify-between gap-4"}>
           {userInfo ? (
             <TripSelector />
           ) : (
@@ -96,7 +96,7 @@ export const TripContent = ({ map }: MapNavigation) => {
 
       <Separator className={"h-px bg-gray-200"} />
 
-      <div className={"flex min-h-0 flex-auto flex-col font-medium"}>
+      <div className={"flex min-h-0 flex-auto flex-col p-4 font-medium"}>
         <StopsList map={map} />
       </div>
 
@@ -159,9 +159,12 @@ export const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => {
     <Menu.Root>
       <Menu.Trigger
         aria-label="Trip menu"
-        className="flex cursor-pointer rounded-2xl bg-blue-500 p-2 text-xl font-bold tracking-widest text-white hover:bg-blue-600"
+        className="group flex aspect-square cursor-pointer items-center justify-center rounded-full text-xl font-bold tracking-widest text-white group-hover:bg-blue-500"
       >
-        <HamburgerMenuIcon aria-hidden="true" className="h-6 w-6" />
+        <TablerMenuDeep
+          aria-hidden="true"
+          className="h-6 w-6 stroke-blue-500 group-hover:stroke-white"
+        />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner

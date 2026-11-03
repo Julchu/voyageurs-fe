@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { useStore } from "zustand";
-import type { Trip } from "@/utils/interfaces";
+import type { TripDto } from "@/types/trip-api";
 import {
   createTripStore,
   initTripStore,
@@ -24,7 +24,7 @@ export const TripStoreProvider = ({
   trips,
   tripsServerLoaded = false,
 }: PropsWithChildren<{
-  trips: Trip[];
+  trips: TripDto[];
   tripsServerLoaded: boolean;
 }>) => {
   const [store] = useState(() =>

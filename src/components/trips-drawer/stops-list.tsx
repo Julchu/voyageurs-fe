@@ -56,7 +56,7 @@ export const StopsList = ({ map }: MapNavigation) => {
         }
       >
         <DragDropProvider onDragEnd={handleDragEnd}>
-          <ol className="flex flex-col gap-2 overflow-x-hidden p-4">
+          <ol className="flex flex-col gap-2 overflow-x-hidden">
             {currentTrip.stops.map((stop, index) => {
               const id = stop.clientId;
 
