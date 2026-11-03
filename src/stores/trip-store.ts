@@ -4,34 +4,33 @@ import {
   reconcileSavedTrip,
   requestTripSave,
   sameTrip,
+  toTripDraft,
 } from "@/utils/trip-sync";
-import type {
-  Place,
-  Trip,
-  TripFormData,
-  TripStopFormData,
-} from "@/utils/interfaces";
+import type { Place } from "@/utils/interfaces";
+import type { TripDto } from "@/types/trip-api";
+import type { TripDraft, TripStopDraft } from "@/types/trip-draft";
 import {
   type CollectionLoadState,
   fetchCollection,
   loadStateFromServer,
   nextLoadStateForFetch,
-} from "@/stores/collection-load";
+} from "@/stores/utils/collection-load";
 
 export type TripState = {
-  trips: Trip[];
+  trips: TripDto[];
   tripsLoadState: CollectionLoadState;
-  currentTrip?: Trip;
+  currentTrip?: TripDraft;
   tripVersion: number;
+  tripSaveStatus: "idle" | "saving" | "saved" | "error";
+  tripSaveError?: string;
+  savedTripVersion?: number;
 };
 
 export type TripActions = {
+  clearTrips: () => void;
   fetchTrips: () => Promise<void>;
-  syncTrips: (tripFormData: TripFormData) => Promise<void>;
+  syncTrips: (tripFormData: TripDraft) => Promise<void>;
   addStop: (stop: Place) => void;
-  // Fill in a stop that was saved before its place lookup finished.
-  rememberPlace: (place: Place) => void;
-  getRememberedPlace: (place: Place) => Place;
   removeStop: (clientOrPublicId?: string) => void;
   reorderStops: (from: number, to: number) => void;
   renameTrip: (name: string) => void;
@@ -42,29 +41,13 @@ export type TripActions = {
 
 export type TripStore = TripState & TripActions;
 
-const trySyncingTrips = async (tripFormData: TripFormData) => {
-  try {
-    const fetchTrip = await fetch("/api/trips", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(tripFormData),
-    });
-    return await fetchTrip.json();
-  } catch (error) {
-    throw new Error("Unable to fetch grocery lists", { cause: error });
-  }
-};
-
 const newStop = ({
   place,
   position,
-  tripPublicId,
 }: {
   place: Place;
   position: number;
-  tripPublicId?: string;
-}): TripStopFormData => ({
-  ...(tripPublicId ? { tripPublicId } : {}),
+}): TripStopDraft => ({
   clientId: crypto.randomUUID(),
   name: place.name,
   streetAddress: place.streetAddress,
@@ -73,9 +56,6 @@ const newStop = ({
   category: place.category,
   id: place.id,
   ...(place.mapboxId ? { mapboxId: place.mapboxId } : {}),
-  ...(place.photos ? { photos: place.photos } : {}),
-  ...(place.placeInfoLoaded ? { placeInfoLoaded: true } : {}),
-  ...(place.details ? { details: place.details } : {}),
   position,
   visited: false,
   visitedAt: null,
@@ -85,9 +65,9 @@ const addStop = ({
   currentTrip,
   place,
 }: {
-  currentTrip?: TripFormData;
+  currentTrip?: TripDraft;
   place: Place;
-}): TripFormData => {
+}): TripDraft => {
   if (!currentTrip) {
     return {
       clientId: crypto.randomUUID(),
@@ -99,82 +79,27 @@ const addStop = ({
   return {
     ...currentTrip,
     stops: [
-      ...currentTrip?.stops,
-      newStop({ place, position: currentTrip?.stops.length }),
+      ...currentTrip.stops,
+      newStop({ place, position: currentTrip.stops.length }),
     ],
   };
-};
-
-const samePoint = (a: Place["coordinates"], b: Place["coordinates"]) =>
-  Math.abs(a.lat - b.lat) < 1e-5 && Math.abs(a.lng - b.lng) < 1e-5;
-
-const samePlace = (a: Place, b: Place) =>
-  (a.mapboxId && a.mapboxId === b.mapboxId) ||
-  (a.name === b.name && samePoint(a.coordinates, b.coordinates));
-
-const withPlaceInfo = <T extends Place>(original: T, place: Place): T => ({
-  ...original,
-  mapboxId: place.mapboxId ?? original.mapboxId,
-  streetAddress: place.streetAddress || original.streetAddress,
-  areaAddress: place.areaAddress || original.areaAddress,
-  category: place.category || original.category,
-  photos: place.photos ?? original.photos,
-  placeInfoLoaded: place.placeInfoLoaded ?? original.placeInfoLoaded,
-  details: place.details ?? original.details,
-});
-
-// Save both basic and expanded details, including on stops that already have
-// an id. Retain each stop's identity, position, and visited state.
-const applyRememberedPlace = ({
-  currentTrip,
-  place,
-}: {
-  currentTrip: TripFormData;
-  place: Place;
-}): TripFormData => {
-  if (!place.mapboxId) return currentTrip;
-  let changed = false;
-  const stops = currentTrip.stops.map((stop) => {
-    if (!samePlace(stop, place)) return stop;
-    const next = withPlaceInfo(stop, place);
-    if (
-      Object.keys(next).every(
-        (key) =>
-          next[key as keyof typeof next] === stop[key as keyof typeof stop],
-      )
-    )
-      return stop;
-    changed = true;
-    return next;
-  });
-  return changed ? { ...currentTrip, stops } : currentTrip;
 };
 
 const removeStop = ({
   currentTrip,
   clientOrPublicId,
 }: {
-  currentTrip: TripFormData;
+  currentTrip: TripDraft;
   clientOrPublicId: string;
-}): TripFormData => {
+}): TripDraft => {
   return {
     ...currentTrip,
-    stops: currentTrip?.stops.filter(({ clientId, publicId }) => {
-      return clientId !== clientOrPublicId && publicId !== clientOrPublicId;
-    }),
-  };
-};
-
-const renameTrip = ({
-  currentTrip,
-  name,
-}: {
-  currentTrip: TripFormData;
-  name: string;
-}): TripFormData => {
-  return {
-    ...currentTrip,
-    name,
+    stops: currentTrip.stops
+      .filter(
+        ({ clientId, publicId }) =>
+          clientId !== clientOrPublicId && publicId !== clientOrPublicId,
+      )
+      .map((stop, position) => ({ ...stop, position })),
   };
 };
 
@@ -183,13 +108,13 @@ const reorderStops = ({
   from,
   to,
 }: {
-  currentTrip: TripFormData;
+  currentTrip: TripDraft;
   from: number;
   to: number;
-}): TripFormData => {
+}): TripDraft => {
   const { stops } = currentTrip;
   const n = stops.length;
-  // Edge cases (no trips, same positions, out of bounds
+  // Ignore unchanged or out-of-bounds moves.
   if (n === 0 || from === to || from < 0 || from >= n || to < 0 || to >= n)
     return currentTrip;
 
@@ -200,81 +125,159 @@ const reorderStops = ({
   next.splice(to, 0, stopToReposition);
   return {
     ...currentTrip,
-    stops: next,
+    stops: next.map((stop, position) => ({ ...stop, position })),
   };
 };
 
-const resetTripToServerTrip = ({
-  originalTrips,
-  currentTripPublicId,
-}: {
-  originalTrips: Trip[];
-  currentTripPublicId?: string;
-}): TripFormData => {
-  if (!currentTripPublicId)
-    return {
-      clientId: crypto.randomUUID(),
-      name: "New Trip",
-      stops: [],
-    };
-  return originalTrips.filter(
-    ({ publicId }) => publicId === currentTripPublicId,
-  )[0];
-};
-
 export const initTripStore = (
-  trips: Trip[],
+  trips: TripDto[],
   tripsServerLoaded = false,
 ): TripState => ({
-  currentTrip: trips.length > 0 ? trips[0] : undefined,
-  trips: trips ?? [],
+  currentTrip: trips[0]
+    ? toTripDraft(trips[0])
+    : { name: "New Trip", stops: [], clientId: crypto.randomUUID() },
+  trips,
   tripsLoadState: loadStateFromServer(tripsServerLoaded),
   tripVersion: 1,
+  tripSaveStatus: "idle",
 });
 
 const resolveCurrentTrip = (
-  serverTrips: Trip[],
-  draft?: Trip,
-): Trip | undefined => {
+  serverTrips: TripDto[],
+  draft?: TripDraft,
+  serverLoaded = true,
+): TripDraft | undefined => {
   // Nothing persisted → use the server default
-  if (!draft) return serverTrips[0];
+  if (!draft) return serverTrips[0] ? toTripDraft(serverTrips[0]) : undefined;
+  if (!serverLoaded) return draft;
   // Brand-new, never-synced trip → keep it
   if (!draft.publicId) return draft;
   // Existing trip that was deleted on the server → drop the draft
   const existsOnServer = serverTrips.some((t) => t.publicId === draft.publicId);
-  if (!existsOnServer) return serverTrips[0];
+  if (!existsOnServer)
+    return serverTrips[0] ? toTripDraft(serverTrips[0]) : undefined;
   // Existing trip still on the server → keep the draft, ignore server's version
   return draft;
 };
 
-// Store handles actions (per-action) rather than RHF
 export const createTripStore = (initialState: TripState) => {
+  // Ignore responses from requests started before the store was cleared.
+  let requestVersion = 0;
+
   return create<TripStore>()(
     persist(
       (set, get) => ({
         ...initialState,
+        clearTrips: () => {
+          requestVersion += 1;
+          set({
+            ...initTripStore([]),
+            tripSaveError: undefined,
+            savedTripVersion: undefined,
+          });
+        },
         fetchTrips: async () => {
           const next = nextLoadStateForFetch(get().tripsLoadState);
           if (!next.shouldFetch) return;
+          const version = requestVersion;
+          const beforeFetch = new Set(get().trips);
           set({ tripsLoadState: next.loadState });
           try {
-            const trips = await fetchCollection<Trip[]>(
-              "/api/trips",
-              "trips",
-              "Trip",
-            );
-            set({ trips, tripsLoadState: "loaded" });
+            const trips = await fetchCollection<TripDto>("/api/trips", "Trip");
+            if (version !== requestVersion) return;
+            set(({ currentTrip, trips: localTrips }) => {
+              // A list request may finish after a save. Keep those newer results.
+              const savedDuringFetch = localTrips.filter(
+                (trip) => !beforeFetch.has(trip),
+              );
+              const savedById = new Map(
+                savedDuringFetch.map((trip) => [trip.publicId, trip]),
+              );
+              const remoteIds = new Set(trips.map((trip) => trip.publicId));
+              const merged = [
+                ...savedDuringFetch.filter(
+                  (trip) => !remoteIds.has(trip.publicId),
+                ),
+                ...trips.map((trip) => {
+                  const saved = savedById.get(trip.publicId);
+                  return saved && saved.version >= trip.version ? saved : trip;
+                }),
+              ];
+              return {
+                trips: merged,
+                tripsLoadState: "loaded",
+                currentTrip:
+                  currentTrip ??
+                  (merged[0] ? toTripDraft(merged[0]) : undefined),
+              };
+            });
           } catch (error) {
+            if (version !== requestVersion) return;
             console.error("Unable to retrieve trips", error);
             set({ tripsLoadState: "error" });
           }
         },
         syncTrips: async (tripFormData) => {
+          if (get().tripSaveStatus === "saving") return;
+          if (
+            !tripFormData.name.trim() ||
+            tripFormData.name.trim().length > 255
+          ) {
+            set({
+              tripSaveStatus: "error",
+              tripSaveError: "Trip name must be between 1 and 255 characters.",
+            });
+            return;
+          }
+          const version = requestVersion;
+          // Form fields are committed once on Save, before reconciling the response.
+          set(({ currentTrip, tripVersion }) => {
+            const isCurrent = sameTrip(currentTrip, tripFormData);
+            return {
+              currentTrip: isCurrent ? tripFormData : currentTrip,
+              tripVersion:
+                isCurrent && currentTrip !== tripFormData
+                  ? tripVersion + 1
+                  : tripVersion,
+              tripSaveStatus: "saving",
+              tripSaveError: undefined,
+            };
+          });
           try {
-            const trips = await trySyncingTrips(tripFormData);
-            set(() => ({ trips }));
+            const saved = get().trips.find(
+              (trip) => trip.publicId === tripFormData.publicId,
+            );
+            const trip = await requestTripSave(tripFormData, saved);
+            if (version !== requestVersion) return;
+            set(({ currentTrip, tripVersion, trips }) => {
+              const isCurrent = sameTrip(currentTrip, tripFormData);
+              const unchanged = currentTrip === tripFormData;
+              const nextVersion = isCurrent ? tripVersion + 1 : tripVersion;
+              return {
+                trips: trips.some((item) => item.publicId === trip.publicId)
+                  ? trips.map((item) =>
+                      item.publicId === trip.publicId ? trip : item,
+                    )
+                  : [trip, ...trips],
+                currentTrip:
+                  isCurrent && currentTrip
+                    ? reconcileSavedTrip(currentTrip, tripFormData, trip)
+                    : currentTrip,
+                tripVersion: nextVersion,
+                tripSaveStatus: "saved",
+                savedTripVersion:
+                  isCurrent && unchanged ? nextVersion : undefined,
+              };
+            });
           } catch (error) {
-            console.error("Failed to sync trip to DB:", error);
+            if (version !== requestVersion) return;
+            set({
+              tripSaveStatus: "error",
+              tripSaveError:
+                error instanceof Error
+                  ? error.message
+                  : "Unable to save trip. Please try again.",
+            });
           }
         },
         // Necessary for adding stop from outside of form
@@ -283,35 +286,6 @@ export const createTripStore = (initialState: TripState) => {
             currentTrip: addStop({ currentTrip, place }),
             tripVersion: tripVersion + 1,
           }));
-        },
-        // TODO: rework remember Place for temp stop info
-        rememberPlace: (place) => {
-          set(({ currentTrip, trips, tripVersion }) => {
-            if (!currentTrip) return {};
-            const next = applyRememberedPlace({ currentTrip, place });
-            const nextTrips = trips.map((trip) =>
-              applyRememberedPlace({ currentTrip: trip, place }),
-            );
-            if (
-              next === currentTrip &&
-              nextTrips.every((trip, i) => trip === trips[i])
-            )
-              return {};
-            return {
-              currentTrip: next,
-              trips: nextTrips,
-              tripVersion: tripVersion + 1,
-            };
-          });
-        },
-        getRememberedPlace: (place) => {
-          const state = get();
-          const stop =
-            state.currentTrip?.stops.find((stop) => samePlace(stop, place)) ??
-            state.trips
-              .flatMap((trip) => trip.stops)
-              .find((stop) => samePlace(stop, place));
-          return stop ? withPlaceInfo(place, stop) : place;
         },
         removeStop: (clientOrPublicId) => {
           if (!clientOrPublicId) return;
@@ -332,9 +306,7 @@ export const createTripStore = (initialState: TripState) => {
         },
         renameTrip: (name) => {
           set(({ currentTrip, tripVersion }) => ({
-            currentTrip: currentTrip
-              ? renameTrip({ currentTrip, name })
-              : undefined,
+            currentTrip: currentTrip ? { ...currentTrip, name } : undefined,
             tripVersion: tripVersion + 1,
           }));
         },
@@ -343,7 +315,7 @@ export const createTripStore = (initialState: TripState) => {
           set(({ trips, tripVersion }) => {
             const trip = trips.find((t) => t.publicId === publicId);
             return trip
-              ? { currentTrip: trip, tripVersion: tripVersion + 1 }
+              ? { currentTrip: toTripDraft(trip), tripVersion: tripVersion + 1 }
               : {};
           });
         },
@@ -361,13 +333,24 @@ export const createTripStore = (initialState: TripState) => {
           }));
         },
         resetDraft: () => {
-          set(({ currentTrip, tripVersion }) => ({
-            currentTrip: resetTripToServerTrip({
-              originalTrips: get().trips,
-              currentTripPublicId: currentTrip?.publicId,
-            }),
-            tripVersion: tripVersion + 1,
-          }));
+          set(({ currentTrip, trips, tripVersion }) => {
+            const saved = trips.find(
+              (trip) => trip.publicId === currentTrip?.publicId,
+            );
+            return {
+              currentTrip: saved
+                ? toTripDraft(saved, currentTrip)
+                : {
+                    clientId: currentTrip?.clientId ?? crypto.randomUUID(),
+                    name: "New Trip",
+                    stops: [],
+                  },
+              tripVersion: tripVersion + 1,
+              tripSaveStatus: "idle",
+              tripSaveError: undefined,
+              savedTripVersion: undefined,
+            };
+          });
         },
       }),
       {
@@ -380,11 +363,28 @@ export const createTripStore = (initialState: TripState) => {
           const { currentTrip: draft, tripVersion } =
             (persisted as Partial<TripState>) ?? {};
           const serverTrips = current.trips; // authoritative, never from storage
-          const resolved = resolveCurrentTrip(serverTrips, draft);
+          const resolved = resolveCurrentTrip(
+            serverTrips,
+            draft,
+            current.tripsLoadState === "loaded",
+          );
           return {
             ...current,
             trips: serverTrips,
-            currentTrip: resolved,
+            currentTrip: resolved
+              ? {
+                  ...resolved,
+                  clientId:
+                    resolved.clientId ??
+                    resolved.publicId ??
+                    crypto.randomUUID(),
+                  stops: resolved.stops.map((stop) => ({
+                    ...stop,
+                    clientId:
+                      stop.clientId ?? stop.publicId ?? crypto.randomUUID(),
+                  })),
+                }
+              : undefined,
             tripVersion:
               resolved === draft
                 ? (tripVersion ?? current.tripVersion)
