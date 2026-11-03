@@ -2,7 +2,7 @@ import { Drawer } from "@base-ui/react/drawer";
 import { StopsList } from "@/components/trips-drawer/stops-list";
 import { useUserStore } from "@/providers/user-store-provider";
 import { TripSelector } from "@/components/trips-drawer/trip-selector";
-import { Button, Separator } from "@base-ui/react";
+import { Button, Input, Separator } from "@base-ui/react";
 import { MapNavigation } from "@/components/trips-drawer/types";
 import { MapSaveIcon } from "@/components/ui/icons/map-icons";
 import { useTripStore } from "@/providers/trip-store-provider";
@@ -12,13 +12,13 @@ import { XIcon } from "@/components/ui/icons/close-icons";
 import { ResetIcon } from "@/components/ui/icons/reset-icons";
 import { Spinner } from "@/components/ui/icons/spinner";
 import { useTripDirty } from "@/hooks/use-trip-dirty";
-import { PencilPinIcon } from "@/components/ui/icons/pin-icons";
-import { useState } from "react";
-import { TablerMenuDeep } from "@/components/ui/icons/menu-icons";
+import { PencilPinIcon, PinMenuButton } from "@/components/ui/icons/pin-icons";
+import { useRef, useState } from "react";
 
 export const TripContent = ({ map }: MapNavigation) => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
   const [isEditingTrip, setIsEditingTrip] = useState(false);
+  const tripNameRef = useRef<HTMLInputElement>(null);
   const {
     trips,
     currentTrip,
@@ -51,7 +51,6 @@ export const TripContent = ({ map }: MapNavigation) => {
       }),
     ),
   );
-
   const serverTrip = currentTrip?.publicId
     ? trips.find((trip) => trip.publicId === currentTrip.publicId)
     : undefined;
@@ -63,8 +62,15 @@ export const TripContent = ({ map }: MapNavigation) => {
   const isSaving = tripSaveStatus === "saving";
 
   const onSaveHandler = () => {
-    if (currentTrip) void syncTrips(currentTrip);
-    setIsEditingTrip(false);
+    if (!currentTrip || isSaving) return;
+    const tripFormData = {
+      ...currentTrip,
+      name: tripNameRef.current?.value.trim() ?? currentTrip.name,
+    };
+    void syncTrips(tripFormData);
+    // Keep invalid input visible so the name can be corrected.
+    if (tripFormData.name && tripFormData.name.length <= 255)
+      setIsEditingTrip(false);
   };
 
   const onResetHandler = () => {
@@ -93,6 +99,21 @@ export const TripContent = ({ map }: MapNavigation) => {
           </div>
         </Drawer.Title>
       </div>
+
+      {isEditingTrip && currentTrip ? (
+        <div className="px-4 pb-4">
+          <Input
+            type="text"
+            key={currentTrip.clientId}
+            ref={tripNameRef}
+            aria-label="Trip name"
+            defaultValue={currentTrip.name}
+            maxLength={255}
+            disabled={isSaving}
+            className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-neutral-950 outline-none"
+          />
+        </div>
+      ) : null}
 
       <Separator className={"h-px bg-gray-200"} />
 
@@ -125,7 +146,7 @@ export const TripContent = ({ map }: MapNavigation) => {
             <Button
               onClick={onResetHandler}
               disabled={isSaving || !currentTrip}
-              className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 px-4 font-medium tracking-widest hover:bg-red-500 hover:text-white"
+              className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 px-4 font-medium tracking-widest transition-colors duration-150 hover:bg-red-500 hover:text-white motion-reduce:transition-none"
             >
               <ResetIcon
                 className={"h-6 w-6 stroke-black group-hover:stroke-white"}
@@ -138,12 +159,12 @@ export const TripContent = ({ map }: MapNavigation) => {
               onClick={onSaveHandler}
               disabled={isSaving || !currentTrip}
               aria-busy={isSaving}
-              className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 bg-blue-500 px-4 font-medium tracking-widest text-white hover:bg-green-500"
+              className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 bg-blue-500 px-4 font-medium tracking-widest text-white transition-colors duration-150 hover:bg-green-500 motion-reduce:transition-none"
             >
               {isSaving ? (
                 <Spinner className={"h-6 w-6 animate-spin fill-white"} />
               ) : (
-                <MapSaveIcon className={"h-6 w-6 fill-white"} />
+                <MapSaveIcon className={"h-6 w-6 fill-none stroke-white"} />
               )}
               Save
             </Button>
@@ -159,11 +180,12 @@ export const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => {
     <Menu.Root>
       <Menu.Trigger
         aria-label="Trip menu"
-        className="group flex aspect-square cursor-pointer items-center justify-center rounded-full text-xl font-bold tracking-widest text-white group-hover:bg-blue-500"
+        openOnHover
+        className="group flex aspect-square cursor-pointer items-center justify-center rounded-xl bg-blue-500 text-xl font-bold tracking-widest text-white transition-colors duration-150 hover:bg-green-500 data-popup-open:bg-green-500 motion-reduce:transition-none"
       >
-        <TablerMenuDeep
+        <PinMenuButton
           aria-hidden="true"
-          className="h-6 w-6 stroke-blue-500 group-hover:stroke-white"
+          className="h-6 w-6 fill-none stroke-white"
         />
       </Menu.Trigger>
       <Menu.Portal>
@@ -174,19 +196,22 @@ export const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => {
         >
           <Menu.Popup
             className={
-              "flex origin-[var(--transform-origin)] flex-col rounded-lg border border-gray-200 bg-white p-2 text-black shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] outline-hidden transition-[scale,opacity] duration-100 ease-out data-ending-style:scale-100 data-ending-style:opacity-100 data-starting-style:scale-100 data-starting-style:opacity-0"
+              "flex origin-[var(--transform-origin)] flex-col rounded-lg bg-white p-2 text-black shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] outline-hidden transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none"
             }
           >
             <MenuItem onClick={onEdit}>
               <PencilPinIcon
                 aria-hidden="true"
-                className="h-6 w-6 fill-current"
+                className="h-6 w-6 fill-blue-500 group-hover:fill-white"
               />
               Edit Trip
             </MenuItem>
 
             <MenuItem nativeButton render={<Drawer.Close />}>
-              <XIcon aria-hidden="true" className="h-6 w-6 stroke-current" />
+              <XIcon
+                aria-hidden="true"
+                className="h-6 w-6 stroke-red-500 group-hover:stroke-white"
+              />
               Close
             </MenuItem>
           </Menu.Popup>
@@ -199,7 +224,7 @@ export const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => {
 const MenuItem = (props: Menu.Item.Props) => (
   <Menu.Item
     className={
-      "group flex cursor-pointer items-center gap-2 rounded-lg p-2 text-sm leading-4 text-black outline-hidden select-none data-disabled:cursor-default data-disabled:text-neutral-500 data-highlighted:bg-blue-500 data-highlighted:text-white"
+      "group flex cursor-pointer items-center gap-2 rounded-lg p-2 text-sm leading-4 text-black outline-hidden transition-colors duration-150 select-none data-disabled:cursor-default data-disabled:text-neutral-500 data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
     }
     {...props}
   />

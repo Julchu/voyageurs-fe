@@ -8,8 +8,8 @@ import {
   CaretDownIcon,
   CaretUpIcon,
 } from "@/components/ui/icons/caret-icons";
-import { MapPinCheckIcon } from "@/components/ui/icons/map-icons";
 import { PinPencilIcon } from "@/components/ui/icons/pin-icons";
+import { MapCurrentIcon } from "@/components/ui/icons/map-icons";
 
 type TripOption = {
   value: string;
@@ -55,7 +55,7 @@ export const TripSelector = () => {
       items={selectValues}
       value={currentTrip?.publicId ?? currentTrip?.clientId ?? null}
     >
-      <Select.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-2xl bg-blue-500 p-2 pl-4 text-xl font-bold tracking-widest text-white">
+      <Select.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-lg bg-blue-500 p-2 pl-4 text-xl font-bold tracking-widest text-white">
         <Select.Value placeholder="Select trip" />
         <Select.Icon>
           <CaretCircleDownIcon className={"h-6 w-6 fill-none stroke-white"} />
@@ -67,7 +67,7 @@ export const TripSelector = () => {
           align="center"
           sideOffset={4}
         >
-          <Select.Popup className="group relative min-w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-hidden rounded-lg bg-white text-neutral-950 shadow-[0px_10px_38px_-10px_rgba(22,23,24,0.35),0px_10px_20px_-15px_rgba(22,23,24,0.2)] transition-[scale,opacity] duration-100 ease-out outline-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 data-[side=none]:min-w-[calc(var(--anchor-width)+1.75rem)] data-[side=none]:translate-y-px data-[side=none]:data-ending-style:transition-none data-[side=none]:data-starting-style:scale-100 data-[side=none]:data-starting-style:opacity-100 data-[side=none]:data-starting-style:transition-none">
+          <Select.Popup className="group relative min-w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-hidden rounded-lg bg-white text-neutral-950 shadow-[0px_10px_38px_-10px_rgba(22,23,24,0.35),0px_10px_20px_-15px_rgba(22,23,24,0.2)] transition-[scale,opacity] duration-150 ease-out outline-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 data-[side=none]:min-w-[calc(var(--anchor-width)+1.75rem)] data-[side=none]:translate-y-px data-[side=none]:data-ending-style:transition-none data-[side=none]:data-starting-style:scale-100 data-[side=none]:data-starting-style:opacity-100 data-[side=none]:data-starting-style:transition-none motion-reduce:transition-none">
             <Select.ScrollUpArrow className="top-0 z-1 flex h-4 w-full cursor-default items-center justify-center bg-white text-center text-xs before:absolute before:left-0 before:h-full before:w-full before:content-[''] data-[side=none]:before:top-[-100%]">
               <CaretUpIcon className={"h-6 w-6 fill-none stroke-blue-500"} />
             </Select.ScrollUpArrow>
@@ -76,12 +76,12 @@ export const TripSelector = () => {
                 <Select.Item
                   key={value}
                   value={value}
-                  className="group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden select-none data-highlighted:bg-blue-500 data-highlighted:text-white"
+                  className="group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden transition-colors duration-150 select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
                 >
                   <Select.ItemIndicator className="col-start-1">
-                    <MapPinCheckIcon
+                    <MapCurrentIcon
                       className={
-                        "h-6 w-6 fill-none stroke-green-500 group-hover/item:stroke-white"
+                        "h-6 w-6 fill-none stroke-green-500 group-data-highlighted/item:stroke-white"
                       }
                     />
                   </Select.ItemIndicator>
@@ -93,12 +93,12 @@ export const TripSelector = () => {
               <Select.Item
                 key="new-trip"
                 value={"new-trip"}
-                className="group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden select-none data-highlighted:bg-blue-500 data-highlighted:text-white"
+                className="group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden transition-colors duration-150 select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
               >
                 <Select.ItemIndicator className="col-start-1">
                   <PinPencilIcon
                     className={
-                      "h-6 w-6 fill-green-500 stroke-green-500 group-hover/item:stroke-white"
+                      "h-6 w-6 fill-green-500 stroke-green-500 group-data-highlighted/item:stroke-white"
                     }
                   />
                 </Select.ItemIndicator>
