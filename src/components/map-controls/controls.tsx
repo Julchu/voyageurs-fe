@@ -1,4 +1,4 @@
-import { type RefObject, useCallback, useState } from "react";
+import { type RefObject, useState } from "react";
 import type { Map } from "mapbox-gl";
 import {
   DawnIcon,
@@ -6,8 +6,8 @@ import {
   DuskIcon,
   LocationIcon,
   NightIcon,
-  NoPowerIcon,
   NorthIcon,
+  PowerIcon,
 } from "@/components/ui/icons/control-icons";
 import { Spinner } from "@/components/ui/icons/spinner";
 import { useMapHook } from "@/hooks/use-map-hook";
@@ -39,23 +39,27 @@ export const Controls = ({
     mapTimeFromDate(),
   );
 
-  const [{ updatePerformance, triggerNorth, setLightMode }] = useMapHook({
+  const [performanceMode, setPerformanceModeState] = useState(false);
+
+  const { triggerNorth, setLightMode, setPerformanceMode } = useMapHook({
     map,
   });
 
-  const updatePerformanceCallback = useCallback(async () => {
-    await updatePerformance();
-    // togglePerformanceLayer(!performanceMode);
-  }, [updatePerformance]);
+  const togglePerformanceMode = () => {
+    if (!map.current) return;
+    const nextMode = !performanceMode;
+    setPerformanceMode(nextMode);
+    setPerformanceModeState(nextMode);
+  };
 
-  const rotateMapTime = useCallback(() => {
+  const rotateMapTime = () => {
     const currentIndex = MapTimeValues.indexOf(currentMapTimeMode);
     const nextIndex =
       currentIndex === -1 ? 0 : (currentIndex + 1) % MapTimeValues.length;
     const nextMode = MapTimeValues[nextIndex];
     setLightMode(nextMode);
     setCurrentMapTimeMode(nextMode);
-  }, [currentMapTimeMode, setCurrentMapTimeMode, setLightMode]);
+  };
 
   const mapTimeIcon = {
     [MapTimeEnum.DAWN]: (
@@ -81,7 +85,7 @@ export const Controls = ({
     <Toolbar.Root orientation="vertical" className="absolute bottom-4 left-4">
       <Toolbar.Group className="flex flex-col gap-4">
         <Toolbar.Button
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50 hover:bg-blue-500 focus-visible:bg-blue-500 motion-safe:transition-colors motion-safe:duration-200 motion-safe:ease-out"
           onClick={triggerGeolocator}
         >
           <LocationIcon className="absolute h-6 w-6 stroke-white" />
@@ -93,7 +97,7 @@ export const Controls = ({
         </Toolbar.Button>
 
         <Toolbar.Button
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50 hover:bg-blue-500 focus-visible:bg-blue-500 motion-safe:transition-colors motion-safe:duration-200 motion-safe:ease-out"
           onClick={triggerNorth}
         >
           <NorthIcon className={"h-6 w-6 stroke-white"} />
@@ -102,7 +106,7 @@ export const Controls = ({
         {userInfo ? (
           <Toolbar.Button
             className={
-              "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50"
+              "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50 hover:bg-blue-500 focus-visible:bg-blue-500 motion-safe:transition-colors motion-safe:duration-200 motion-safe:ease-out"
             }
             onClick={rotateMapTime}
           >
@@ -112,15 +116,21 @@ export const Controls = ({
 
         {userInfo ? (
           <Toolbar.Button
-            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50"
-            onClick={updatePerformanceCallback}
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50 hover:bg-blue-500 focus-visible:bg-blue-500 motion-safe:transition-colors motion-safe:duration-200 motion-safe:ease-out"
+            aria-label="Performance mode"
+            aria-pressed={performanceMode}
+            title={
+              performanceMode
+                ? "Turn off performance mode"
+                : "Turn on performance mode"
+            }
+            onClick={togglePerformanceMode}
           >
-            <NoPowerIcon className={"h-6 w-6 fill-none stroke-white"} />
-            {/*{performanceMode ? (*/}
-            {/*  <PowerIcon className={"h-6 w-6"} />*/}
-            {/*) : (*/}
-            {/*  <NoPowerIcon className={"h-6 w-6"} />*/}
-            {/*)}*/}
+            <PowerIcon
+              aria-hidden="true"
+              className="h-6 w-6 stroke-white"
+              crossed={!performanceMode}
+            />
           </Toolbar.Button>
         ) : null}
       </Toolbar.Group>

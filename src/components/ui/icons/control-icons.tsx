@@ -40,7 +40,10 @@ export const NorthIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export const PowerIcon = (props: SVGProps<SVGSVGElement>) => (
+export const PowerIcon = ({
+  crossed = false,
+  ...props
+}: SVGProps<SVGSVGElement> & { crossed?: boolean }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
@@ -52,6 +55,11 @@ export const PowerIcon = (props: SVGProps<SVGSVGElement>) => (
       strokeLinecap="round"
       strokeLinejoin="round"
       d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+    />
+    <path
+      className={`motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out ${crossed ? "opacity-100" : "opacity-0"}`}
+      strokeLinecap="round"
+      d="M3 3L21 21"
     />
   </svg>
 );
