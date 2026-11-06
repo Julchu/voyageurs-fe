@@ -17,9 +17,9 @@ const navigationLinks = [
   },
 
   {
-    href: "/trips",
-    title: "Trips",
-    description: "Stop details for your current trip",
+    href: "/stops",
+    title: "Trip stops",
+    description: "Edit details of your current trip stops",
   },
   {
     href: "/calendar",
