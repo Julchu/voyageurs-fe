@@ -1,6 +1,5 @@
 export const DESKTOP_MAP_QUERY = "(min-width: 40rem)";
 
-// TODO: verify all usage (check if actually shared)
 export const DESKTOP_SEARCH_COLUMN =
   "sm:left-1/2 sm:w-[min(28rem,calc(100%-2rem))] sm:-translate-x-1/2";
 

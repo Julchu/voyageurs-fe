@@ -4,7 +4,6 @@ import { Drawer } from "@base-ui/react/drawer";
 
 export const visitDrawerHandle = Drawer.createHandle();
 
-// Mounted with the map. Open it later with openVisitDrawer(); no control is wired yet.
 export const VisitDrawer = () => {
   return (
     <Drawer.Root

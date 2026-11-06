@@ -4,15 +4,13 @@ import type { PlaceSearch, PlaceSearchInput } from "@/utils/interfaces";
 import {
   type CollectionLoadState,
   fetchCollection,
-  loadStateFromServer,
-  nextLoadStateForFetch,
+  shouldFetchCollection,
 } from "@/stores/utils/collection-load";
 
 export type SearchState = {
   searches: PlaceSearch[];
   searchesLoadState: CollectionLoadState;
   error: string | null;
-  searchesVersion: number;
 };
 
 export type SearchActions = {
@@ -30,9 +28,8 @@ export const initSearchStore = (
   searchesServerLoaded = false,
 ): SearchState => ({
   searches,
-  searchesLoadState: loadStateFromServer(searchesServerLoaded),
+  searchesLoadState: searchesServerLoaded ? "loaded" : "idle",
   error: null,
-  searchesVersion: 1,
 });
 
 export const createSearchStore = (initialState: SearchState) => {
@@ -41,9 +38,8 @@ export const createSearchStore = (initialState: SearchState) => {
       (set, get) => ({
         ...initialState,
         fetchSearches: async () => {
-          const next = nextLoadStateForFetch(get().searchesLoadState);
-          if (!next.shouldFetch) return;
-          set({ searchesLoadState: next.loadState });
+          if (!shouldFetchCollection(get().searchesLoadState)) return;
+          set({ searchesLoadState: "loading" });
           try {
             const searches = await fetchCollection<PlaceSearch>(
               "/api/searches",
@@ -72,13 +68,6 @@ export const createSearchStore = (initialState: SearchState) => {
             updatedAt: null,
           });
 
-          // if (get().mode === "local") {
-          //   set((state) => ({
-          //     searches: [localSearch(), ...state.searches].slice(0, 100),
-          //   }));
-          //   return;
-          // }
-
           try {
             const response = await fetch("/api/searches", {
               method: "POST",
@@ -87,7 +76,6 @@ export const createSearchStore = (initialState: SearchState) => {
             });
             if (response.status === 401) {
               set((state) => ({
-                mode: "local",
                 searches: [localSearch(), ...state.searches].slice(0, 100),
               }));
               return;
@@ -110,7 +98,8 @@ export const createSearchStore = (initialState: SearchState) => {
         name: "voyageurs-searches",
         partialize: ({ searches }) => ({ searches }),
         merge: (persisted, current) => {
-          const saved = persisted as Partial<Pick<SearchState, "searches">>;
+          const saved =
+            (persisted as Partial<Pick<SearchState, "searches">>) ?? {};
           return {
             ...current,
             searches: saved.searches ?? current.searches,

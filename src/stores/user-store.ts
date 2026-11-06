@@ -7,34 +7,20 @@ export type UserState = {
 };
 
 export type UserActions = {
-  setUser: (userInfo: UserInfo | null) => void;
   setLastLocation: (coords: Coordinates) => void;
   logout: () => Promise<void>;
 };
 
 export type UserStore = UserState & UserActions;
 
-export const initUserStore = (userInfo?: UserInfo | null): UserState => {
-  return {
-    userInfo: userInfo ?? null,
-    lastLocation: userInfo?.lastLocation,
-  };
-};
+export const initUserStore = (userInfo?: UserInfo | null): UserState => ({
+  userInfo: userInfo ?? null,
+  lastLocation: userInfo?.lastLocation,
+});
 
-export const defaultInitState: UserState = {
-  userInfo: null,
-  lastLocation: undefined,
-};
-
-export const createUserStore = (initialState: UserState = defaultInitState) => {
+export const createUserStore = (initialState: UserState = initUserStore()) => {
   return create<UserStore>((set) => ({
-    userInfo: initialState.userInfo,
-    lastLocation: initialState.lastLocation,
-    setUser: (userInfo) =>
-      set({
-        userInfo,
-        lastLocation: userInfo?.lastLocation,
-      }),
+    ...initialState,
     setLastLocation: (coords) =>
       set((state) => ({
         lastLocation: coords,
@@ -52,7 +38,7 @@ export const createUserStore = (initialState: UserState = defaultInitState) => {
           throw new Error(`Logout request failed (${response.status})`);
         }
       } finally {
-        set({ ...defaultInitState });
+        set(initUserStore());
       }
     },
   }));

@@ -1,18 +1,8 @@
 export type CollectionLoadState = "idle" | "loading" | "loaded" | "error";
 
-export const loadStateFromServer = (
-  serverLoaded: boolean,
-): CollectionLoadState => (serverLoaded ? "loaded" : "idle");
-
-/** Skip when a fetch is already in flight or finished. Error stays retryable. */
-export const nextLoadStateForFetch = (
-  loadState: CollectionLoadState,
-): { shouldFetch: true; loadState: "loading" } | { shouldFetch: false } => {
-  if (loadState === "loading" || loadState === "loaded") {
-    return { shouldFetch: false };
-  }
-  return { shouldFetch: true, loadState: "loading" };
-};
+/** Failed loads can be retried; loaded and in-flight requests are skipped. */
+export const shouldFetchCollection = (state: CollectionLoadState) =>
+  state === "idle" || state === "error";
 
 export const fetchCollection = async <T>(
   path: string,

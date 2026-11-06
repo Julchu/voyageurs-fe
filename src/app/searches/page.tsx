@@ -36,7 +36,10 @@ const SearchesPage = () => {
       ) : null}
       <ul className="flex flex-col gap-3">
         {searches.map((search) => (
-          <li key={search.publicId} className="rounded-md bg-white p-4 shadow">
+          <li
+            key={search.publicId ?? search.clientId}
+            className="rounded-md border border-neutral-200 bg-white p-4"
+          >
             <Link
               href={`/?lat=${search.coordinates.lat}&lng=${search.coordinates.lng}`}
               className="text-sm font-medium hover:underline"

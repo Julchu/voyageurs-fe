@@ -8,27 +8,24 @@ import type { TripDto } from "@/types/trip-api";
 import { SearchStoreProvider } from "@/providers/search-store-provider";
 
 export const Providers = async ({ children }: PropsWithChildren) => {
-  const userInfo = await serverFetch<UserInfo>({ endpoint: "user" });
+  const userInfo = await serverFetch<UserInfo>("user");
 
   const [fetchedTrips, fetchedSearches] = userInfo
     ? await Promise.all([
-        serverFetch<TripDto[]>({ endpoint: "trips" }),
-        serverFetch<PlaceSearch[]>({ endpoint: "searches" }),
+        serverFetch<TripDto[]>("trips"),
+        serverFetch<PlaceSearch[]>("searches"),
       ])
     : [null, null];
 
-  const trips = fetchedTrips ?? [];
-  const tripsServerLoaded = fetchedTrips !== null;
-
-  const searches = fetchedSearches ?? [];
-  const searchesServerLoaded = fetchedSearches !== null;
-
   return (
     <UserStoreProvider userInfo={userInfo}>
-      <TripStoreProvider trips={trips} tripsServerLoaded={tripsServerLoaded}>
+      <TripStoreProvider
+        trips={fetchedTrips ?? []}
+        tripsServerLoaded={fetchedTrips !== null}
+      >
         <SearchStoreProvider
-          searches={searches}
-          searchesServerLoaded={searchesServerLoaded}
+          searches={fetchedSearches ?? []}
+          searchesServerLoaded={fetchedSearches !== null}
         >
           <TravelLoader />
           {children}

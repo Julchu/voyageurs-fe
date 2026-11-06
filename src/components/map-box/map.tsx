@@ -90,7 +90,7 @@ export const MapAndControls = ({
       }`}
     >
       <div
-        className={`h-full w-full ${locationLoading ? "animate-pulse" : ""}`}
+        className={`z-1 h-full w-full ${locationLoading ? "animate-pulse" : ""}`}
         ref={mapContainer}
       />
       <Controls

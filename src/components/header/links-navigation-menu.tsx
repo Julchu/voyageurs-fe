@@ -3,9 +3,8 @@
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
-import { useUserStore } from "@/providers/user-store-provider";
 
-const browseLinks = [
+const navigationLinks = [
   {
     href: "/",
     title: "Map",
@@ -16,28 +15,22 @@ const browseLinks = [
     title: "Searches",
     description: "Saved address searches",
   },
-] as const;
 
-const listLinks = [
   {
     href: "/trips",
     title: "Trips",
-    description: "Saved trips and visit order",
+    description: "Stop details for your current trip",
+  },
+  {
+    href: "/calendar",
+    title: "Calendar",
+    description: "Plan visits and opening hours",
   },
 ] as const;
 
-type NavLink = {
-  href: string;
-  title: string;
-  description?: string;
-};
-
 export const LinksNavigationMenu = () => {
   const pathname = usePathname();
-  const userInfo = useUserStore(({ userInfo }) => userInfo);
-  const links: readonly NavLink[] = (
-    userInfo ? [...browseLinks, ...listLinks] : browseLinks
-  ).filter((link) => link.href !== pathname);
+  const links = navigationLinks.filter((link) => link.href !== pathname);
 
   return (
     <NavigationMenu.Root className="text-neutral-950">
@@ -78,10 +71,10 @@ export const LinksNavigationMenu = () => {
       <NavigationMenu.Portal>
         <NavigationMenu.Positioner
           align="start"
-          sideOffset={10}
-          collisionPadding={{ top: 5, bottom: 5, left: 20, right: 20 }}
+          sideOffset={16}
+          collisionPadding={{ top: 5, bottom: 5, left: 16, right: 16 }}
           collisionAvoidance={{ side: "none" }}
-          className="h-[var(--positioner-height)] w-[var(--positioner-width)] max-w-[var(--available-width)] transition-[top,left,right,bottom] duration-[var(--duration)] ease-[var(--easing)] before:absolute before:content-[''] data-instant:transition-none data-[side=bottom]:before:top-[-10px] data-[side=bottom]:before:right-0 data-[side=bottom]:before:left-0 data-[side=bottom]:before:h-2.5 data-[side=left]:before:top-0 data-[side=left]:before:right-[-10px] data-[side=left]:before:bottom-0 data-[side=left]:before:w-2.5 data-[side=right]:before:top-0 data-[side=right]:before:bottom-0 data-[side=right]:before:left-[-10px] data-[side=right]:before:w-2.5 data-[side=top]:before:right-0 data-[side=top]:before:bottom-[-10px] data-[side=top]:before:left-0 data-[side=top]:before:h-2.5"
+          className="h-[var(--positioner-height)] w-[var(--positioner-width)] max-w-[var(--available-width)] transition-[top,left,right,bottom] duration-[var(--duration)] ease-[var(--easing)] data-instant:transition-none"
           style={{
             ["--duration" as string]: "0.35s",
             ["--easing" as string]: "cubic-bezier(0.22, 1, 0.36, 1)",

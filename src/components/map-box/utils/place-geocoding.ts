@@ -115,7 +115,7 @@ const placeFromForwardFeature = (
     props?.metadata?.phone ||
     typeof props?.metadata?.opening_hours === "string"
       ? {
-          details: {
+          placeDetails: {
             website: props.metadata.website,
             phone: props.metadata.phone,
             openingHours:
@@ -289,7 +289,7 @@ const enrichableFieldsFromMatch = (match: Place): Partial<Place> => ({
   streetAddress: match.streetAddress,
   areaAddress: match.areaAddress,
   photos: match.photos,
-  details: match.details,
+  placeDetails: match.placeDetails,
   ...(match.category ? { category: match.category } : {}),
 });
 
@@ -346,7 +346,7 @@ export const fetchMapboxPlace = async (
       category: body.primary_category || body.categories?.[0] || "",
       photos,
       placeInfoLoaded: true,
-      details: {
+      placeDetails: {
         ...(body.website ? { website: body.website } : {}),
         ...(body.phone ? { phone: body.phone } : {}),
         ...(body.opening_hours ? { openingHours: body.opening_hours } : {}),
@@ -377,7 +377,11 @@ const withPlacesRecord = (place: Place, record: Partial<Place>): Place => ({
   areaAddress: record.areaAddress || place.areaAddress,
   category: record.category || place.category,
   photos: record.photos?.length ? record.photos : place.photos,
-  details: { ...place.details, ...record.details, photos: record.photos ?? [] },
+  placeDetails: {
+    ...place.placeDetails,
+    ...record.placeDetails,
+    photos: record.photos ?? [],
+  },
   placeInfoLoaded: true,
 });
 

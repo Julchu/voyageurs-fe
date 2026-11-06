@@ -80,32 +80,23 @@ export const UserMenu = () => {
               Account
             </Menu.GroupLabel>
 
-            <Menu.Item
-              onClick={userInfo ? logoutHandler : undefined}
-              disabled={isLoggingOut}
-              className={
-                "text-md relative flex h-6 content-center items-center rounded-lg py-4 leading-none transition-colors duration-150 outline-none data-[highlighted]:bg-blue-500 data-[highlighted]:text-white motion-reduce:transition-none"
-              }
-            >
-              {userInfo ? (
-                <p
-                  onClick={logoutHandler}
-                  className="ml-6 w-full cursor-pointer"
-                >
-                  Logout
-                </p>
-              ) : (
-                <Link
-                  href={"/api/login"}
-                  className={
-                    "flex w-full items-center justify-center gap-x-2 p-2"
-                  }
-                >
-                  <GoogleIcon />
-                  <p>Sign in with Google</p>
-                </Link>
-              )}
-            </Menu.Item>
+            {userInfo ? (
+              <Menu.Item
+                onClick={logoutHandler}
+                disabled={isLoggingOut}
+                className="text-md relative flex h-6 cursor-pointer items-center rounded-lg py-4 pl-6 leading-none transition-colors duration-150 outline-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
+              >
+                Logout
+              </Menu.Item>
+            ) : (
+              <Menu.Item
+                render={<Link href="/api/login" />}
+                className="text-md relative flex h-6 items-center justify-center gap-x-2 rounded-lg px-2 py-4 leading-none transition-colors duration-150 outline-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
+              >
+                <GoogleIcon />
+                Sign in with Google
+              </Menu.Item>
+            )}
           </Menu.Group>
         </Menu.Popup>
       </Menu.Positioner>

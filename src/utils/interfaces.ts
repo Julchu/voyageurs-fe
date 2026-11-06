@@ -76,7 +76,7 @@ export type Place = {
   photos?: PlacePhoto[];
   // A successful lookup may legitimately return no photos or address.
   placeInfoLoaded?: boolean;
-  details?: PlaceDetails;
+  placeDetails?: PlaceDetails;
 };
 
 export type PlaceSearch = Place & {
