@@ -9,7 +9,7 @@ import { MapComponents } from "@/components/map-box/map-components";
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const onMap = pathname === "/";
-  const onPlanner = pathname === "/trips" || pathname === "/calendar";
+  const onPlanner = pathname === "/stops" || pathname === "/calendar";
 
   return (
     <div className="relative h-full">

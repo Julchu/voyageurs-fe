@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
+import type { Map as MapboxMap } from "mapbox-gl";
+import { useMapHook } from "@/hooks/use-map-hook";
 import { useDebouncedValue } from "@/hooks/use-debounced-state";
 import type { Coordinates, PlaceSearch } from "@/utils/interfaces";
 import { useSearchStore } from "@/providers/search-store-provider";
@@ -22,8 +24,15 @@ type AddressOption = AddressComboboxItem &
     | { kind: "recent"; search: PlaceSearch }
   );
 
-export const AddressSearch = ({ proximity }: { proximity: Coordinates }) => {
+export const AddressSearch = ({
+  proximity,
+  map,
+}: {
+  proximity: Coordinates;
+  map: RefObject<MapboxMap | null>;
+}) => {
   const { lat, lng } = proximity;
+  const { flyTo } = useMapHook({ map });
   const { searches, logSearch } = useSearchStore(
     useShallow(({ searches, logSearch }) => ({ searches, logSearch })),
   );
@@ -110,6 +119,7 @@ export const AddressSearch = ({ proximity }: { proximity: Coordinates }) => {
 
     if (option.kind === "recent") {
       openPlacePopup.openWithPayload(option.search);
+      flyTo(option.search.coordinates);
       return;
     }
 
@@ -127,6 +137,7 @@ export const AddressSearch = ({ proximity }: { proximity: Coordinates }) => {
       setRetrieveStatus(place ? "idle" : "error");
       if (place) {
         openPlacePopup.openWithPayload(place);
+        flyTo(place.coordinates);
         void logSearch({ ...placeRecord(place), query: searchQuery });
       }
     });

@@ -13,20 +13,21 @@ export const UserAvatar = () => {
     return <UserFilledIcon className="size-1/2 rounded-full fill-white" />;
 
   return (
-    <Avatar.Root>
+    <Avatar.Root className="relative flex size-full items-center justify-center">
       <Avatar.Fallback>
-        <p className={"tracking-widest"}>
+        <span className="tracking-widest">
           {firstName[0]}
           {lastName[0]}
-        </p>
+        </span>
       </Avatar.Fallback>
-      {userInfo?.image ? (
+      {userInfo.image ? (
         <Avatar.Image
           keepMounted
           render={
             <Image
-              src={userInfo?.image}
+              src={userInfo.image}
               fill
+              sizes="48px"
               alt="Voyageur"
               className={"rounded-full object-cover"}
             />

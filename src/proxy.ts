@@ -29,20 +29,16 @@ const setCookiePair = (setCookie: string) => {
   return { name, value };
 };
 
-const replaceCookie = (cookieHeader: string, name: string, value: string) => {
-  const parts = cookieHeader
-    .split(";")
-    .map((part) => part.trim())
-    .filter((part) => part && !part.startsWith(`${name}=`));
-  parts.push(`${name}=${value}`);
-  return parts.join("; ");
-};
-
 const removeCookie = (cookieHeader: string, name: string) =>
   cookieHeader
     .split(";")
     .map((part) => part.trim())
     .filter((part) => part && !part.startsWith(`${name}=`))
+    .join("; ");
+
+const replaceCookie = (cookieHeader: string, name: string, value: string) =>
+  [removeCookie(cookieHeader, name), `${name}=${value}`]
+    .filter(Boolean)
     .join("; ");
 
 export async function proxy(req: NextRequest) {
@@ -73,7 +69,6 @@ export async function proxy(req: NextRequest) {
           headers: {
             Authorization: `Bearer ${refreshToken}`,
           },
-          cache: "no-store",
         },
       );
 

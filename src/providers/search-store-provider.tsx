@@ -11,7 +11,7 @@ import type { PlaceSearch } from "@/utils/interfaces";
 import {
   createSearchStore,
   initSearchStore,
-  SearchStore,
+  type SearchStore,
   type SearchStoreApi,
 } from "@/stores/search-store";
 

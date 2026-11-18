@@ -32,7 +32,7 @@ export const googleProxy = async (
   };
 
   try {
-    const response = await fetch(url, { ...init, headers, cache: "no-store" });
+    const response = await fetch(url, { ...init, headers });
     const body = await response.text();
     return new NextResponse(body, {
       status: response.status,

@@ -35,7 +35,6 @@ export const GET = async (request: NextRequest) => {
   try {
     const meta = await fetch(upstream, {
       headers: { "X-Goog-Api-Key": key },
-      cache: "no-store",
     });
     if (!meta.ok) {
       return NextResponse.json(
@@ -48,9 +47,8 @@ export const GET = async (request: NextRequest) => {
       return NextResponse.json({ error: "No photo" }, { status: 404 });
     }
 
-    // Fetch the CDN URL without the API key. `photoUri` is short-lived, so
-    // this response is not cached here; `next/image` caches the optimized result.
-    const image = await fetch(body.photoUri, { cache: "no-store" });
+    // Fetch the CDN URL without the API key. `next/image` caches the optimized result.
+    const image = await fetch(body.photoUri);
     if (!image.ok) {
       return NextResponse.json(
         { error: "Photo lookup failed" },

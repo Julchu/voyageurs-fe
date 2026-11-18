@@ -3,7 +3,7 @@ import {
   getAccessToken,
   getRefreshToken,
   sessionCookieClearOptions,
-} from "@/utils/server-actions/session-token";
+} from "@/server/session-token";
 
 export async function POST() {
   let status = 200;
@@ -20,7 +20,6 @@ export async function POST() {
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
           ...(refreshToken ? { "X-Refresh-Token": refreshToken } : {}),
         },
-        cache: "no-store",
         signal: AbortSignal.timeout(10_000),
       },
     );

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAccessToken } from "@/utils/server-actions/session-token";
+import { getAccessToken } from "@/server/session-token";
 import {
   googleRedirectUri,
   OAUTH_STATE_COOKIE,
   OAUTH_VERIFIER_COOKIE,
   oauthCookieOptions,
-} from "@/utils/server-actions/oauth";
+} from "@/server/oauth";
 
 const base64url = (bytes: Uint8Array) =>
   Buffer.from(bytes).toString("base64url");

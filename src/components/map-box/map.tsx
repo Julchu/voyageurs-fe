@@ -90,7 +90,7 @@ export const MapAndControls = ({
       }`}
     >
       <div
-        className={`z-1 h-full w-full ${locationLoading ? "animate-pulse" : ""}`}
+        className={`h-full w-full ${locationLoading ? "animate-pulse" : ""}`}
         ref={mapContainer}
       />
       <Controls
@@ -99,7 +99,7 @@ export const MapAndControls = ({
         locationLoading={locationLoading}
         triggerGeolocator={triggerGeolocator}
       />
-      <AddressSearch proximity={mapFocus ?? initialCoords} />
+      <AddressSearch proximity={mapFocus ?? initialCoords} map={map} />
       <TripDrawer map={map} />
     </div>
   );

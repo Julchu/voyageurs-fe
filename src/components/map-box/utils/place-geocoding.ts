@@ -1,5 +1,6 @@
 import type { TargetFeature } from "mapbox-gl";
 import type { Coordinates, Place, PlacePhoto } from "@/utils/interfaces";
+import { normalizePlaceName } from "@/utils/place-name";
 import type {
   MapboxMetadata,
   MapboxPlaceRecord,
@@ -8,6 +9,7 @@ import type {
   MapboxSuggestion,
 } from "@/types/mapbox";
 
+// TODO: deep clean
 export type { PlaceDetails } from "@/utils/interfaces";
 
 /* Current flows:
@@ -58,7 +60,7 @@ const mapboxRequest = async <T>(
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) url.searchParams.set(key, String(value));
   }
-  const response = await fetch(url, { signal, cache: "no-store" });
+  const response = await fetch(url, { signal });
   if (!response.ok)
     throw new Error(`Mapbox request failed (${response.status})`);
   return response.json() as Promise<T>;
@@ -395,13 +397,7 @@ export const enrichPlace = async (
   place: Pick<Place, "name" | "coordinates" | "mapboxId">,
   signal?: AbortSignal,
 ): Promise<Partial<Place> | undefined> => {
-  const normalize = (name: string) =>
-    name
-      .normalize("NFKD")
-      .replace(/\p{M}/gu, "")
-      .toLowerCase()
-      .replace(/[^\p{L}\p{N}]/gu, "");
-  const target = normalize(place.name);
+  const target = normalizePlaceName(place.name);
   const candidates = await searchBoxForward(place.name, {
     proximity: place.coordinates,
     limit: 5,
@@ -416,7 +412,7 @@ export const enrichPlace = async (
       match = candidate;
       break;
     }
-    if (normalize(candidate.name) !== target) continue;
+    if (normalizePlaceName(candidate.name) !== target) continue;
     const distance = distanceMeters(place.coordinates, candidate.coordinates);
     if (distance <= closestDistance) {
       match = candidate;

@@ -4,7 +4,7 @@ import {
   OAUTH_STATE_COOKIE,
   OAUTH_VERIFIER_COOKIE,
   oauthCookieClearOptions,
-} from "@/utils/server-actions/oauth";
+} from "@/server/oauth";
 
 const finishLogin = (req: NextRequest, failed: boolean) => {
   const base = process.env.VOYAGEURS_BASE_URL ?? req.nextUrl.origin;
@@ -45,7 +45,6 @@ export async function GET(req: NextRequest) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, codeVerifier }),
-        cache: "no-store",
       },
     );
 
