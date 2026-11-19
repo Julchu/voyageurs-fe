@@ -7,6 +7,14 @@ import { tripPersistence } from "./trip-persistence";
 
 export * from "./trip-state";
 
+/*
+ * The trip store. State and selectors are in trip-state.ts.
+ * - trip-edit-actions: local edits to the drawer and page drafts
+ * - trip-save-actions: loading trips and saving to the server
+ * - page-drafts: how a page's unsaved edits are kept and saved
+ * - trip-persistence: what survives a reload (drafts, not saved trips)
+ */
+
 export const createTripStore = (initialState: TripState) =>
   createStore<TripStore>()(
     persist(

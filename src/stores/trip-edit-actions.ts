@@ -1,9 +1,10 @@
 import type { TripDraft } from "@/types/trip-draft";
-import { arrayMove } from "@/utils/data";
+import { moveItem } from "@/utils/data";
 import { draftId, newStop, newTrip, toTripDraft } from "@/utils/trip-draft";
-import { editPage, pageDraftOf, withPageDraft } from "./page-drafts";
+import { editPageDraft, getPageDraft, setPageDraft } from "./page-drafts";
 import { savedTripOf, type TripSlice, type TripStore } from "./trip-state";
 
+/** Local edits to the drawer and page drafts. Nothing here talks to the server. */
 export const createTripEditActions: TripSlice<
   | "selectTrip"
   | "createTrip"
@@ -16,37 +17,48 @@ export const createTripEditActions: TripSlice<
   | "updatePage"
   | "resetPage"
 > = (set, get) => {
-  /** Drawer edits are paused while a save is in flight. */
-  const edit = (update: (trip: TripDraft, state: TripStore) => TripDraft) => {
-    if (get().saveStatus === "saving") return;
-    set((state) => ({ currentTrip: update(state.currentTrip, state) }));
+  // Edits wait while a save is in flight, so they can't be lost or half-sent.
+  const isSaving = () => get().saveStatus === "saving";
+
+  const editDrawer = (
+    edit: (trip: TripDraft, state: TripStore) => TripDraft,
+  ) => {
+    if (isSaving()) return;
+    set((state) => ({ currentTrip: edit(state.currentTrip, state) }));
   };
 
   return {
     selectTrip: (publicId) =>
-      edit((trip, { trips }) => {
+      editDrawer((trip, { trips }) => {
         const saved = trips.find((item) => item.publicId === publicId);
         return saved ? toTripDraft(saved) : trip;
       }),
 
-    createTrip: (name = "") => edit(() => newTrip(name.trim() || undefined)),
+    createTrip: (name = "") =>
+      editDrawer(() => newTrip(name.trim() || undefined)),
 
-    renameTrip: (name) => edit((trip) => ({ ...trip, name })),
+    renameTrip: (name) => editDrawer((trip) => ({ ...trip, name })),
 
     addStop: (place) =>
-      edit((trip) => ({ ...trip, stops: [...trip.stops, newStop(place)] })),
+      editDrawer((trip) => ({
+        ...trip,
+        stops: [...trip.stops, newStop(place)],
+      })),
 
     removeStop: (id) =>
-      edit((trip) => ({
+      editDrawer((trip) => ({
         ...trip,
         stops: trip.stops.filter((stop) => draftId(stop) !== id),
       })),
 
     moveStop: (from, to) =>
-      edit((trip) => ({ ...trip, stops: arrayMove(trip.stops, from, to) })),
+      editDrawer((trip) => ({
+        ...trip,
+        stops: moveItem(trip.stops, from, to),
+      })),
 
     resetTrip: () => {
-      if (get().saveStatus === "saving") return;
+      if (isSaving()) return;
       set(({ currentTrip, trips }) => {
         const saved = savedTripOf(trips, currentTrip);
         return {
@@ -61,27 +73,23 @@ export const createTripEditActions: TripSlice<
 
     setError: (error) => set({ error }),
 
-    updatePage: (page, next) => {
-      if (get().saveStatus === "saving") return;
+    updatePage: (page, edit) => {
+      if (isSaving()) return;
       set(({ pageDrafts, currentTrip: trip, trips }) => {
-        const draft = pageDraftOf(pageDrafts, trip, page.scope);
+        const draft = getPageDraft(pageDrafts, trip, page.scope);
         const context = { trip, saved: savedTripOf(trips, trip) };
+        const next = editPageDraft(page, draft, context, edit);
         return {
-          pageDrafts: withPageDraft(
-            pageDrafts,
-            trip,
-            page.scope,
-            editPage(page, draft, context, next),
-          ),
+          pageDrafts: setPageDraft(pageDrafts, trip, page.scope, next),
           error: undefined,
         };
       });
     },
 
     resetPage: (scope) => {
-      if (get().saveStatus === "saving") return;
+      if (isSaving()) return;
       set(({ pageDrafts, currentTrip }) => ({
-        pageDrafts: withPageDraft(pageDrafts, currentTrip, scope),
+        pageDrafts: setPageDraft(pageDrafts, currentTrip, scope),
       }));
     },
   };

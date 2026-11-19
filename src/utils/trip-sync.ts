@@ -34,10 +34,10 @@ export const tripChanges = (
   const body = tripSaveBody(draft);
   if (!saved) return body;
 
-  const base = tripSaveBody(toTripDraft(saved));
+  const savedBody = tripSaveBody(toTripDraft(saved));
   return {
-    ...(body.name !== base.name && { name: body.name }),
-    ...(!isEqual(body.stops, base.stops) && { stops: body.stops }),
+    ...(body.name !== savedBody.name && { name: body.name }),
+    ...(!isEqual(body.stops, savedBody.stops) && { stops: body.stops }),
   };
 };
 
@@ -55,19 +55,16 @@ const isTripDto = (value: unknown): value is TripDto => {
   );
 };
 
-/** POST creates a trip; PATCH saves one scope of an existing trip. */
-export const sendTrip = async (
-  publicId: string | undefined,
+const sendTrip = async (
+  url: string,
+  method: "POST" | "PATCH",
   body: CreateTripInput | UpdateTripInput,
 ): Promise<TripDto> => {
-  const response = await fetch(
-    publicId ? `/api/trips/${publicId}` : "/api/trips",
-    {
-      method: publicId ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    },
-  );
+  const response = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
   const payload = await response.json().catch(() => null);
 
   if (!response.ok)
@@ -77,3 +74,11 @@ export const sendTrip = async (
   if (!isTripDto(payload)) throw new Error("Invalid trip save response");
   return payload;
 };
+
+/** Creates a trip. */
+export const postTrip = (body: CreateTripInput) =>
+  sendTrip("/api/trips", "POST", body);
+
+/** Saves one scope (drawer, place details or calendar) of an existing trip. */
+export const patchTrip = (publicId: string, body: UpdateTripInput) =>
+  sendTrip(`/api/trips/${publicId}`, "PATCH", body);

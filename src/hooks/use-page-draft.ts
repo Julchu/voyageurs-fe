@@ -4,7 +4,7 @@ import { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useUserStore } from "@/providers/user-store-provider";
-import { pageDraftOf, readPage, type PageConfig } from "@/stores/page-drafts";
+import { getPageDraft, viewPage, type PageConfig } from "@/stores/page-drafts";
 import {
   selectIsSaving,
   selectSavedTrip,
@@ -29,7 +29,7 @@ export function usePageDraft<V>(page: PageConfig<V>) {
     useShallow((state) => ({
       trip: state.currentTrip,
       saved: selectSavedTrip(state),
-      draft: pageDraftOf(state.pageDrafts, state.currentTrip, page.scope),
+      draft: getPageDraft(state.pageDrafts, state.currentTrip, page.scope),
       isLoading: state.tripsLoadState === "loading",
       isSaving: selectIsSaving(state),
       drawerDirty: selectTripDirty(state),
@@ -41,13 +41,13 @@ export function usePageDraft<V>(page: PageConfig<V>) {
   );
 
   const { view, isDirty } = useMemo(
-    () => readPage(page, draft, { trip, saved }),
+    () => viewPage(page, draft, { trip, saved }),
     [page, draft, trip, saved],
   );
   const conflict = isDirty && draft?.version !== saved?.version;
 
   const update = useCallback(
-    (next: (view: V) => V) => updatePage(page, next),
+    (edit: (view: V) => V) => updatePage(page, edit),
     [page, updatePage],
   );
   const save = useCallback(() => savePage(page), [page, savePage]);
