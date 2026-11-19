@@ -1,4 +1,4 @@
-import { proxyJson } from "@/utils/backend-proxy";
+import { proxyJson } from "@/server/backend-proxy";
 
 export const GET = async () => proxyJson("trips");
 
