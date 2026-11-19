@@ -1,70 +1,45 @@
-import { useTripStore } from "@/providers/trip-store-provider";
-import { useShallow } from "zustand/react/shallow";
-import { DragEndEvent } from "@dnd-kit/dom";
-import { isSortable } from "@dnd-kit/react/sortable";
 import { DragDropProvider } from "@dnd-kit/react";
-import { DraggableTripStops } from "@/components/trips-drawer/draggable-trip-stops";
+import { useShallow } from "zustand/react/shallow";
 import { useMapHook } from "@/hooks/use-map-hook";
-import { MapNavigation } from "@/components/trips-drawer/types";
+import { useTripStore } from "@/providers/trip-store-provider";
+import type { MapNavigation } from "./types";
+import { onSortEnd } from "./sortable";
+import { TripStopItem } from "./trip-stop-item";
 
 export const StopsList = ({ map }: MapNavigation) => {
-  const { currentTrip, reorderStops } = useTripStore(
-    useShallow(({ currentTrip, reorderStops }) => ({
-      currentTrip,
-      reorderStops,
+  const { stops, moveStop, removeStop } = useTripStore(
+    useShallow(({ currentTrip, moveStop, removeStop }) => ({
+      stops: currentTrip.stops,
+      moveStop,
+      removeStop,
     })),
   );
-
   const { flyTo } = useMapHook({ map });
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    if (event.canceled) return;
-    const { source } = event.operation;
-    if (!source || !isSortable(source)) return;
-    const from = source.initialIndex;
-    const to = source.index;
-    if (from === to) return;
-    reorderStops(from, to);
-  };
-
-  if (!currentTrip)
+  if (!stops.length)
     return (
-      <p className="mt-4 text-sm text-neutral-500">No current trip yet.</p>
+      <p className="text-sm text-neutral-500">
+        Search an address or tap a place on the map, then add it to this trip.
+      </p>
     );
+
   return (
-    <div className="flex min-h-0 flex-auto flex-col">
-      <div className={"shrink-0"}>
-        {currentTrip.stops.length == 0 ? (
-          <p className="text-sm text-neutral-500">
-            Search an address or tap a place on the map, then add it to this
-            trip.
-          </p>
-        ) : null}
-      </div>
-
-      <div
-        className={
-          "min-h-0 flex-auto touch-auto overflow-y-auto overscroll-contain"
-        }
-      >
-        <DragDropProvider onDragEnd={handleDragEnd}>
-          <ol className="flex flex-col gap-2 overflow-x-hidden">
-            {currentTrip.stops.map((stop, index) => {
-              const id = stop.clientId;
-
-              return (
-                <DraggableTripStops
-                  id={id}
-                  index={index}
-                  key={id}
-                  stop={stop}
-                  onClickHandler={flyTo}
-                />
-              );
-            })}
-          </ol>
-        </DragDropProvider>
-      </div>
+    <div className="min-h-0 flex-auto touch-auto overflow-y-auto overscroll-none">
+      <DragDropProvider onDragEnd={onSortEnd(moveStop)}>
+        <ol className="flex flex-col gap-2 overflow-x-hidden">
+          {stops.map((stop, index) => (
+            <TripStopItem
+              key={stop.clientId}
+              stop={stop}
+              index={index}
+              isLast={index === stops.length - 1}
+              onMove={moveStop}
+              onRemove={removeStop}
+              onFlyTo={flyTo}
+            />
+          ))}
+        </ol>
+      </DragDropProvider>
     </div>
   );
 };

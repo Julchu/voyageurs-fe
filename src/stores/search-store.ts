@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createStore } from "zustand";
 import { persist } from "zustand/middleware";
 import type { PlaceSearch, PlaceSearchInput } from "@/utils/interfaces";
 import {
@@ -33,7 +33,7 @@ export const initSearchStore = (
 });
 
 export const createSearchStore = (initialState: SearchState) => {
-  return create<SearchStore>()(
+  return createStore<SearchStore>()(
     persist(
       (set, get) => ({
         ...initialState,

@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createStore } from "zustand";
 import type { Coordinates, UserInfo } from "@/utils/interfaces";
 
 export type UserState = {
@@ -19,7 +19,7 @@ export const initUserStore = (userInfo?: UserInfo | null): UserState => ({
 });
 
 export const createUserStore = (initialState: UserState = initUserStore()) => {
-  return create<UserStore>((set) => ({
+  return createStore<UserStore>()((set) => ({
     ...initialState,
     setLastLocation: (coords) =>
       set((state) => ({
