@@ -11,6 +11,13 @@ export const draftId = ({
   clientId: string;
 }) => publicId ?? clientId;
 
+/** Stops at the same place share details and open hours. Must match the backend's placeKey. */
+export const placeKey = ({
+  mapboxId,
+  coordinates,
+}: Pick<TripStopDraft, "mapboxId" | "coordinates">) =>
+  mapboxId?.trim() || `${coordinates.lat},${coordinates.lng}`;
+
 export const sameTrip = (left: TripDraft, right: TripDraft) =>
   left.clientId === right.clientId ||
   (!!left.publicId && left.publicId === right.publicId);

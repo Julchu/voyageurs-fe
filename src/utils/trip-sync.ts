@@ -50,6 +50,7 @@ const isTripDto = (value: unknown): value is TripDto => {
     typeof trip?.publicId === "string" &&
     Number.isInteger(trip.version) &&
     typeof trip.name === "string" &&
+    Array.isArray(trip.places) &&
     Array.isArray(trip.stops)
   );
 };

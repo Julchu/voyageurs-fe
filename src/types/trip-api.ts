@@ -29,19 +29,34 @@ export type ScheduledVisit = {
   locked: boolean;
 };
 
-export type TripStopDto = StopDetails & {
-  publicId: string;
-  createdAt: string | null;
-  updatedAt: string | null;
+type PlaceFields = {
   mapboxId?: string;
   name: string;
   streetAddress: string;
   areaAddress: string;
+  category: string;
   coordinates: Coordinates;
+  availability: AvailabilityWindow[];
+};
+
+/** One per place in a trip; its stops share these details. `key` matches placeKey. */
+export type TripPlaceDto = StopDetails &
+  PlaceFields & {
+    publicId: string;
+    key: string;
+    createdAt: string | null;
+    updatedAt: string | null;
+  };
+
+/** Place fields are copied in from the stop's place. */
+export type TripStopDto = PlaceFields & {
+  publicId: string;
+  placeId: string;
+  createdAt: string | null;
+  updatedAt: string | null;
   position: number;
   visited: boolean;
   visitedAt: string | null;
-  availability: AvailabilityWindow[];
 };
 
 export type TripDto = {
@@ -50,6 +65,7 @@ export type TripDto = {
   updatedAt: string | null;
   version: number;
   name: string;
+  places: TripPlaceDto[];
   stops: TripStopDto[];
   startDate: string | null;
   endDate: string | null;
@@ -77,10 +93,10 @@ export type CalendarInput = Pick<
   availability: { publicId: string; availability: AvailabilityWindow[] }[];
 };
 
-/** The backend saves exactly one scope per request: drawer, stop details or calendar. */
+/** The backend saves exactly one scope per request: drawer, place details or calendar. */
 export type TripPatch =
   | Partial<CreateTripInput>
-  | { stopDetails: (StopDetails & { publicId: string })[] }
+  | { placeDetails: (StopDetails & { publicId: string })[] }
   | { calendar: CalendarInput };
 
 export type UpdateTripInput = TripPatch & { version: number };
