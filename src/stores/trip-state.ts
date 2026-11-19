@@ -5,7 +5,7 @@ import type { Place } from "@/utils/interfaces";
 import { isTripDirty } from "@/utils/trip-sync";
 import { newTrip, toTripDraft } from "@/utils/trip-draft";
 import type { CollectionLoadState } from "./utils/collection-load";
-import type { PageConfig, PageDraft, PageDrafts } from "./page-drafts";
+import type { PageConfig, PageDrafts } from "./page-drafts";
 
 export type TripState = {
   trips: TripDto[];
@@ -30,7 +30,9 @@ export type TripActions = {
   setError: (error?: string) => void;
   /** Saves the drawer (name and stops). Resolves false when nothing was saved. */
   saveTrip: () => Promise<boolean>;
-  setPageDraft: (scope: string, draft?: PageDraft) => void;
+  /** Edits a page draft from its current view. */
+  updatePage: <V>(page: PageConfig<V>, next: (view: V) => V) => void;
+  resetPage: (scope: string) => void;
   /** Saves pending drawer changes, then one page's draft. */
   savePage: <V>(page: PageConfig<V>) => Promise<boolean>;
 };

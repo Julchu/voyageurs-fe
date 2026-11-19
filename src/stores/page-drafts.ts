@@ -1,6 +1,6 @@
 import type { TripDto, TripPatch } from "@/types/trip-api";
 import type { TripDraft } from "@/types/trip-draft";
-import { remapIds } from "@/utils/data";
+import { isEqual, remapIds } from "@/utils/data";
 import { draftId } from "@/utils/trip-draft";
 
 /**
@@ -31,16 +31,34 @@ export const pageDraftOf = (
   scope: string,
 ) => drafts[draftId(trip)]?.[scope];
 
-/** What the page shows: the draft fitted to the current stops, or the saved values. */
-export const pageView = <V>(
+/**
+ * `view` is what the page shows: the draft fitted to the current stops, or the
+ * saved values. It's dirty once it differs from them.
+ */
+export const readPage = <V>(
   page: PageConfig<V>,
   draft: PageDraft | undefined,
   context: PageContext,
 ) => {
   const latest = page.latest(context);
-  if (!draft) return latest;
-  const value = draft.value as V;
-  return page.reconcile ? page.reconcile(value, latest) : value;
+  const value = draft?.value as V | undefined;
+  const view =
+    value === undefined ? latest : (page.reconcile?.(value, latest) ?? value);
+  return { latest, view, isDirty: !isEqual(view, latest) };
+};
+
+/** Next draft after an edit. Dropped once it matches the saved values again. */
+export const editPage = <V>(
+  page: PageConfig<V>,
+  draft: PageDraft | undefined,
+  context: PageContext,
+  next: (view: V) => V,
+): PageDraft | undefined => {
+  const { latest, view, isDirty } = readPage(page, draft, context);
+  const value = next(view);
+  if (isEqual(value, latest)) return undefined;
+  // A clean draft restarts from the current saved version.
+  return { value, version: isDirty ? draft?.version : context.saved?.version };
 };
 
 export const withPageDraft = (

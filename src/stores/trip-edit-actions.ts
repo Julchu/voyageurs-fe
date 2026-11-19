@@ -1,7 +1,7 @@
 import type { TripDraft } from "@/types/trip-draft";
 import { arrayMove } from "@/utils/data";
 import { draftId, newStop, newTrip, toTripDraft } from "@/utils/trip-draft";
-import { withPageDraft } from "./page-drafts";
+import { editPage, pageDraftOf, withPageDraft } from "./page-drafts";
 import { savedTripOf, type TripSlice, type TripStore } from "./trip-state";
 
 export const createTripEditActions: TripSlice<
@@ -13,7 +13,8 @@ export const createTripEditActions: TripSlice<
   | "moveStop"
   | "resetTrip"
   | "setError"
-  | "setPageDraft"
+  | "updatePage"
+  | "resetPage"
 > = (set, get) => {
   /** Drawer edits are paused while a save is in flight. */
   const edit = (update: (trip: TripDraft, state: TripStore) => TripDraft) => {
@@ -60,11 +61,27 @@ export const createTripEditActions: TripSlice<
 
     setError: (error) => set({ error }),
 
-    setPageDraft: (scope, draft) => {
+    updatePage: (page, next) => {
+      if (get().saveStatus === "saving") return;
+      set(({ pageDrafts, currentTrip: trip, trips }) => {
+        const draft = pageDraftOf(pageDrafts, trip, page.scope);
+        const context = { trip, saved: savedTripOf(trips, trip) };
+        return {
+          pageDrafts: withPageDraft(
+            pageDrafts,
+            trip,
+            page.scope,
+            editPage(page, draft, context, next),
+          ),
+          error: undefined,
+        };
+      });
+    },
+
+    resetPage: (scope) => {
       if (get().saveStatus === "saving") return;
       set(({ pageDrafts, currentTrip }) => ({
-        pageDrafts: withPageDraft(pageDrafts, currentTrip, scope, draft),
-        error: undefined,
+        pageDrafts: withPageDraft(pageDrafts, currentTrip, scope),
       }));
     },
   };

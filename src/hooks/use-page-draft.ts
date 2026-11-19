@@ -1,24 +1,31 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useUserStore } from "@/providers/user-store-provider";
-import { pageDraftOf, pageView, type PageConfig } from "@/stores/page-drafts";
+import { pageDraftOf, readPage, type PageConfig } from "@/stores/page-drafts";
 import {
   selectIsSaving,
   selectSavedTrip,
   selectTripDirty,
 } from "@/stores/trip-store";
-import { isEqual } from "@/utils/data";
 
-/**
- * A page's draft on top of the saved trip. `view` is what the page shows;
- * `update` stores a new view, or drops the draft once it matches the saved values.
- */
+/** A page's draft on top of the saved trip, with Save/Reset that also cover the drawer. */
 export function usePageDraft<V>(page: PageConfig<V>) {
   const isSignedIn = useUserStore(({ userInfo }) => !!userInfo);
-  const state = useTripStore(
+  const {
+    trip,
+    saved,
+    draft,
+    isLoading,
+    isSaving,
+    drawerDirty,
+    updatePage,
+    resetPage,
+    savePage,
+    resetTrip,
+  } = useTripStore(
     useShallow((state) => ({
       trip: state.currentTrip,
       saved: selectSavedTrip(state),
@@ -26,51 +33,40 @@ export function usePageDraft<V>(page: PageConfig<V>) {
       isLoading: state.tripsLoadState === "loading",
       isSaving: selectIsSaving(state),
       drawerDirty: selectTripDirty(state),
-      setPageDraft: state.setPageDraft,
+      updatePage: state.updatePage,
+      resetPage: state.resetPage,
       savePage: state.savePage,
       resetTrip: state.resetTrip,
     })),
   );
-  const { trip, saved, draft, isSaving, setPageDraft } = state;
 
-  const latest = useMemo(
-    () => page.latest({ trip, saved }),
-    [page, trip, saved],
-  );
-  const view = useMemo(
-    () => pageView(page, draft, { trip, saved }),
+  const { view, isDirty } = useMemo(
+    () => readPage(page, draft, { trip, saved }),
     [page, draft, trip, saved],
   );
-  const isDirty = useMemo(() => !isEqual(view, latest), [view, latest]);
   const conflict = isDirty && draft?.version !== saved?.version;
 
-  // One update per event: `next` gets the view from the last render.
-  const update = (next: (view: V) => V) => {
-    if (isSaving) return;
-    const value = next(view);
-    setPageDraft(
-      page.scope,
-      isEqual(value, latest)
-        ? undefined
-        : { value, version: isDirty ? draft?.version : saved?.version },
-    );
-  };
-
-  const reset = () => {
-    state.resetTrip();
-    setPageDraft(page.scope, undefined);
-  };
+  const update = useCallback(
+    (next: (view: V) => V) => updatePage(page, next),
+    [page, updatePage],
+  );
+  const save = useCallback(() => savePage(page), [page, savePage]);
+  const reset = useCallback(() => {
+    resetTrip();
+    resetPage(page.scope);
+  }, [page, resetTrip, resetPage]);
 
   return {
     trip,
     saved,
     view,
     update,
+    save,
     reset,
-    save: () => state.savePage(page),
-    isDirty: isDirty || state.drawerDirty,
+    isDirty: isDirty || drawerDirty,
+    isPageDirty: isDirty,
     isSaving,
     // TODO: explain blocked saves (signed out, conflict) in the footer.
-    canSave: isSignedIn && !conflict && !state.isLoading,
+    canSave: isSignedIn && !conflict && !isLoading,
   };
 }

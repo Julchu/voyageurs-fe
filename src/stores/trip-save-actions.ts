@@ -18,7 +18,7 @@ import {
   type TripSlice,
   type TripState,
 } from "./trip-state";
-import { pageDraftOf, pageView, settlePageDrafts } from "./page-drafts";
+import { pageDraftOf, readPage, settlePageDrafts } from "./page-drafts";
 
 /** Remote trips win, unless this tab saved a newer version while the request was in flight. */
 const mergeTrips = (remote: TripDto[], savedDuringFetch: TripDto[]) => {
@@ -153,7 +153,7 @@ export const createTripSaveActions: TripSlice<
         );
 
       const context = { trip, saved };
-      const patch = page.toPatch(pageView(page, draft, context), context);
+      const patch = page.toPatch(readPage(page, draft, context).view, context);
       return commit(
         trip,
         () => sendTrip(saved.publicId, { ...patch, version: saved.version }),
