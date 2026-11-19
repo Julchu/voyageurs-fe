@@ -5,7 +5,7 @@
 // The active Mapbox implementation lives in address-search.tsx.
 //
 // import { useEffect, useRef, useState } from "react";
-// import { useDebouncedValue } from "@/hooks/use-debounced-state";
+// import { useDebouncedValue } from "@/hooks/use-debounced-value";
 // import type { Coordinates, Place, PlaceSearch } from "@/utils/interfaces";
 // import { useSearchStore } from "@/providers/search-store-provider";
 // import {

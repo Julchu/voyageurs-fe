@@ -1,7 +1,7 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
 import { useMapHook } from "@/hooks/use-map-hook";
-import { useDebouncedValue } from "@/hooks/use-debounced-state";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import type { Coordinates, PlaceSearch } from "@/utils/interfaces";
 import { useSearchStore } from "@/providers/search-store-provider";
 import {

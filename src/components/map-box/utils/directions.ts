@@ -1,31 +1,26 @@
 import type { Coordinates } from "@/utils/interfaces";
 
-export type RouteKind = "empty" | "straight" | "directions";
+export type LngLat = [lng: number, lat: number];
 
 const MAX_DIRECTION_STOPS = 25;
 
 type DirectionsBody = {
   code?: string;
-  routes?: { geometry?: { coordinates?: [number, number][] } }[];
+  routes?: { geometry?: { coordinates?: LngLat[] } }[];
 };
 
 /**
- * One driving route per stop-order change, never while the map pans.
- * Return no line when directions are unavailable; never connect stops directly.
+ * The driving route through the stops, in order. Empty when there's nothing to
+ * route or directions fail: stops are never joined with straight lines.
  */
 export const routeForStops = async (
-  coordinates: Coordinates[],
-): Promise<{ kind: RouteKind; line: [number, number][] }> => {
-  const line = coordinates.map(
-    (point) => [point.lng, point.lat] as [number, number],
-  );
-  if (line.length < 2 || line.length > MAX_DIRECTION_STOPS)
-    return { kind: "empty", line: [] };
-
+  stops: Coordinates[],
+): Promise<LngLat[]> => {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  if (!token) return { kind: "empty", line: [] };
+  if (!token || stops.length < 2 || stops.length > MAX_DIRECTION_STOPS)
+    return [];
 
-  const path = line.map((pair) => pair.join(",")).join(";");
+  const path = stops.map(({ lng, lat }) => `${lng},${lat}`).join(";");
   const url = new URL(
     `https://api.mapbox.com/directions/v5/mapbox/driving/${path}`,
   );
@@ -36,13 +31,11 @@ export const routeForStops = async (
 
   try {
     const response = await fetch(url);
-    if (!response.ok) return { kind: "empty", line: [] };
+    if (!response.ok) return [];
     const body = (await response.json()) as DirectionsBody;
-    const routed = body.routes?.[0]?.geometry?.coordinates;
-    if (body.code !== "Ok" || !routed || routed.length < 2)
-      return { kind: "empty", line: [] };
-    return { kind: "directions", line: routed };
+    const line = body.routes?.[0]?.geometry?.coordinates;
+    return body.code === "Ok" && line && line.length >= 2 ? line : [];
   } catch {
-    return { kind: "empty", line: [] };
+    return [];
   }
 };
