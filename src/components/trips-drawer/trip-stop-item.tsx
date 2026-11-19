@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useSortable } from "@dnd-kit/react/sortable";
+import { Button } from "@base-ui/react/button";
 import { Menu } from "@base-ui/react/menu";
 import { cn } from "cn";
 import { useTripStore } from "@/providers/trip-store-provider";
@@ -70,9 +71,8 @@ export const TripStopItem = ({
         disabled={!canMove}
       />
 
-      <button
-        type="button"
-        className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+      <Button
+        className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded text-left outline-blue-500"
         onClick={() => {
           openPlacePopup.openWithPayload(stop);
           onFlyTo(stop.coordinates);
@@ -91,7 +91,7 @@ export const TripStopItem = ({
           </span>
           {children}
         </span>
-      </button>
+      </Button>
 
       <Menu.Root>
         <Menu.Trigger
