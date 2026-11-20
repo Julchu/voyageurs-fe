@@ -8,10 +8,8 @@
 // import { useDebouncedValue } from "@/hooks/use-debounced-value";
 // import type { Coordinates, Place, PlaceSearch } from "@/utils/interfaces";
 // import { useSearchStore } from "@/providers/search-store-provider";
-// import {
-//   placeRecord,
-//   type SearchSuggestion,
-// } from "@/components/map-box/utils/place-geocoding";
+// import type { SearchSuggestion } from "@/components/map-box/utils/mapbox-search-box";
+// import { placeRecord } from "@/utils/place-record";
 // import {
 //   createGoogleSessionToken,
 //   googleResolvePlace,

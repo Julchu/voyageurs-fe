@@ -8,9 +8,9 @@
 //   RetrieveOptions,
 //   SearchSuggestion,
 //   SuggestOptions,
-// } from "@/components/map-box/utils/place-geocoding";
+// } from "@/components/map-box/utils/mapbox-search-box";
 //
-// /* Google Maps Platform adapter — a drop-in mirror of `place-geocoding.ts`.
+// /* Google Maps Platform adapter — a drop-in mirror of the `mapbox-*` and `poi-click-place` files.
 //  *
 //  * Same inputs/outputs as the Mapbox adapter (`Place`, `SearchSuggestion`,
 //  * `PlaceDetails`), so components can swap imports without other changes. The

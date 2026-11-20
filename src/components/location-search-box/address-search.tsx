@@ -6,11 +6,11 @@ import type { Coordinates, PlaceSearch } from "@/utils/interfaces";
 import { useSearchStore } from "@/providers/search-store-provider";
 import {
   createSearchBoxSessionToken,
-  placeRecord,
   searchBoxRetrieve,
   searchBoxSuggest,
   type SearchSuggestion,
-} from "@/components/map-box/utils/place-geocoding";
+} from "@/components/map-box/utils/mapbox-search-box";
+import { placeRecord } from "@/utils/place-record";
 import { AddressCombobox, type AddressComboboxItem } from "./address-combobox";
 import { DESKTOP_SEARCH_COLUMN } from "@/components/map-box/map-panel-layout";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";

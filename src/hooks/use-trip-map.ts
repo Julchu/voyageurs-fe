@@ -7,6 +7,8 @@ import { drawRoute } from "@/components/map-box/utils/route-layer";
 import type { TripStopDraft } from "@/types/trip-draft";
 import type { Coordinates } from "@/utils/interfaces";
 
+// TODO: route line disabled; set to true to re-enable
+const SHOW_ROUTE_LINE: boolean = false;
 const ROUTE_DELAY_MS = 400;
 
 const createStopMarker = (map: MapboxMap, stop: TripStopDraft) => {
@@ -87,7 +89,7 @@ export const useTripMap = (
 
     const coordinates = JSON.parse(routeKey) as Coordinates[];
     drawRoute(mapInstance, []);
-    if (coordinates.length < 2) return;
+    if (!SHOW_ROUTE_LINE || coordinates.length < 2) return;
 
     let cancelled = false;
     const timer = window.setTimeout(() => {

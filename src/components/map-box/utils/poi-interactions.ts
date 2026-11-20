@@ -1,5 +1,5 @@
 import type { Map as MapboxMap } from "mapbox-gl";
-import { placeFromFeature } from "@/components/map-box/utils/place-geocoding";
+import { placeFromFeature } from "@/components/map-box/utils/poi-click-place";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 
 export const addPoiInteractions = (map: MapboxMap) => {
