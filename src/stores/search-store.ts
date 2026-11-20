@@ -111,5 +111,3 @@ export const createSearchStore = (initialState: SearchState) =>
       },
     ),
   );
-
-export type SearchStoreApi = ReturnType<typeof createSearchStore>;
