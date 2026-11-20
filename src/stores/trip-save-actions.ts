@@ -23,7 +23,7 @@ const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Unable to save. Please try again.";
 
 export const createTripSaveActions: TripActionCreator<
-  "clearTrips" | "fetchTrips" | "saveTrip" | "saveDetails"
+  "clearTrips" | "fetchTrips" | "saveTrip"
 > = (set, get) => {
   // Ignore responses from requests started before this store was cleared.
   let requestVersion = 0;
@@ -103,32 +103,6 @@ export const createTripSaveActions: TripActionCreator<
         }));
       } catch (error) {
         if (version === requestVersion) fail(errorMessage(error));
-      }
-    },
-
-    /** Place details save on their own; the trip draft only moves to the new version. */
-    saveDetails: async (placeDetails) => {
-      const { currentTrip, trips, tripSaveStatus } = get();
-      const saved = serverTrip(trips, currentTrip);
-      if (!saved || tripSaveStatus === "saving" || !placeDetails.length)
-        return false;
-      const version = requestVersion;
-      set({ tripSaveStatus: "saving", tripSaveError: undefined });
-      try {
-        const trip = await sendTrip(saved, { placeDetails });
-        if (version !== requestVersion) return false;
-        set(({ trips, currentTrip }) => ({
-          trips: withTrip(trips, trip),
-          currentTrip:
-            currentTrip?.version === saved.version
-              ? { ...currentTrip, version: trip.version }
-              : currentTrip,
-          tripSaveStatus: "saved",
-        }));
-        return true;
-      } catch (error) {
-        if (version === requestVersion) fail(errorMessage(error));
-        return false;
       }
     },
   };

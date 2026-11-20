@@ -4,7 +4,6 @@ import type { Place } from "@/utils/interfaces";
 import type {
   AvailabilityWindow,
   ScheduledVisit,
-  StopDetails,
   TripDto,
 } from "@/types/trip-api";
 import type { TripDraft } from "@/types/trip-draft";
@@ -44,9 +43,6 @@ export type TripActions = {
   clearTrips: () => void;
   fetchTrips: () => Promise<void>;
   saveTrip: () => Promise<void>;
-  saveDetails: (
-    placeDetails: (StopDetails & { publicId: string })[],
-  ) => Promise<boolean>;
 };
 
 export type TripStore = TripState & TripActions;

@@ -6,7 +6,6 @@ import { serverFetch } from "@/server/backend";
 import type { PlaceSearch, UserInfo } from "@/utils/interfaces";
 import type { TripDto } from "@/types/trip-api";
 import { SearchStoreProvider } from "@/providers/search-store-provider";
-import { StopDetailsStoreProvider } from "@/providers/stop-details-store-provider";
 
 export const Providers = async ({ children }: PropsWithChildren) => {
   const [userInfo, fetchedTrips, fetchedSearches] = await Promise.all([
@@ -21,15 +20,13 @@ export const Providers = async ({ children }: PropsWithChildren) => {
         trips={fetchedTrips ?? []}
         tripsServerLoaded={fetchedTrips !== null}
       >
-        <StopDetailsStoreProvider>
-          <SearchStoreProvider
-            searches={fetchedSearches ?? []}
-            searchesServerLoaded={fetchedSearches !== null}
-          >
-            <TravelLoader />
-            {children}
-          </SearchStoreProvider>
-        </StopDetailsStoreProvider>
+        <SearchStoreProvider
+          searches={fetchedSearches ?? []}
+          searchesServerLoaded={fetchedSearches !== null}
+        >
+          <TravelLoader />
+          {children}
+        </SearchStoreProvider>
       </TripStoreProvider>
     </UserStoreProvider>
   );
