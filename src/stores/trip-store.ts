@@ -3,8 +3,10 @@ import { persist } from "zustand/middleware";
 import type { Place } from "@/utils/interfaces";
 import type { TripDto } from "@/types/trip-api";
 import type { TripDraft } from "@/types/trip-draft";
+import type { AvailabilityWindow, ScheduledVisit } from "@/types/trip-api";
 import type { CollectionLoadState } from "./utils/collection-load";
 import { createTripDraftActions } from "./trip-draft-actions";
+import { createTripCalendarActions } from "./trip-calendar-actions";
 import { createTripSaveActions } from "./trip-save-actions";
 import { tripPersistenceOptions } from "./trip-persistence";
 
@@ -29,6 +31,12 @@ export type TripActions = {
   selectTrip: (publicId: string) => void;
   createTrip: (name: string) => void;
   resetDraft: () => void;
+  // Calendar
+  setTripDates: (startDate: string | null, endDate: string | null) => void;
+  setVisit: (visit: ScheduledVisit) => void;
+  removeVisit: (visitId: string) => void;
+  toggleReserved: (visitId: string) => void;
+  setOpenHours: (stopId: string, windows: AvailabilityWindow[]) => void;
   // Server
   clearTrips: () => void;
   fetchTrips: () => Promise<void>;
@@ -48,6 +56,7 @@ export const createTripStore = (initialState: TripState) =>
       (set, get) => ({
         ...initialState,
         ...createTripDraftActions(set, get),
+        ...createTripCalendarActions(set, get),
         ...createTripSaveActions(set, get),
       }),
       tripPersistenceOptions,
