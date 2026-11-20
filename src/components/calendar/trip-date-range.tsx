@@ -1,15 +1,9 @@
 import { useState } from "react";
 import { Button } from "@base-ui/react/button";
 import { DayPicker } from "@daypicker/react";
-import { calendarButton } from "./styles";
-import {
-  RangePopover,
-  dateLabel,
-  dayPickerClassNames,
-  isoDate,
-  parseDate,
-  pickerFooter,
-} from "./range-picker";
+import { dateLabel, dayOf, parseDate } from "./calendar-time";
+import { RangePopover } from "./range-popover";
+import { calendarButton, dayPickerClassNames, pickerFooter } from "./styles";
 
 type Props = {
   startDate: string | null;
@@ -62,8 +56,8 @@ export function TripDateRange({
         disabled={disabled}
         onSelect={(range) => {
           onChange(
-            range?.from ? isoDate(range.from) : null,
-            range?.to ? isoDate(range.to) : null,
+            range?.from ? dayOf(range.from) : null,
+            range?.to ? dayOf(range.to) : null,
           );
           if (range?.to) setOpen(false);
         }}

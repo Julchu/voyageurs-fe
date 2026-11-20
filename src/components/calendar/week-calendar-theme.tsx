@@ -5,7 +5,7 @@ import { CaretDownIcon } from "@/components/ui/icons/caret-icons";
 // Tailwind-only FullCalendar theme for the timeGrid views (replaces the Forma
 // theme CSS). Based on FullCalendar's shadcn "forma" theme, trimmed to the
 // parts WeekCalendar uses.
-// TODO: add dayGrid/list/more-link/popover classes if those views get used.
+// TODO: add all-day/dayGrid/list/more-link/popover classes if those views get used.
 
 const border = "border border-neutral-200";
 const muted = "bg-neutral-50";
@@ -66,17 +66,6 @@ export const weekCalendarTheme: CalendarOptions = {
   columnEventTimeClass: (info) => cn(!info.isShort && "pt-1", "text-[11px]"),
   columnEventTitleClass: (info) => cn(!info.isShort && "py-1", "font-medium"),
 
-  /* Row (all-day) events */
-  rowEventClass: (info) =>
-    cn("mb-px items-center", info.isStart && "ms-0.5", info.isEnd && "me-0.5"),
-  rowEventBeforeClass: (info) =>
-    cn(info.isStartResizable && `${resizer} inset-y-0 -start-1 w-2`),
-  rowEventAfterClass: (info) =>
-    cn(info.isEndResizable && `${resizer} inset-y-0 -end-1 w-2`),
-  rowEventInnerClass: "flex flex-row items-center py-0.5",
-  rowEventTimeClass: "ps-1 font-medium",
-  rowEventTitleClass: "px-1",
-
   /* Day headers, cells and lanes */
   dayHeaderAlign: "center",
   dayHeaderRowClass: border,
@@ -101,9 +90,6 @@ export const weekCalendarTheme: CalendarOptions = {
   slotHeaderClass: "justify-end",
   slotHeaderInnerClass: "m-1.5 text-[10px] tabular-nums text-neutral-500",
   slotHeaderDividerClass: "border-e border-neutral-200",
-  allDayHeaderClass: "items-center justify-end",
-  allDayHeaderInnerClass: "m-1.5 text-end text-[10px] text-neutral-500",
-  allDayDividerClass: "border-b border-neutral-200",
 
   /* Misc */
   tableHeaderClass: "bg-white",

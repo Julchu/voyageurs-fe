@@ -1,9 +1,6 @@
 "use client";
 
-import FullCalendar, {
-  type CalendarOptions,
-  useCalendarController,
-} from "@fullcalendar/react";
+import FullCalendar, { type CalendarOptions } from "@fullcalendar/react";
 import timeGrid from "@fullcalendar/react/timegrid";
 import interaction from "@fullcalendar/react/interaction";
 import "@fullcalendar/react/skeleton.css";
@@ -42,17 +39,8 @@ const clockFormat = {
 } as const;
 
 export function WeekCalendar(props: CalendarOptions) {
-  const controller = useCalendarController();
-  const buttons = controller.getButtonState();
   return (
     <div className="h-112 min-w-0 flex-none bg-white text-xs md:h-auto md:min-h-0 md:flex-1">
-      {/*<div className="toolbar border-b border-neutral-200 bg-blue-500">*/}
-      {/*  <button onClick={() => controller.today()}>{buttons.today.text}</button>*/}
-      {/*  <div className="toolbar-title bg-red-500">Cheese</div>*/}
-      {/*  <div className="toolbar-title">{controller?.view?.title}</div>*/}
-      {/*  <div className="toolbar-title">{controller?.view?.title}</div>*/}
-      {/*  <div className="toolbar-title">{controller?.view?.title}</div>*/}
-      {/*</div>*/}
       <FullCalendar
         {...weekCalendarTheme}
         plugins={plugins}
@@ -62,7 +50,7 @@ export function WeekCalendar(props: CalendarOptions) {
         now={localNow}
         firstDay={0}
         height="100%"
-        allDaySlot={true}
+        allDaySlot={false}
         slotDuration="00:30"
         snapDuration="00:30"
         slotHeaderFormat={clockFormat}
