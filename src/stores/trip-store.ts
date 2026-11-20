@@ -1,4 +1,4 @@
-import { create, type StoreApi } from "zustand";
+import { createStore, type StoreApi } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Place } from "@/utils/interfaces";
 import type { TripDto } from "@/types/trip-api";
@@ -43,7 +43,7 @@ export type TripActionCreator<Keys extends keyof TripActions> = (
 ) => Pick<TripActions, Keys>;
 
 export const createTripStore = (initialState: TripState) =>
-  create<TripStore>()(
+  createStore<TripStore>()(
     persist(
       (set, get) => ({
         ...initialState,
