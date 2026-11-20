@@ -1,11 +1,7 @@
 import { create, type StoreApi } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Place } from "@/utils/interfaces";
-import type {
-  AvailabilityWindow,
-  ScheduledVisit,
-  TripDto,
-} from "@/types/trip-api";
+import type { TripDto } from "@/types/trip-api";
 import type { TripDraft } from "@/types/trip-draft";
 import type { CollectionLoadState } from "./utils/collection-load";
 import { createTripDraftActions } from "./trip-draft-actions";
@@ -33,12 +29,6 @@ export type TripActions = {
   selectTrip: (publicId: string) => void;
   createTrip: (name: string) => void;
   resetDraft: () => void;
-  // Calendar
-  setTripDates: (startDate: string | null, endDate: string | null) => void;
-  setVisit: (visit: ScheduledVisit) => void;
-  removeVisit: (visitId: string) => void;
-  toggleReserved: (visitId: string) => void;
-  setOpenHours: (stopId: string, windows: AvailabilityWindow[]) => void;
   // Server
   clearTrips: () => void;
   fetchTrips: () => Promise<void>;

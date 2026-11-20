@@ -1,15 +1,11 @@
 import type { TripDto } from "@/types/trip-api";
 import type { TripDraft, TripStopDraft } from "@/types/trip-draft";
 import type { Place } from "@/utils/interfaces";
-import type { TripActionCreator, TripState } from "./trip-store";
+import type { TripActionCreator, TripState, TripStore } from "./trip-store";
+import type { StoreApi } from "zustand";
 import { toTripDraft } from "@/utils/trip-sync";
 import { placeKey, stopId } from "@/utils/trip-stop";
-import { compareVisits } from "@/utils/trip-time";
-import {
-  orderBySchedule,
-  placeMove,
-  scheduledNeighbours,
-} from "@/utils/trip-scheduler";
+import { placeMove, scheduledNeighbours } from "@/utils/trip-scheduler";
 
 const newTrip = (
   name = "New Trip",
@@ -50,22 +46,13 @@ export const initTripStore = (
   tripSaveStatus: "idle",
 });
 
-export const createTripDraftActions: TripActionCreator<
-  | "addStop"
-  | "removeStop"
-  | "moveStop"
-  | "renameTrip"
-  | "selectTrip"
-  | "createTrip"
-  | "resetDraft"
-  | "setTripDates"
-  | "setVisit"
-  | "removeVisit"
-  | "toggleReserved"
-  | "setOpenHours"
-> = (set, get) => {
-  /** Every draft edit goes through here. Editing is paused while saving. */
-  const edit = (update: (trip: TripDraft) => TripDraft) => {
+/** Every draft edit goes through here. Editing is paused while saving. */
+export const draftEditor =
+  (
+    set: StoreApi<TripStore>["setState"],
+    get: StoreApi<TripStore>["getState"],
+  ) =>
+  (update: (trip: TripDraft) => TripDraft) => {
     const { currentTrip, tripSaveStatus } = get();
     if (!currentTrip || tripSaveStatus === "saving") return;
     set({
@@ -74,6 +61,17 @@ export const createTripDraftActions: TripActionCreator<
       tripSaveError: undefined,
     });
   };
+
+export const createTripDraftActions: TripActionCreator<
+  | "addStop"
+  | "removeStop"
+  | "moveStop"
+  | "renameTrip"
+  | "selectTrip"
+  | "createTrip"
+  | "resetDraft"
+> = (set, get) => {
+  const edit = draftEditor(set, get);
 
   return {
     addStop: (place) => {
@@ -147,44 +145,6 @@ export const createTripDraftActions: TripActionCreator<
         return saved
           ? toTripDraft(saved, trip)
           : newTrip("New Trip", trip.clientId);
-      }),
-
-    setTripDates: (startDate, endDate) =>
-      edit((trip) => ({ ...trip, startDate, endDate })),
-    setVisit: (visit) =>
-      edit((trip) => {
-        const visits = [
-          ...trip.visits.filter((item) => item.stopId !== visit.stopId),
-          visit,
-        ].sort(compareVisits);
-        // The backend needs scheduled stops in time order.
-        return { ...trip, visits, stops: orderBySchedule(trip.stops, visits) };
-      }),
-    removeVisit: (visitId) =>
-      edit((trip) => ({
-        ...trip,
-        visits: trip.visits.filter((visit) => visit.id !== visitId),
-      })),
-    toggleReserved: (visitId) =>
-      edit((trip) => ({
-        ...trip,
-        visits: trip.visits.map((visit) =>
-          visit.id === visitId ? { ...visit, locked: !visit.locked } : visit,
-        ),
-      })),
-    // Open hours belong to the place, so every stop there gets the same hours.
-    setOpenHours: (id, availability) =>
-      edit((trip) => {
-        const source = trip.stops.find((stop) => stopId(stop) === id);
-        if (!source) return trip;
-        return {
-          ...trip,
-          stops: trip.stops.map((stop) =>
-            placeKey(stop) === placeKey(source)
-              ? { ...stop, availability }
-              : stop,
-          ),
-        };
       }),
   };
 };

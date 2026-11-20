@@ -1,7 +1,5 @@
 import type { AvailabilityWindow, ScheduledVisit } from "@/types/trip-api";
-import type { TripStopDraft } from "@/types/trip-draft";
 import { canSchedule, compareVisits, visitEnd, visitStart } from "./trip-time";
-import { stopId } from "./trip-stop";
 
 // Keep `placeMove` identical to the backend's trip.calendar.ts.
 type AvailableStop = { publicId: string; availability: AvailabilityWindow[] };
@@ -102,20 +100,3 @@ export const placeMove = (
     );
   return moved ? visits.filter((visit) => visit !== moved) : visits;
 };
-
-/** Scheduled stops follow their visit times; unscheduled stops keep their place. */
-export function orderBySchedule(
-  stops: TripStopDraft[],
-  visits: ScheduledVisit[],
-): TripStopDraft[] {
-  const byStop = new Map(visits.map((visit) => [visit.stopId, visit]));
-  const scheduled = stops
-    .filter((stop) => byStop.has(stopId(stop)))
-    .sort((a, b) =>
-      compareVisits(byStop.get(stopId(a))!, byStop.get(stopId(b))!),
-    );
-  let index = 0;
-  return stops.map((stop) =>
-    byStop.has(stopId(stop)) ? scheduled[index++] : stop,
-  );
-}

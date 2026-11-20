@@ -9,26 +9,11 @@ export const visitStart = (visit: ScheduledVisit) =>
   dateMinute(visit.date, visit.startMinute);
 export const visitEnd = (visit: ScheduledVisit) =>
   dateMinute(visit.date, visit.endMinute);
-export const visitDuration = (visit: ScheduledVisit) =>
-  visit.endMinute - visit.startMinute;
 
 export const compareVisits = (a: ScheduledVisit, b: ScheduledVisit) =>
   a.date.localeCompare(b.date) ||
   a.startMinute - b.startMinute ||
   a.id.localeCompare(b.id);
-
-export function mergeHours(windows: AvailabilityWindow[]) {
-  const result: AvailabilityWindow[] = [];
-  for (const next of [...windows].sort(
-    (a, b) => a.day - b.day || a.startMinute - b.startMinute,
-  )) {
-    const last = result.at(-1);
-    if (last && last.day === next.day && next.startMinute <= last.endMinute)
-      last.endMinute = Math.max(last.endMinute, next.endMinute);
-    else result.push({ ...next });
-  }
-  return result;
-}
 
 /** Weekly open hours, matching the backend: empty means open anytime. */
 export const isAvailable = (
