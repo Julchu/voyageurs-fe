@@ -1,6 +1,5 @@
-import { ComingSoon } from "@/components/ui/coming-soon";
+import { StopsTable } from "@/components/trip-stops/stops-table";
 
-// TODO: replaced by the stops table (trip-stops-table branch).
 export default function StopsPage() {
-  return <ComingSoon title="Trip stops" />;
+  return <StopsTable />;
 }
