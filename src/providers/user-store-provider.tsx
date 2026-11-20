@@ -1,22 +1,47 @@
 "use client";
 
-import { type PropsWithChildren, useState } from "react";
+import {
+  createContext,
+  type PropsWithChildren,
+  useContext,
+  useState,
+} from "react";
+import { useStore } from "zustand";
 import type { UserInfo } from "@/utils/interfaces";
 import {
   createUserStore,
   initUserStore,
   type UserStore,
+  type UserStoreApi,
 } from "@/stores/user-store";
-import { createStoreContext } from "./create-store-context";
 
-const { Provider, useSelector } = createStoreContext<UserStore>("useUserStore");
+export const UserStoreContext = createContext<UserStoreApi | undefined>(
+  undefined,
+);
 
-export const useUserStore = useSelector;
+export type UserStoreProviderProps = PropsWithChildren<{
+  userInfo: UserInfo | null;
+}>;
 
 export const UserStoreProvider = ({
   children,
   userInfo,
-}: PropsWithChildren<{ userInfo: UserInfo | null }>) => {
+}: UserStoreProviderProps) => {
   const [store] = useState(() => createUserStore(initUserStore(userInfo)));
-  return <Provider value={store}>{children}</Provider>;
+
+  return (
+    <UserStoreContext.Provider value={store}>
+      {children}
+    </UserStoreContext.Provider>
+  );
+};
+
+export const useUserStore = <T,>(selector: (store: UserStore) => T): T => {
+  const store = useContext(UserStoreContext);
+
+  if (!store) {
+    throw new Error("useUserStore must be used within UserStoreProvider");
+  }
+
+  return useStore(store, selector);
 };

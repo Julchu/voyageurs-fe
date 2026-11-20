@@ -1,17 +1,31 @@
 import type { Place } from "@/utils/interfaces";
+import type { TripDto, TripStopDto } from "./trip-api";
 
-/** A drawer stop. New stops only have a clientId until the trip is saved. */
-export type TripStopDraft = Place & {
-  clientId: string;
-  publicId?: string;
-  visited?: boolean;
-};
+type Timestamps = Partial<Pick<TripDto, "createdAt" | "updatedAt">>;
 
-/** The drawer's local copy of a trip: its name and ordered stops. Pages keep their own drafts. */
-export type TripDraft = {
-  clientId: string;
-  publicId?: string;
-  version?: number;
-  name: string;
-  stops: TripStopDraft[];
-};
+/** A stop being edited. New stops only have a `clientId` until saved. */
+export type TripStopDraft = Omit<
+  TripStopDto,
+  "publicId" | "placeId" | "position" | keyof Timestamps
+> &
+  Timestamps &
+  Place & {
+    clientId: string;
+    publicId?: string;
+    placeId?: string;
+  };
+
+/**
+ * The trip being edited by the drawer and calendar. Stop order is the array
+ * order. `version` is the server version this draft started from.
+ */
+export type TripDraft = Omit<
+  TripDto,
+  "publicId" | "version" | "stops" | "places" | "stopIdMap" | keyof Timestamps
+> &
+  Timestamps & {
+    clientId: string;
+    publicId?: string;
+    version?: number;
+    stops: TripStopDraft[];
+  };

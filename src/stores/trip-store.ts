@@ -1,29 +1,70 @@
-import { createStore } from "zustand";
+import { create, type StoreApi } from "zustand";
 import { persist } from "zustand/middleware";
-import type { TripState, TripStore } from "./trip-state";
-import { createTripEditActions } from "./trip-edit-actions";
+import type { Place } from "@/utils/interfaces";
+import type {
+  AvailabilityWindow,
+  ScheduledVisit,
+  StopDetails,
+  TripDto,
+} from "@/types/trip-api";
+import type { TripDraft } from "@/types/trip-draft";
+import type { CollectionLoadState } from "./utils/collection-load";
+import { createTripDraftActions } from "./trip-draft-actions";
 import { createTripSaveActions } from "./trip-save-actions";
-import { tripPersistence } from "./trip-persistence";
+import { tripPersistenceOptions } from "./trip-persistence";
 
-export * from "./trip-state";
+export { initTripStore } from "./trip-draft-actions";
 
-/*
- * The trip store. State and selectors are in trip-state.ts.
- * - trip-edit-actions: local edits to the drawer and page drafts
- * - trip-save-actions: loading trips and saving to the server
- * - page-drafts: how a page's unsaved edits are kept and saved
- * - trip-persistence: what survives a reload (drafts, not saved trips)
- */
+export type TripState = {
+  /** Saved trips, as the server returned them. */
+  trips: TripDto[];
+  tripsLoadState: CollectionLoadState;
+  /** The trip being edited. The drawer and calendar both edit this draft. */
+  currentTrip?: TripDraft;
+  tripSaveStatus: "idle" | "saving" | "saved" | "error";
+  tripSaveError?: string;
+};
+
+export type TripActions = {
+  // Drawer
+  addStop: (place: Place) => string | undefined;
+  removeStop: (stopId: string) => void;
+  moveStop: (from: number, to: number, targetDate?: string) => void;
+  renameTrip: (name: string) => void;
+  selectTrip: (publicId: string) => void;
+  createTrip: (name: string) => void;
+  resetDraft: () => void;
+  // Calendar
+  setTripDates: (startDate: string | null, endDate: string | null) => void;
+  setVisit: (visit: ScheduledVisit) => void;
+  removeVisit: (visitId: string) => void;
+  toggleReserved: (visitId: string) => void;
+  setOpenHours: (stopId: string, windows: AvailabilityWindow[]) => void;
+  // Server
+  clearTrips: () => void;
+  fetchTrips: () => Promise<void>;
+  saveTrip: () => Promise<void>;
+  saveDetails: (
+    placeDetails: (StopDetails & { publicId: string })[],
+  ) => Promise<boolean>;
+};
+
+export type TripStore = TripState & TripActions;
+
+export type TripActionCreator<Keys extends keyof TripActions> = (
+  set: StoreApi<TripStore>["setState"],
+  get: StoreApi<TripStore>["getState"],
+) => Pick<TripActions, Keys>;
 
 export const createTripStore = (initialState: TripState) =>
-  createStore<TripStore>()(
+  create<TripStore>()(
     persist(
       (set, get) => ({
         ...initialState,
-        ...createTripEditActions(set, get),
+        ...createTripDraftActions(set, get),
         ...createTripSaveActions(set, get),
       }),
-      tripPersistence,
+      tripPersistenceOptions,
     ),
   );
 

@@ -1,179 +1,135 @@
 import type { TripDto } from "@/types/trip-api";
-import type { TripDraft } from "@/types/trip-draft";
-import { errorMessage } from "@/utils/data";
-import { sameTrip, toTripDraft } from "@/utils/trip-draft";
+import type { TripActionCreator } from "./trip-store";
+import { initTripStore } from "./trip-draft-actions";
 import {
-  isTripDirty,
-  patchTrip,
-  postTrip,
-  tripChanges,
-  tripSaveBody,
+  calendarChanges,
+  rebaseDraft,
+  sendTrip,
+  serverTrip,
+  stopListChanges,
+  toTripDraft,
 } from "@/utils/trip-sync";
 import {
   fetchCollection,
   shouldFetchCollection,
 } from "./utils/collection-load";
-import {
-  initTripStore,
-  savedTripOf,
-  type TripSlice,
-  type TripState,
-} from "./trip-state";
-import { getPageDraft, rebasePageDrafts, viewPage } from "./page-drafts";
 
-/**
- * Server trips win, except ones this tab saved while the fetch was running:
- * those keep the newer version, and new ones aren't dropped.
- */
-const mergeTrips = (remote: TripDto[], savedDuringFetch: TripDto[]) => {
-  const local = new Map(savedDuringFetch.map((trip) => [trip.publicId, trip]));
-  const merged = remote.map((trip) => {
-    const mine = local.get(trip.publicId);
-    local.delete(trip.publicId);
-    return mine && mine.version >= trip.version ? mine : trip;
-  });
-  return [...local.values(), ...merged];
-};
-
-/** Replaces the trip with the same ID, or adds it first. */
-const upsertTrip = (trips: TripDto[], trip: TripDto) =>
-  trips.some(({ publicId }) => publicId === trip.publicId)
+const withTrip = (trips: TripDto[], trip: TripDto) =>
+  trips.some((item) => item.publicId === trip.publicId)
     ? trips.map((item) => (item.publicId === trip.publicId ? trip : item))
     : [trip, ...trips];
 
-/** State after a save returns the canonical trip. */
-const withSavedTrip = (
-  state: TripState,
-  submitted: TripDraft,
-  trip: TripDto,
-  scope?: string,
-): Partial<TripState> => ({
-  trips: upsertTrip(state.trips, trip),
-  currentTrip: sameTrip(state.currentTrip, submitted)
-    ? toTripDraft(trip, state.currentTrip)
-    : state.currentTrip,
-  pageDrafts: rebasePageDrafts(state.pageDrafts, submitted, trip, scope),
-  saveStatus: "saved",
-});
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Unable to save. Please try again.";
 
-/** Server calls: loading trips and saving the drawer or a page. */
-export const createTripSaveActions: TripSlice<
-  "fetchTrips" | "clearTrips" | "saveTrip" | "savePage"
+export const createTripSaveActions: TripActionCreator<
+  "clearTrips" | "fetchTrips" | "saveTrip" | "saveDetails"
 > = (set, get) => {
-  // Responses that come back after a logout must not refill the cleared store.
-  let logouts = 0;
-  const staleAfterLogout = () => {
-    const startedAt = logouts;
-    return () => startedAt !== logouts;
-  };
-
-  const failSave = (error: string) => {
-    set({ saveStatus: "error", error });
-    return false;
-  };
-
-  const save = async (
-    submitted: TripDraft,
-    request: () => Promise<TripDto>,
-    scope?: string,
-  ) => {
-    const isStale = staleAfterLogout();
-    set({ saveStatus: "saving", error: undefined });
-    try {
-      const trip = await request();
-      if (isStale()) return false;
-      set((state) => withSavedTrip(state, submitted, trip, scope));
-      return true;
-    } catch (error) {
-      if (isStale()) return false;
-      return failSave(
-        errorMessage(error, "Unable to save trip. Please try again."),
-      );
-    }
-  };
+  // Ignore responses from requests started before this store was cleared.
+  let requestVersion = 0;
+  const fail = (tripSaveError: string) =>
+    set({ tripSaveStatus: "error", tripSaveError });
 
   return {
+    clearTrips: () => {
+      requestVersion += 1;
+      set({ ...initTripStore([]), tripSaveError: undefined });
+    },
     fetchTrips: async () => {
       if (!shouldFetchCollection(get().tripsLoadState)) return;
-      const isStale = staleAfterLogout();
-      const tripsBeforeFetch = new Set(get().trips);
+      const version = requestVersion;
+      const beforeFetch = new Set(get().trips);
       set({ tripsLoadState: "loading" });
       try {
-        const remote = await fetchCollection<TripDto>("/api/trips", "Trip");
-        if (isStale()) return;
-        set(({ trips }) => ({
-          trips: mergeTrips(
-            remote,
-            trips.filter((trip) => !tripsBeforeFetch.has(trip)),
-          ),
-          tripsLoadState: "loaded",
-        }));
+        const trips = await fetchCollection<TripDto>("/api/trips", "Trip");
+        if (version !== requestVersion) return;
+        set(({ currentTrip, trips: localTrips }) => {
+          // A list request may finish after a save. Keep those newer results.
+          const savedDuringFetch = localTrips.filter(
+            (trip) => !beforeFetch.has(trip),
+          );
+          const merged = savedDuringFetch.reduce((list, saved) => {
+            const remote = list.find((t) => t.publicId === saved.publicId);
+            return !remote || saved.version >= remote.version
+              ? withTrip(list, saved)
+              : list;
+          }, trips);
+          return {
+            trips: merged,
+            tripsLoadState: "loaded",
+            currentTrip:
+              currentTrip ?? (merged[0] ? toTripDraft(merged[0]) : undefined),
+          };
+        });
       } catch (error) {
-        if (isStale()) return;
+        if (version !== requestVersion) return;
         console.error("Unable to retrieve trips", error);
         set({ tripsLoadState: "error" });
       }
     },
 
-    clearTrips: () => {
-      logouts += 1;
-      set(initTripStore([]));
-    },
-
+    /** Saves the draft in two parts: the stop list, then the calendar. Each part is skipped when unchanged. */
     saveTrip: async () => {
-      const { currentTrip: draft, trips, saveStatus } = get();
-      if (saveStatus === "saving") return false;
-
-      const name = draft.name.trim();
-      if (!name || name.length > 255)
-        return failSave("Trip name must be between 1 and 255 characters.");
-
-      const saved = savedTripOf(trips, draft);
-      if (draft.publicId && draft.version !== saved?.version)
-        return failSave(
-          "This draft is out of date. Restore the latest saved trip before editing.",
+      const { currentTrip: draft, trips, tripSaveStatus } = get();
+      if (!draft || tripSaveStatus === "saving") return;
+      const saved = serverTrip(trips, draft);
+      if (draft.publicId && saved?.version !== draft.version)
+        return fail(
+          "This trip changed elsewhere. Reset to load the latest version.",
         );
+      if (!draft.name.trim()) return fail("Give your trip a name.");
 
-      const changes = tripChanges(draft, saved);
-      if (!Object.keys(changes).length) return true;
+      const version = requestVersion;
+      set({ tripSaveStatus: "saving", tripSaveError: undefined });
+      try {
+        // A new trip always has a stop-list part, so `saved` exists when it's skipped.
+        const stopList = stopListChanges(draft, saved);
+        const listed = stopList ? await sendTrip(saved, stopList) : saved!;
+        if (version !== requestVersion) return;
+        // Keep this result even if the calendar part fails next.
+        if (stopList)
+          set(({ trips, currentTrip }) => ({
+            trips: withTrip(trips, listed),
+            currentTrip: currentTrip && rebaseDraft(currentTrip, listed),
+          }));
 
-      return save(draft, () =>
-        saved
-          ? patchTrip(saved.publicId, { ...changes, version: saved.version })
-          : postTrip(tripSaveBody(draft)),
-      );
+        const calendar = calendarChanges(get().currentTrip!, listed);
+        const trip = calendar ? await sendTrip(listed, { calendar }) : listed;
+        if (version !== requestVersion) return;
+        set(({ trips, currentTrip }) => ({
+          trips: withTrip(trips, trip),
+          currentTrip: toTripDraft(trip, currentTrip),
+          tripSaveStatus: "saved",
+        }));
+      } catch (error) {
+        if (version === requestVersion) fail(errorMessage(error));
+      }
     },
 
-    savePage: async (page) => {
-      const { currentTrip, trips, saveStatus } = get();
-      if (saveStatus === "saving") return false;
-
-      // The page's patch needs saved stop IDs, so unsaved drawer changes go first.
-      if (
-        isTripDirty(currentTrip, savedTripOf(trips, currentTrip)) &&
-        !(await get().saveTrip())
-      )
+    /** Place details save on their own; the trip draft only moves to the new version. */
+    saveDetails: async (placeDetails) => {
+      const { currentTrip, trips, tripSaveStatus } = get();
+      const saved = serverTrip(trips, currentTrip);
+      if (!saved || tripSaveStatus === "saving" || !placeDetails.length)
         return false;
-
-      // Re-read: the drawer save may have assigned new IDs.
-      const state = get();
-      const trip = state.currentTrip;
-      const saved = savedTripOf(state.trips, trip);
-      const draft = getPageDraft(state.pageDrafts, trip, page.scope);
-      if (!saved || !draft) return false;
-      if (draft.version !== saved.version)
-        return failSave(
-          "This page changed elsewhere. Reset it to load the latest saved values.",
-        );
-
-      const context = { trip, saved };
-      const { view } = viewPage(page, draft, context);
-      const patch = page.toPatch(view, context);
-      return save(
-        trip,
-        () => patchTrip(saved.publicId, { ...patch, version: saved.version }),
-        page.scope,
-      );
+      const version = requestVersion;
+      set({ tripSaveStatus: "saving", tripSaveError: undefined });
+      try {
+        const trip = await sendTrip(saved, { placeDetails });
+        if (version !== requestVersion) return false;
+        set(({ trips, currentTrip }) => ({
+          trips: withTrip(trips, trip),
+          currentTrip:
+            currentTrip?.version === saved.version
+              ? { ...currentTrip, version: trip.version }
+              : currentTrip,
+          tripSaveStatus: "saved",
+        }));
+        return true;
+      } catch (error) {
+        if (version === requestVersion) fail(errorMessage(error));
+        return false;
+      }
     },
   };
 };

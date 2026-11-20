@@ -1,0 +1,190 @@
+import type { TripDto } from "@/types/trip-api";
+import type { TripDraft, TripStopDraft } from "@/types/trip-draft";
+import type { Place } from "@/utils/interfaces";
+import type { TripActionCreator, TripState } from "./trip-store";
+import { toTripDraft } from "@/utils/trip-sync";
+import { placeKey, stopId } from "@/utils/trip-stop";
+import { compareVisits } from "@/utils/trip-time";
+import {
+  orderBySchedule,
+  placeMove,
+  scheduledNeighbours,
+} from "@/utils/trip-scheduler";
+
+const newTrip = (
+  name = "New Trip",
+  clientId = crypto.randomUUID(),
+): TripDraft => ({
+  clientId,
+  name,
+  stops: [],
+  startDate: null,
+  endDate: null,
+  visits: [],
+});
+
+/** A new, unscheduled stop. It shares open hours with other stops at the same place. */
+const newStop = (trip: TripDraft, place: Place): TripStopDraft => ({
+  clientId: crypto.randomUUID(),
+  id: place.id,
+  ...(place.mapboxId ? { mapboxId: place.mapboxId } : {}),
+  name: place.name,
+  streetAddress: place.streetAddress,
+  areaAddress: place.areaAddress,
+  coordinates: place.coordinates,
+  category: place.category,
+  availability:
+    trip.stops.find((stop) => placeKey(stop) === placeKey(place))
+      ?.availability ?? [],
+  visited: false,
+  visitedAt: null,
+});
+
+export const initTripStore = (
+  trips: TripDto[],
+  tripsServerLoaded = false,
+): TripState => ({
+  currentTrip: trips[0] ? toTripDraft(trips[0]) : newTrip(),
+  trips,
+  tripsLoadState: tripsServerLoaded ? "loaded" : "idle",
+  tripSaveStatus: "idle",
+});
+
+export const createTripDraftActions: TripActionCreator<
+  | "addStop"
+  | "removeStop"
+  | "moveStop"
+  | "renameTrip"
+  | "selectTrip"
+  | "createTrip"
+  | "resetDraft"
+  | "setTripDates"
+  | "setVisit"
+  | "removeVisit"
+  | "toggleReserved"
+  | "setOpenHours"
+> = (set, get) => {
+  /** Every draft edit goes through here. Editing is paused while saving. */
+  const edit = (update: (trip: TripDraft) => TripDraft) => {
+    const { currentTrip, tripSaveStatus } = get();
+    if (!currentTrip || tripSaveStatus === "saving") return;
+    set({
+      currentTrip: update(currentTrip),
+      tripSaveStatus: "idle",
+      tripSaveError: undefined,
+    });
+  };
+
+  return {
+    addStop: (place) => {
+      if (get().tripSaveStatus === "saving") return;
+      const trip = get().currentTrip ?? newTrip();
+      const stop = newStop(trip, place);
+      set({
+        currentTrip: { ...trip, stops: [...trip.stops, stop] },
+        tripSaveStatus: "idle",
+        tripSaveError: undefined,
+      });
+      return stop.clientId;
+    },
+    removeStop: (id) =>
+      edit((trip) => ({
+        ...trip,
+        stops: trip.stops.filter((stop) => stopId(stop) !== id),
+        visits: trip.visits.filter((visit) => visit.stopId !== id),
+      })),
+    moveStop: (from, to, targetDate) => {
+      const { currentTrip: trip, tripSaveStatus } = get();
+      if (!trip || tripSaveStatus === "saving" || (!targetDate && from === to))
+        return;
+      const stops = trip.stops.slice();
+      const [stop] = stops.splice(from, 1);
+      if (!stop) return;
+      // A day move lands at the end of that day: before the first later visit.
+      const later = stops.findIndex((item) => {
+        const visit = trip.visits.find((v) => v.stopId === stopId(item));
+        return !!targetDate && !!visit && visit.date > targetDate;
+      });
+      const index = !targetDate ? to : later < 0 ? stops.length : later;
+      stops.splice(index, 0, stop);
+      try {
+        const visits = placeMove(
+          stops.map((item) => ({
+            publicId: stopId(item),
+            availability: item.availability,
+          })),
+          trip.visits,
+          {
+            stopId: stopId(stop),
+            ...scheduledNeighbours(stops.map(stopId), index, trip.visits),
+            targetDate,
+          },
+        );
+        edit(() => ({ ...trip, stops, visits }));
+      } catch (error) {
+        set({
+          tripSaveStatus: "error",
+          tripSaveError:
+            error instanceof Error ? error.message : "Unable to move the stop.",
+        });
+      }
+    },
+    renameTrip: (name) => edit((trip) => ({ ...trip, name })),
+    selectTrip: (publicId) => {
+      const trip = get().trips.find((item) => item.publicId === publicId);
+      if (trip && get().tripSaveStatus !== "saving")
+        set({ currentTrip: toTripDraft(trip), tripSaveError: undefined });
+    },
+    createTrip: (name) => {
+      if (name.trim() && get().tripSaveStatus !== "saving")
+        set({ currentTrip: newTrip(name.trim()), tripSaveError: undefined });
+    },
+    resetDraft: () =>
+      edit((trip) => {
+        const saved = get().trips.find(
+          (item) => item.publicId === trip.publicId,
+        );
+        return saved
+          ? toTripDraft(saved, trip)
+          : newTrip("New Trip", trip.clientId);
+      }),
+
+    setTripDates: (startDate, endDate) =>
+      edit((trip) => ({ ...trip, startDate, endDate })),
+    setVisit: (visit) =>
+      edit((trip) => {
+        const visits = [
+          ...trip.visits.filter((item) => item.stopId !== visit.stopId),
+          visit,
+        ].sort(compareVisits);
+        // The backend needs scheduled stops in time order.
+        return { ...trip, visits, stops: orderBySchedule(trip.stops, visits) };
+      }),
+    removeVisit: (visitId) =>
+      edit((trip) => ({
+        ...trip,
+        visits: trip.visits.filter((visit) => visit.id !== visitId),
+      })),
+    toggleReserved: (visitId) =>
+      edit((trip) => ({
+        ...trip,
+        visits: trip.visits.map((visit) =>
+          visit.id === visitId ? { ...visit, locked: !visit.locked } : visit,
+        ),
+      })),
+    // Open hours belong to the place, so every stop there gets the same hours.
+    setOpenHours: (id, availability) =>
+      edit((trip) => {
+        const source = trip.stops.find((stop) => stopId(stop) === id);
+        if (!source) return trip;
+        return {
+          ...trip,
+          stops: trip.stops.map((stop) =>
+            placeKey(stop) === placeKey(source)
+              ? { ...stop, availability }
+              : stop,
+          ),
+        };
+      }),
+  };
+};
