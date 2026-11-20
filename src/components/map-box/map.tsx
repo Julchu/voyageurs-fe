@@ -1,5 +1,4 @@
 import "mapbox-gl/dist/mapbox-gl.css";
-import "./map.css";
 import mapBoxGL, { type Map as MapboxMap } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import { Controls } from "@/components/map-controls/controls";
@@ -90,7 +89,7 @@ export const MapAndControls = ({
       }`}
     >
       <div
-        className={`h-full w-full ${locationLoading ? "animate-pulse" : ""}`}
+        className={`h-full w-full [&_.mapboxgl-ctrl-bottom-left]:hidden [&_.mapboxgl-ctrl-top-right]:hidden ${locationLoading ? "animate-pulse" : ""}`}
         ref={mapContainer}
       />
       <Controls

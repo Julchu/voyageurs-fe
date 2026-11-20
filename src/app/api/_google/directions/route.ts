@@ -1,0 +1,20 @@
+// Google Maps integration, paused (Places, photos, directions).
+// Uncomment (and rename app/api/_google back to google) to re-enable; needs GOOGLE_MAPS_API_KEY. Google sign-in is separate and still active.
+//
+// import { googleProxy } from "@/utils/google-maps-server";
+//
+// /**
+//  * Routes API `computeRoutes`. We only need the overview geometry to draw the
+//  * line, so the field mask requests nothing but the encoded polyline — the
+//  * cheapest Routes tier. The client posts an already-shaped Routes request body.
+//  */
+// const FIELD_MASK = "routes.polyline.encodedPolyline";
+//
+// export const POST = async (request: Request) => {
+//   const body = await request.text();
+//   return googleProxy(
+//     "https://routes.googleapis.com/directions/v2:computeRoutes",
+//     FIELD_MASK,
+//     { method: "POST", body },
+//   );
+// };

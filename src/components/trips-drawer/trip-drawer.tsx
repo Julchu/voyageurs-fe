@@ -21,7 +21,9 @@ export const TripDrawer = ({ map }: MapNavigation) => {
       handle={tripDrawerHandle}
       swipeDirection={isDesktop ? "right" : "down"}
     >
-      <Drawer.SwipeArea className="fixed inset-x-0 bottom-0 h-5 sm:inset-x-auto sm:top-0 sm:right-0 sm:h-full sm:w-5" />
+      {/* The map wrapper is pointer-events-none off the map page; re-enable
+          here so the drawer can still be swiped open on /stops and /calendar. */}
+      <Drawer.SwipeArea className="pointer-events-auto fixed inset-x-0 bottom-0 z-3 h-5 sm:inset-x-auto sm:top-0 sm:right-0 sm:h-full sm:w-5" />
       <Drawer.Portal>
         <Drawer.Viewport
           className={`${MOBILE_PANEL_VIEWPORT} z-3 sm:top-20 sm:right-0 sm:bottom-18 sm:left-0 sm:h-auto sm:items-center sm:justify-end sm:px-4`}

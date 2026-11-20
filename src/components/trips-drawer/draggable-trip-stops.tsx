@@ -1,58 +1,50 @@
-import { useSortable } from "@dnd-kit/react/sortable";
+import {
+  useTripStopSorting,
+  useTripStopSortable,
+} from "@/hooks/use-trip-stop-sorting";
+import { StopDragHandle } from "./stop-drag-controls";
 import type { Coordinates } from "@/utils/interfaces";
 import type { TripStopDraft } from "@/types/trip-draft";
 import { MoveDownArrow, MoveUpArrow } from "@/components/ui/icons/move-icons";
 import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
-import { cn } from "cn";
+import { Field } from "@base-ui/react/field";
 import { Menu } from "@base-ui/react/menu";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useShallow } from "zustand/react/shallow";
-import {
-  GripIcon,
-  VerticalEllipsisIcon,
-} from "@/components/ui/icons/stop-card-icons";
+import { VerticalEllipsisIcon } from "@/components/ui/icons/stop-card-icons";
 import { FlyToIcon } from "@/components/ui/icons/map-icons";
+import { dateDays, timeLabel } from "@/utils/trip-calendar";
+import { stopId } from "@/utils/trip-stop";
 
 export const DraggableTripStops = ({
-  id,
   index,
   stop,
   onClickHandler,
 }: {
-  id: string;
   index: number;
   stop: TripStopDraft;
   onClickHandler: (coords: Coordinates, zoom?: number) => void;
 }) => {
-  const { ref, isDragging } = useSortable({
-    id,
-    index,
-  });
+  const { ref, handleRef, isDragging, disabled, visit, changed, unscheduled } =
+    useTripStopSortable(stop, index);
 
   return (
     <li
       data-base-ui-swipe-ignore
       ref={ref}
-      className={cn(
-        `flex ${isDragging ? "cursor-grab" : "cursor-pointer"} items-center gap-2 rounded-xl border border-neutral-200 bg-white p-2`,
-      )}
+      className={`flex items-center gap-2 rounded-xl border p-2 ${isDragging ? "cursor-grab" : "cursor-pointer"} ${changed || unscheduled ? "border-amber-300 bg-amber-50" : "border-neutral-200 bg-white"}`}
     >
-      <span
-        className="cursor-grab px-1 text-neutral-400 select-none"
-        aria-label={`Reorder ${stop.name}`}
-      >
-        <GripIcon className={"h-6 w-6 fill-blue-500"} />
-      </span>
+      <StopDragHandle
+        name={stop.name}
+        handleRef={handleRef}
+        disabled={disabled}
+      />
 
       <div
         className={"flex flex-row items-center gap-2"}
         onClick={() => {
           openPlacePopup.openWithPayload(stop);
-          // if (
-          //   stop.mapboxId?.startsWith("google:") &&
-          //   stop.name !== "Saved place"
-          // )
           onClickHandler(stop.coordinates);
         }}
       >
@@ -67,9 +59,27 @@ export const DraggableTripStops = ({
           <span className="hidden truncate text-xs text-neutral-500 capitalize sm:block">
             {stop.areaAddress || "No address"}
           </span>
+          {visit ? (
+            <span className="mt-1 block text-xs text-blue-700">
+              {timeLabel(visit.startMinute)}–{timeLabel(visit.endMinute)}
+            </span>
+          ) : null}
         </span>
       </div>
 
+      {(changed || unscheduled) && (
+        <span className="text-[10px] text-amber-800">
+          {unscheduled ? "Unscheduled" : "Time changed"}
+        </span>
+      )}
+      {visit?.locked && (
+        <span
+          className="text-[10px] text-neutral-500"
+          title="Remove the reservation on the calendar to rearrange"
+        >
+          Reserved
+        </span>
+      )}
       <div className={"ml-auto shrink-0"}>
         <PlaceActionsMenu
           index={index}
@@ -90,17 +100,20 @@ export const PlaceActionsMenu = ({
   index: number;
   onJumpToLocation: () => void;
 }) => {
-  const { currentTrip, removeStop, reorderStops } = useTripStore(
-    useShallow(({ currentTrip, removeStop, reorderStops }) => ({
-      currentTrip,
-      removeStop,
-      reorderStops,
-    })),
+  const { trip, busy, visitsByStop } = useTripStopSorting();
+  const { removeStop, moveStop } = useTripStore(
+    useShallow(({ removeStop, moveStop }) => ({ removeStop, moveStop })),
   );
 
+  const visit = visitsByStop.get(stopId(stop));
+  const days =
+    trip?.startDate && trip.endDate
+      ? dateDays(trip.startDate, trip.endDate)
+      : [];
   return (
     <Menu.Root>
       <Menu.Trigger
+        disabled={busy}
         aria-label="Stop actions"
         className="ml-auto flex size-8 cursor-pointer items-center justify-center text-neutral-950 outline-none select-none any-pointer-coarse:opacity-100"
       >
@@ -125,12 +138,11 @@ export const PlaceActionsMenu = ({
               Fly to location
             </MenuItem>
 
-            {index !== 0 ? (
+            {index !== 0 && !visit?.locked ? (
               <MenuItem
                 aria-label={`Move ${stop.name} up`}
-                onClick={() => {
-                  reorderStops(index - 1, index);
-                }}
+                disabled={busy}
+                onClick={() => moveStop(index, index - 1)}
               >
                 <MoveUpArrow
                   className={
@@ -141,12 +153,11 @@ export const PlaceActionsMenu = ({
               </MenuItem>
             ) : null}
 
-            {!(currentTrip && index === currentTrip.stops.length - 1) ? (
+            {!(trip && index === trip.stops.length - 1) && !visit?.locked ? (
               <MenuItem
                 aria-label={`Move ${stop.name} down`}
-                onClick={() => {
-                  reorderStops(index, index + 1);
-                }}
+                disabled={busy}
+                onClick={() => moveStop(index, index + 1)}
               >
                 <MoveDownArrow
                   className={
@@ -157,9 +168,25 @@ export const PlaceActionsMenu = ({
               </MenuItem>
             ) : null}
 
-            <MenuItem
-              onClick={() => removeStop(stop.publicId || stop.clientId)}
-            >
+            {visit && !visit.locked && days.length > 1 && (
+              <Field.Root className="flex items-center gap-2 px-2 py-2 text-xs">
+                <Field.Label>Move {stop.name} to day</Field.Label>
+                <Field.Control
+                  render={<select />}
+                  value={visit.date}
+                  disabled={busy}
+                  className="rounded border border-neutral-200 p-1"
+                  onValueChange={(day) => moveStop(index, index, day)}
+                >
+                  {days.map((day) => (
+                    <option key={day} value={day}>
+                      {day}
+                    </option>
+                  ))}
+                </Field.Control>
+              </Field.Root>
+            )}
+            <MenuItem disabled={busy} onClick={() => removeStop(stopId(stop))}>
               <PinRemoveIcon
                 className={
                   "h-6 w-6 fill-none stroke-red-500 group-data-highlighted:stroke-white"

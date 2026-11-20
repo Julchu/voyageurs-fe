@@ -7,13 +7,9 @@ const nextConfig: NextConfig = {
     turbopackRustReactCompiler: true,
   },
   images: {
-    localPatterns: [
-      // Photo proxy URLs carry ?name=&w=. The default local pattern rejects
-      // any query string, so next/image would 400 these srcs.
-      { pathname: "/api/google/photo" },
-      // Preserve the default: any local path with no query string.
-      { pathname: "**", search: "" },
-    ],
+    // Google Places photos are paused. Their proxy URLs carry ?name=&w=, so
+    // re-add { pathname: "/api/google/photo" } here when re-enabling them.
+    localPatterns: [{ pathname: "**", search: "" }],
     remotePatterns: [
       {
         protocol: "https",

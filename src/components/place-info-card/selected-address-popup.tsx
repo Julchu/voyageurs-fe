@@ -3,10 +3,8 @@ import { useEffect, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "@/components/ui/icons/close-icons";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
-import {
-  placeRecord,
-  resolveMapboxPlace,
-} from "@/components/map-box/utils/place-geocoding";
+import { resolveMapboxPlace } from "@/components/map-box/utils/poi-click-place";
+import { placeRecord } from "@/utils/place-record";
 import type { Place } from "@/utils/interfaces";
 import Image from "next/image";
 import {

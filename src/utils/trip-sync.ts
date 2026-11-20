@@ -1,164 +1,181 @@
 import type {
+  CalendarInput,
   CreateTripInput,
+  ScheduledVisit,
   TripDto,
+  TripPatch,
+  TripStopDto,
   TripStopInput,
-  UpdateTripInput,
 } from "@/types/trip-api";
-import type { TripDraft } from "@/types/trip-draft";
+import type { TripDraft, TripStopDraft } from "@/types/trip-draft";
+import { stopId } from "./trip-stop";
 
-/** Explicit fields keep client IDs and temporary Mapbox details out of requests. */
-export const tripSaveBody = (trip: TripDraft | TripDto) => ({
-  name: trip.name.trim(),
-  stops: trip.stops.map((stop) => ({
-    publicId: stop.publicId,
-    mapboxId: stop.mapboxId?.trim(),
-    name: stop.name.trim(),
-    streetAddress: stop.streetAddress.trim(),
-    areaAddress: stop.areaAddress.trim(),
-    category: stop.category.trim(),
-    coordinates: stop.coordinates,
-  })),
-});
+/** The saved copy of the trip a draft was made from. */
+export const serverTrip = (trips: TripDto[], draft?: TripDraft) =>
+  draft?.publicId
+    ? trips.find((trip) => trip.publicId === draft.publicId)
+    : undefined;
 
-const sameStopInput = (left: TripStopInput, right: TripStopInput) =>
-  left.publicId === right.publicId &&
-  left.mapboxId === right.mapboxId &&
-  left.name === right.name &&
-  left.streetAddress === right.streetAddress &&
-  left.areaAddress === right.areaAddress &&
-  left.category === right.category &&
-  left.coordinates.lat === right.coordinates.lat &&
-  left.coordinates.lng === right.coordinates.lng;
-
-export const tripChanges = (draft: TripDraft, saved?: TripDto) => {
-  const cleanedDraft = tripSaveBody(draft);
-  if (!saved || draft.publicId !== saved.publicId) return cleanedDraft;
-  const serverVersion = tripSaveBody(saved);
-  return {
-    ...(cleanedDraft.name !== serverVersion.name ? { name: cleanedDraft.name } : {}),
-    ...(cleanedDraft.stops.length !== serverVersion.stops.length ||
-    cleanedDraft.stops.some(
-      (stop, index) => !sameStopInput(stop, serverVersion.stops[index]),
-    )
-      ? { stops: cleanedDraft.stops }
-      : {}),
-  };
-};
-
-export const requestTripSave = async (
-  draft: TripDraft,
-  saved?: TripDto,
-): Promise<TripDto> => {
-  let body: CreateTripInput | UpdateTripInput;
-  if (draft.publicId) {
-    if (!draft.version || !saved || draft.version !== saved.version) {
-      throw new Error(
-        "This draft is out of date. Reload and restore the latest saved trip before editing.",
-      );
-    }
-    const changes = tripChanges(draft, saved);
-    if (changes.name === undefined && changes.stops === undefined) return saved;
-    body = { ...changes, version: draft.version } satisfies UpdateTripInput;
-  } else {
-    body = tripSaveBody(draft);
-  }
-
-  const response = await fetch(
-    draft.publicId ? `/api/trips/${draft.publicId}` : "/api/trips",
-    {
-      method: draft.publicId ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    },
-  );
-  const payload = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(
-      payload?.error ?? `Unable to save trip (${response.status})`,
-    );
-  }
-  if (
-    typeof payload?.publicId !== "string" ||
-    !Number.isInteger(payload.version) ||
-    typeof payload.name !== "string" ||
-    !Array.isArray(payload.stops)
-  ) {
-    throw new Error("Invalid trip save response");
-  }
-  return payload as TripDto;
-};
-
-export const sameTrip = (left?: TripDraft, right?: TripDraft) =>
-  !!left &&
-  !!right &&
-  (left.clientId === right.clientId ||
-    (!!left.publicId && left.publicId === right.publicId));
-
-/** Loaded trips use their public IDs as stable local keys. */
+/** A fresh draft of a saved trip. Keeps client IDs from `previous` so list keys stay stable. */
 export const toTripDraft = (trip: TripDto, previous?: TripDraft): TripDraft => {
   const previousStops = new Map(
-    previous?.stops.map((stop) => [stop.publicId, stop]),
-  );
-  return {
-    ...trip,
-    clientId: previous?.clientId ?? trip.publicId,
-    stops: trip.stops.map((stop) => {
-      const original = previousStops.get(stop.publicId);
-      return {
-        ...original,
-        ...stop,
-        clientId: original?.clientId ?? stop.publicId,
-      };
-    }),
-  };
-};
-
-/** Match the submitted snapshot, even if the user reordered or removed stops while saving. */
-export const reconcileSavedTrip = (
-  draft: TripDraft,
-  submitted: TripDraft,
-  saved: TripDto,
-): TripDraft => {
-  const persistedByClientId = new Map(
-    submitted.stops.map((stop, index) => [
-      stop.clientId,
-      { submitted: stop, saved: saved.stops[index] },
+    previous?.stops.map((stop) => [
+      stop.publicId ?? trip.stopIdMap?.[stop.clientId],
+      stop,
     ]),
   );
   return {
-    ...draft,
-    publicId: saved.publicId,
-    createdAt: saved.createdAt,
-    updatedAt: saved.updatedAt,
-    version: saved.version,
-    name: draft.name === submitted.name ? saved.name : draft.name,
-    stops: draft.stops.map((stop, position) => {
-      const match = persistedByClientId.get(stop.clientId);
-      if (!match?.saved) return { ...stop, position };
-      const persisted = match.saved;
-      // Accept server normalization only for fields the user has not edited again.
-      const fields = [
-        "name",
-        "mapboxId",
-        "streetAddress",
-        "areaAddress",
-        "category",
-      ] as const;
-      const normalized = Object.fromEntries(
-        fields
-          .filter((field) => stop[field] === match.submitted[field])
-          .map((field) => [field, persisted[field]]),
-      );
-      return {
-        ...stop,
-        ...normalized,
-        publicId: persisted.publicId,
-        createdAt: persisted.createdAt,
-        updatedAt: persisted.updatedAt,
-        visited: persisted.visited,
-        visitedAt: persisted.visitedAt,
-        position,
-      };
+    clientId: previous?.clientId ?? trip.publicId,
+    publicId: trip.publicId,
+    version: trip.version,
+    createdAt: trip.createdAt,
+    updatedAt: trip.updatedAt,
+    name: trip.name,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    visits: trip.visits,
+    stops: trip.stops.map((stop) => {
+      const local = previousStops.get(stop.publicId);
+      return { ...local, ...stop, clientId: local?.clientId ?? stop.publicId };
     }),
   };
+};
+
+/** After the stop list is saved: give new stops their IDs, keep unsaved calendar edits. */
+export const rebaseDraft = (draft: TripDraft, trip: TripDto): TripDraft => {
+  const ids = trip.stopIdMap ?? {};
+  return {
+    ...draft,
+    publicId: trip.publicId,
+    version: trip.version,
+    stops: draft.stops.map((stop) =>
+      stop.publicId ? stop : { ...stop, publicId: ids[stop.clientId] },
+    ),
+    visits: draft.visits.map((visit) => ({
+      ...visit,
+      stopId: ids[visit.stopId] ?? visit.stopId,
+    })),
+  };
+};
+
+const stopInput = (stop: TripStopDto | TripStopDraft): TripStopInput => ({
+  publicId: stop.publicId,
+  ...(!stop.publicId && "clientId" in stop && { clientId: stop.clientId }),
+  mapboxId: stop.mapboxId?.trim() || undefined,
+  name: stop.name.trim(),
+  streetAddress: stop.streetAddress.trim(),
+  areaAddress: stop.areaAddress.trim(),
+  category: stop.category.trim(),
+  coordinates: stop.coordinates,
+});
+
+/**
+ * Save part 1: name, added and removed stops. Kept stops stay in their saved
+ * order and new stops go last; the calendar part saves the final order.
+ */
+export const stopListChanges = (
+  draft: TripDraft,
+  saved?: TripDto,
+): CreateTripInput | undefined => {
+  const name = draft.name.trim();
+  if (!saved) return { name, stops: draft.stops.map(stopInput) };
+  const kept = new Set(draft.stops.map((stop) => stop.publicId));
+  const added = draft.stops.filter((stop) => !stop.publicId);
+  const stops = [
+    ...saved.stops.filter((stop) => kept.has(stop.publicId)),
+    ...added,
+  ];
+  const changes = {
+    ...(name !== saved.name && { name }),
+    ...((added.length > 0 || stops.length !== saved.stops.length) && {
+      stops: stops.map(stopInput),
+    }),
+  };
+  return Object.keys(changes).length ? changes : undefined;
+};
+
+const visitsKey = (visits: ScheduledVisit[]) =>
+  JSON.stringify(
+    [...visits]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map(({ id, stopId, date, startMinute, endMinute, locked }) => [
+        id,
+        stopId,
+        date,
+        startMinute,
+        endMinute,
+        locked,
+      ]),
+  );
+
+/** Save part 2: stop order, dates, visits and open hours. */
+export const calendarChanges = (
+  draft: TripDraft,
+  saved: TripDto,
+): CalendarInput | undefined => {
+  const order = draft.stops.map(stopId);
+  const orderChanged =
+    order.join() !== saved.stops.map((stop) => stop.publicId).join();
+  const savedHours = new Map(
+    saved.stops.map((stop) => [
+      stop.publicId,
+      JSON.stringify(stop.availability),
+    ]),
+  );
+  const availability = draft.stops
+    .filter(
+      (stop) =>
+        savedHours.get(stopId(stop)) !== JSON.stringify(stop.availability),
+    )
+    .map((stop) => ({
+      publicId: stopId(stop),
+      availability: stop.availability,
+    }));
+  if (
+    !orderChanged &&
+    !availability.length &&
+    draft.startDate === saved.startDate &&
+    draft.endDate === saved.endDate &&
+    visitsKey(draft.visits) === visitsKey(saved.visits)
+  )
+    return;
+  return {
+    startDate: draft.startDate,
+    endDate: draft.endDate,
+    visits: draft.visits,
+    availability,
+    ...(orderChanged && { order }),
+  };
+};
+
+export const isTripDirty = (draft: TripDraft, saved?: TripDto) =>
+  !saved || !!stopListChanges(draft, saved) || !!calendarChanges(draft, saved);
+
+/** POST a new trip, or PATCH one part of a saved trip at its current version. */
+export const sendTrip = async (
+  saved: Pick<TripDto, "publicId" | "version"> | undefined,
+  patch: TripPatch,
+): Promise<TripDto> => {
+  const response = await fetch(
+    saved ? `/api/trips/${saved.publicId}` : "/api/trips",
+    {
+      method: saved ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        saved ? { version: saved.version, ...patch } : patch,
+      ),
+    },
+  );
+  const payload = await response.json().catch(() => null);
+  if (!response.ok)
+    throw new Error(
+      payload?.error ?? `Unable to save trip (${response.status})`,
+    );
+  if (
+    typeof payload?.publicId !== "string" ||
+    !Number.isInteger(payload.version) ||
+    !Array.isArray(payload.stops)
+  )
+    throw new Error("Invalid trip save response");
+  return payload as TripDto;
 };

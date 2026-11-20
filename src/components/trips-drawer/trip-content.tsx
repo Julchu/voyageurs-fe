@@ -2,87 +2,42 @@ import { Drawer } from "@base-ui/react/drawer";
 import { StopsList } from "@/components/trips-drawer/stops-list";
 import { useUserStore } from "@/providers/user-store-provider";
 import { TripSelector } from "@/components/trips-drawer/trip-selector";
-import { Button, Input, Separator } from "@base-ui/react";
+import { Input } from "@base-ui/react/input";
+import { Separator } from "@base-ui/react/separator";
+import { EditorFooter } from "@/components/ui/editor-footer";
 import { MapNavigation } from "@/components/trips-drawer/types";
-import { MapSaveIcon } from "@/components/ui/icons/map-icons";
 import { useTripStore } from "@/providers/trip-store-provider";
-import { useShallow } from "zustand/react/shallow";
 import { Menu } from "@base-ui/react/menu";
 import { XIcon } from "@/components/ui/icons/close-icons";
-import { ResetIcon } from "@/components/ui/icons/reset-icons";
-import { Spinner } from "@/components/ui/icons/spinner";
-import { useTripDirty } from "@/hooks/use-trip-dirty";
+import { useTripDraft } from "@/hooks/use-trip-draft";
 import { PencilPinIcon, PinMenuButton } from "@/components/ui/icons/pin-icons";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 export const TripContent = ({ map }: MapNavigation) => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
   const [isEditingTrip, setIsEditingTrip] = useState(false);
-  const [nameInputVersion, setNameInputVersion] = useState(0);
-  const tripNameRef = useRef<HTMLInputElement>(null);
+  const renameTrip = useTripStore(({ renameTrip }) => renameTrip);
   const {
-    trips,
-    currentTrip,
-    renameTrip,
-    resetDraft,
-    syncTrips,
-    tripSaveStatus,
-    tripSaveError,
-    savedTripVersion,
-    tripVersion,
-  } = useTripStore(
-    useShallow(
-      ({
-        trips,
-        currentTrip,
-        renameTrip,
-        resetDraft,
-        syncTrips,
-        tripSaveStatus,
-        tripSaveError,
-        savedTripVersion,
-        tripVersion,
-      }) => ({
-        trips,
-        currentTrip,
-        renameTrip,
-        resetDraft,
-        syncTrips,
-        tripSaveStatus,
-        tripSaveError,
-        savedTripVersion,
-        tripVersion,
-      }),
-    ),
-  );
-
-  const serverTrip = currentTrip?.publicId
-    ? trips.find((trip) => trip.publicId === currentTrip.publicId)
-    : undefined;
-
-  const isDirty = useTripDirty(currentTrip, serverTrip);
+    trip: currentTrip,
+    isDirty,
+    isSaving,
+    canSave,
+    save,
+    reset,
+  } = useTripDraft();
 
   const showNameInput =
     !!currentTrip && (!userInfo || !currentTrip.publicId || isEditingTrip);
   const showActions = !!userInfo && (isEditingTrip || isDirty);
 
-  const isSaving = tripSaveStatus === "saving";
-
   const onSaveHandler = () => {
-    if (!userInfo || !currentTrip || isSaving) return;
-    const tripFormData = {
-      ...currentTrip,
-      name: tripNameRef.current?.value.trim() ?? currentTrip.name,
-    };
-    void syncTrips(tripFormData);
-    // Keep invalid input visible so the name can be corrected.
-    if (tripFormData.name && tripFormData.name.length <= 255)
-      setIsEditingTrip(false);
+    void save();
+    // Keep an empty name visible so it can be fixed.
+    if (currentTrip?.name.trim()) setIsEditingTrip(false);
   };
 
   const onResetHandler = () => {
-    resetDraft();
-    setNameInputVersion((version) => version + 1);
+    reset();
     setIsEditingTrip(false);
   };
 
@@ -112,14 +67,10 @@ export const TripContent = ({ map }: MapNavigation) => {
         <div className="px-4 pb-4">
           <Input
             type="text"
-            placeholder={"Name your trip"}
-            key={`${currentTrip.clientId}:${nameInputVersion}`}
-            ref={tripNameRef}
+            placeholder="Name your trip"
             aria-label="Trip name"
-            defaultValue={currentTrip.name}
-            onChange={(event) => {
-              if (!userInfo) renameTrip(event.target.value);
-            }}
+            value={currentTrip.name}
+            onValueChange={renameTrip}
             maxLength={255}
             disabled={isSaving}
             className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-neutral-950 outline-none"
@@ -133,56 +84,17 @@ export const TripContent = ({ map }: MapNavigation) => {
         <StopsList map={map} />
       </div>
 
-      <div className={"mt-auto shrink-0 font-medium"}>
-        <Separator className={"h-px bg-gray-200"} />
-        {tripSaveStatus === "error" ? (
-          <p role="alert" className="px-4 pt-3 text-sm text-red-600">
-            {tripSaveError}
-          </p>
-        ) : null}
-        <p
-          role="status"
-          aria-live="polite"
-          className="px-4 text-sm text-neutral-500"
-        >
-          {isSaving
-            ? "Saving trip…"
-            : tripSaveStatus === "saved" && savedTripVersion === tripVersion
-              ? "Trip saved."
-              : ""}
-        </p>
-
-        {/* Reset/save trip button row */}
-        {showActions ? (
-          <div className="flex justify-end gap-4 p-4">
-            <Button
-              onClick={onResetHandler}
-              disabled={isSaving || !currentTrip}
-              className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 px-4 font-medium tracking-widest transition-colors duration-150 hover:bg-red-500 hover:text-white motion-reduce:transition-none"
-            >
-              <ResetIcon
-                className={"h-6 w-6 stroke-black group-hover:stroke-white"}
-              />
-              Restore
-            </Button>
-
-            {/* Save trip button */}
-            <Button
-              onClick={onSaveHandler}
-              disabled={isSaving || !currentTrip}
-              aria-busy={isSaving}
-              className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 bg-blue-500 px-4 font-medium tracking-widest text-white transition-colors duration-150 hover:bg-green-500 motion-reduce:transition-none"
-            >
-              {isSaving ? (
-                <Spinner className={"h-6 w-6 animate-spin fill-white"} />
-              ) : (
-                <MapSaveIcon className={"h-6 w-6 fill-none stroke-white"} />
-              )}
-              Save
-            </Button>
-          </div>
-        ) : null}
-      </div>
+      {showActions && (
+        <EditorFooter
+          isDirty={isDirty}
+          isEditing={isEditingTrip}
+          isSaving={isSaving}
+          canSave={canSave}
+          resetLabel="Restore"
+          onSave={onSaveHandler}
+          onReset={onResetHandler}
+        />
+      )}
     </div>
   );
 };
@@ -193,7 +105,7 @@ export const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => {
       <Menu.Trigger
         aria-label="Trip menu"
         openOnHover
-        className="group flex aspect-square cursor-pointer items-center justify-center rounded-xl bg-blue-500 text-xl font-bold tracking-widest text-white transition-colors duration-150 hover:bg-green-500 data-popup-open:bg-green-500 motion-reduce:transition-none"
+        className="group flex size-11 cursor-pointer items-center justify-center rounded-xl bg-blue-500 text-xl font-bold tracking-widest text-white transition-colors duration-150 hover:bg-green-500 data-popup-open:bg-green-500 motion-reduce:transition-none"
       >
         <PinMenuButton
           aria-hidden="true"

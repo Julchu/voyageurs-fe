@@ -1,5 +1,6 @@
-import { TripCalendar } from "@/components/calendar/trip-calendar";
+import { ComingSoon } from "@/components/ui/coming-soon";
 
+// TODO: replaced by the trip calendar (trip-calendar branch).
 export default function CalendarPage() {
-  return <TripCalendar />;
+  return <ComingSoon title="Calendar" />;
 }
