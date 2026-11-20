@@ -1,6 +1,7 @@
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useEffect, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
+import { Button } from "@base-ui/react/button";
 import { XIcon } from "@/components/ui/icons/close-icons";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 import { resolveMapboxPlace } from "@/components/map-box/utils/poi-click-place";
@@ -16,6 +17,8 @@ import { tripDrawerHandle } from "@/components/trips-drawer/trip-drawer";
 import { MapAddIcon } from "@/components/ui/icons/map-icons";
 import { PlaceCategoryBadge } from "./place-category-badge";
 import { getPlacePlaceholder } from "./utils/place-category";
+import { TripadvisorPhotoCredits } from "./tripadvisor-credits";
+import { fetchTripadvisorPhotos } from "@/components/map-box/utils/tripadvisor-photos";
 
 type LookupState = {
   status: "loading" | "ready" | "error";
@@ -32,17 +35,26 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
   const [failedPhotos, setFailedPhotos] = useState<string[]>([]);
 
   // POIs load Places details on open; addresses already have their search fields.
+  // When Mapbox has no photos, fall back to Tripadvisor (billed per lookup, so
+  // only for map POI clicks, never for plain addresses).
   useEffect(() => {
     if (payload.placeInfoLoaded) return;
     const controller = new AbortController();
-    void resolveMapboxPlace(payload, controller.signal).then((next) => {
-      if (controller.signal.aborted) return;
+    const { signal } = controller;
+    void (async () => {
+      const next = await resolveMapboxPlace(payload, signal);
+      if (signal.aborted) return;
       if (next) setPlace(next);
       setLookup((current) => ({
         ...current,
         status: next ? "ready" : "error",
       }));
-    });
+      if (next?.photos?.length) return;
+
+      const tripadvisor = await fetchTripadvisorPhotos(next ?? payload, signal);
+      if (signal.aborted || !tripadvisor) return;
+      setPlace((current) => ({ ...current, ...tripadvisor }));
+    })();
     return () => controller.abort();
   }, [payload, lookup.attempt]);
 
@@ -76,6 +88,12 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
               : undefined
           }
         />
+        {photo ? (
+          <TripadvisorPhotoCredits
+            photo={photo}
+            tripadvisorUrl={place.tripadvisorUrl}
+          />
+        ) : null}
       </figure>
 
       <div className="flex min-h-0 shrink flex-col p-4 sm:shrink-0">
@@ -105,7 +123,7 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
           {lookup.status === "error" ? (
             <p role="status" className="mt-3 text-sm text-neutral-500">
               Couldn’t load place information.{" "}
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   setLookup(({ attempt }) => ({
@@ -116,7 +134,7 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
                 className="cursor-pointer text-blue-600 hover:underline"
               >
                 Retry
-              </button>
+              </Button>
             </p>
           ) : null}
         </div>

@@ -52,6 +52,9 @@ export type PlacePhoto = {
   url: string;
   width?: number | null;
   height?: number | null;
+  // Set for third-party photos that require on-image credit (display only).
+  provider?: "tripadvisor";
+  author?: string;
 };
 
 export type PlaceDetails = {
@@ -74,6 +77,8 @@ export type Place = {
   coordinates: Coordinates;
   // Photo URLs returned by the place provider (optional/not guaranteed).
   photos?: PlacePhoto[];
+  // Link-back required wherever Tripadvisor photos are shown (display only, never persisted).
+  tripadvisorUrl?: string;
   // A successful lookup may legitimately return no photos or address.
   placeInfoLoaded?: boolean;
   placeDetails?: PlaceDetails;
