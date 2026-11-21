@@ -1,6 +1,8 @@
 import { useTripStore } from "@/providers/trip-store-provider";
+import { useUserStore } from "@/providers/user-store-provider";
 import { useEffect, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
+import { Button } from "@base-ui/react/button";
 import { XIcon } from "@/components/ui/icons/close-icons";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 import { resolveMapboxPlace } from "@/components/map-box/utils/poi-click-place";
@@ -16,6 +18,8 @@ import { tripDrawerHandle } from "@/components/trips-drawer/trip-drawer";
 import { MapAddIcon } from "@/components/ui/icons/map-icons";
 import { PlaceCategoryBadge } from "./place-category-badge";
 import { getPlacePlaceholder } from "./utils/place-category";
+import { TripadvisorPhotoCredits } from "./tripadvisor-credits";
+import { fetchTripadvisorPhotos } from "@/components/map-box/utils/tripadvisor-photos";
 
 type LookupState = {
   status: "loading" | "ready" | "error";
@@ -30,6 +34,7 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
     attempt: 0,
   });
   const [failedPhotos, setFailedPhotos] = useState<string[]>([]);
+  const signedIn = useUserStore(({ userInfo }) => Boolean(userInfo));
 
   // POIs load Places details on open; addresses already have their search fields.
   useEffect(() => {
@@ -45,6 +50,24 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
     });
     return () => controller.abort();
   }, [payload, lookup.attempt]);
+
+  // Tripadvisor is billed per lookup: signed-in only, map POIs only, and only when Mapbox has no photos.
+  const needsTripadvisor =
+    signedIn &&
+    !payload.placeInfoLoaded &&
+    lookup.status !== "loading" &&
+    !place.photos?.length;
+
+  useEffect(() => {
+    if (!needsTripadvisor) return;
+    const controller = new AbortController();
+    void fetchTripadvisorPhotos(place, controller.signal).then((photos) => {
+      if (photos && !controller.signal.aborted) {
+        setPlace((current) => ({ ...current, ...photos }));
+      }
+    });
+    return () => controller.abort();
+  }, [needsTripadvisor, place]);
 
   const photo = place.photos?.find(
     (photo) => !failedPhotos.includes(photo.url),
@@ -76,6 +99,12 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
               : undefined
           }
         />
+        {photo ? (
+          <TripadvisorPhotoCredits
+            photo={photo}
+            tripadvisorUrl={place.tripadvisorUrl}
+          />
+        ) : null}
       </figure>
 
       <div className="flex min-h-0 shrink flex-col p-4 sm:shrink-0">
@@ -105,7 +134,7 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
           {lookup.status === "error" ? (
             <p role="status" className="mt-3 text-sm text-neutral-500">
               Couldn’t load place information.{" "}
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   setLookup(({ attempt }) => ({
@@ -116,7 +145,7 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
                 className="cursor-pointer text-blue-600 hover:underline"
               >
                 Retry
-              </button>
+              </Button>
             </p>
           ) : null}
         </div>
