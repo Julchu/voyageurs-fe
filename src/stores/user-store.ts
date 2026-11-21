@@ -43,5 +43,3 @@ export const createUserStore = (initialState: UserState = initUserStore()) => {
     },
   }));
 };
-
-export type UserStoreApi = ReturnType<typeof createUserStore>;
