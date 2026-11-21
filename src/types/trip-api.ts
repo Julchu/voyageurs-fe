@@ -14,8 +14,8 @@ export type StopDetails = {
   price: number | null;
 };
 
-/** One visit per stop, within a single day. */
-export type ScheduledVisit = {
+/** One time slot per stop, within a single day. */
+export type TimeSlot = {
   locked: boolean;
   id: string;
   stopId: string;
@@ -28,7 +28,7 @@ export type CalendarInput = {
   order?: string[];
   startDate: string | null;
   endDate: string | null;
-  visits: ScheduledVisit[];
+  timeSlots: TimeSlot[];
   availability: { publicId: string; availability: AvailabilityWindow[] }[];
 };
 
@@ -94,5 +94,5 @@ export type TripDto = {
   stops: TripStopDto[];
   startDate: string | null;
   endDate: string | null;
-  visits: ScheduledVisit[];
+  timeSlots: TimeSlot[];
 };

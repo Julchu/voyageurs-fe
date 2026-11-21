@@ -1,7 +1,7 @@
 import type {
   CalendarInput,
   CreateTripInput,
-  ScheduledVisit,
+  TimeSlot,
   TripDto,
   TripPatch,
   TripStopDto,
@@ -33,7 +33,7 @@ export const toTripDraft = (trip: TripDto, previous?: TripDraft): TripDraft => {
     name: trip.name,
     startDate: trip.startDate,
     endDate: trip.endDate,
-    visits: trip.visits,
+    timeSlots: trip.timeSlots,
     stops: trip.stops.map((stop) => {
       const local = previousStops.get(stop.publicId);
       return { ...local, ...stop, clientId: local?.clientId ?? stop.publicId };
@@ -51,9 +51,9 @@ export const rebaseDraft = (draft: TripDraft, trip: TripDto): TripDraft => {
     stops: draft.stops.map((stop) =>
       stop.publicId ? stop : { ...stop, publicId: ids[stop.clientId] },
     ),
-    visits: draft.visits.map((visit) => ({
-      ...visit,
-      stopId: ids[visit.stopId] ?? visit.stopId,
+    timeSlots: draft.timeSlots.map((slot) => ({
+      ...slot,
+      stopId: ids[slot.stopId] ?? slot.stopId,
     })),
   };
 };
@@ -94,9 +94,9 @@ export const stopListChanges = (
   return Object.keys(changes).length ? changes : undefined;
 };
 
-const visitsKey = (visits: ScheduledVisit[]) =>
+const slotsKey = (slots: TimeSlot[]) =>
   JSON.stringify(
-    [...visits]
+    [...slots]
       .sort((a, b) => a.id.localeCompare(b.id))
       .map(({ id, stopId, date, startMinute, endMinute, locked }) => [
         id,
@@ -108,7 +108,7 @@ const visitsKey = (visits: ScheduledVisit[]) =>
       ]),
   );
 
-/** Save part 2: stop order, dates, visits and open hours. */
+/** Save part 2: stop order, dates, slots and open hours. */
 export const calendarChanges = (
   draft: TripDraft,
   saved: TripDto,
@@ -136,13 +136,13 @@ export const calendarChanges = (
     !availability.length &&
     draft.startDate === saved.startDate &&
     draft.endDate === saved.endDate &&
-    visitsKey(draft.visits) === visitsKey(saved.visits)
+    slotsKey(draft.timeSlots) === slotsKey(saved.timeSlots)
   )
     return;
   return {
     startDate: draft.startDate,
     endDate: draft.endDate,
-    visits: draft.visits,
+    timeSlots: draft.timeSlots,
     availability,
     ...(orderChanged && { order }),
   };
