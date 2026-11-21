@@ -1,19 +1,13 @@
 import type { Place, PlacePhoto } from "@/utils/interfaces";
 
 type TripadvisorPhotosResponse = {
-  photos?: {
-    url: string;
-    width: number | null;
-    height: number | null;
-    author?: string;
-  }[];
+  photos?: Omit<PlacePhoto, "provider">[];
   tripadvisorUrl?: string;
 };
 
 /**
- * Tripadvisor photos for a POI via `/api/tripadvisor/photos` (the API key stays
- * on the server). Display only: these fields must never be persisted, which
- * `placeRecord()` already guarantees by whitelisting fields.
+ * Tripadvisor photos for a POI via the backend (signed-in only, billed per lookup).
+ * Display only: `placeRecord()` whitelists fields, so these are never persisted.
  */
 export const fetchTripadvisorPhotos = async (
   place: Pick<Place, "name" | "coordinates" | "mapboxId">,
@@ -22,7 +16,7 @@ export const fetchTripadvisorPhotos = async (
   const params = new URLSearchParams({
     name: place.name,
     lat: String(place.coordinates.lat),
-    lon: String(place.coordinates.lng),
+    lng: String(place.coordinates.lng),
   });
   if (place.mapboxId) params.set("mapboxId", place.mapboxId);
 
@@ -31,14 +25,14 @@ export const fetchTripadvisorPhotos = async (
       signal,
     });
     if (!response.ok) return;
-    const body = (await response.json()) as TripadvisorPhotosResponse;
-    const photos: PlacePhoto[] = (body.photos ?? []).map((photo) => ({
-      ...photo,
-      provider: "tripadvisor",
-    }));
+    const { photos = [], tripadvisorUrl } =
+      (await response.json()) as TripadvisorPhotosResponse;
     // A Tripadvisor photo may only be shown with its link-back.
-    if (!photos.length || !body.tripadvisorUrl) return;
-    return { photos, tripadvisorUrl: body.tripadvisorUrl };
+    if (!photos.length || !tripadvisorUrl) return;
+    return {
+      photos: photos.map((photo) => ({ ...photo, provider: "tripadvisor" })),
+      tripadvisorUrl,
+    };
   } catch {
     return;
   }

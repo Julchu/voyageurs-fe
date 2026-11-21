@@ -1,4 +1,5 @@
 import { useTripStore } from "@/providers/trip-store-provider";
+import { useUserStore } from "@/providers/user-store-provider";
 import { useEffect, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Button } from "@base-ui/react/button";
@@ -33,30 +34,40 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
     attempt: 0,
   });
   const [failedPhotos, setFailedPhotos] = useState<string[]>([]);
+  const signedIn = useUserStore(({ userInfo }) => Boolean(userInfo));
 
   // POIs load Places details on open; addresses already have their search fields.
-  // When Mapbox has no photos, fall back to Tripadvisor (billed per lookup, so
-  // only for map POI clicks, never for plain addresses).
   useEffect(() => {
     if (payload.placeInfoLoaded) return;
     const controller = new AbortController();
-    const { signal } = controller;
-    void (async () => {
-      const next = await resolveMapboxPlace(payload, signal);
-      if (signal.aborted) return;
+    void resolveMapboxPlace(payload, controller.signal).then((next) => {
+      if (controller.signal.aborted) return;
       if (next) setPlace(next);
       setLookup((current) => ({
         ...current,
         status: next ? "ready" : "error",
       }));
-      if (next?.photos?.length) return;
-
-      const tripadvisor = await fetchTripadvisorPhotos(next ?? payload, signal);
-      if (signal.aborted || !tripadvisor) return;
-      setPlace((current) => ({ ...current, ...tripadvisor }));
-    })();
+    });
     return () => controller.abort();
   }, [payload, lookup.attempt]);
+
+  // Tripadvisor is billed per lookup: signed-in only, map POIs only, and only when Mapbox has no photos.
+  const needsTripadvisor =
+    signedIn &&
+    !payload.placeInfoLoaded &&
+    lookup.status !== "loading" &&
+    !place.photos?.length;
+
+  useEffect(() => {
+    if (!needsTripadvisor) return;
+    const controller = new AbortController();
+    void fetchTripadvisorPhotos(place, controller.signal).then((photos) => {
+      if (photos && !controller.signal.aborted) {
+        setPlace((current) => ({ ...current, ...photos }));
+      }
+    });
+    return () => controller.abort();
+  }, [needsTripadvisor, place]);
 
   const photo = place.photos?.find(
     (photo) => !failedPhotos.includes(photo.url),
