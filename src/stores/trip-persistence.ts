@@ -8,10 +8,19 @@ type PersistedTrip = Pick<TripState, "currentTrip">;
 export const tripPersistenceOptions: PersistOptions<TripStore, PersistedTrip> =
   {
     name: "voyageurs-trips",
-    version: 7,
-    // v7 replaced per-page drafts with one trip draft; older drafts don't fit.
-    migrate: (persisted, version) =>
-      (version < 7 ? {} : persisted) as PersistedTrip,
+    version: 8,
+    migrate: (persisted, version) => {
+      // v7 replaced per-page drafts with one trip draft; older drafts don't fit.
+      if (version < 7) return {} as PersistedTrip;
+      // v8 renamed the draft's visits to timeSlots.
+      const draft = (persisted as { currentTrip?: Record<string, unknown> })
+        .currentTrip;
+      if (version < 8 && draft && "visits" in draft) {
+        draft.timeSlots = draft.visits;
+        delete draft.visits;
+      }
+      return persisted as PersistedTrip;
+    },
     partialize: ({ currentTrip }) => ({ currentTrip }),
     merge: (persisted, current) => {
       const draft = (persisted as PersistedTrip | undefined)?.currentTrip;

@@ -9,13 +9,13 @@ import {
   useTripStopSortable,
   useTripStopSorting,
 } from "@/hooks/use-trip-stop-sorting";
-import type { ScheduledVisit } from "@/types/trip-api";
+import type { TimeSlot } from "@/types/trip-api";
 import type { TripStopDraft } from "@/types/trip-draft";
 import { timeLabel } from "@/utils/trip-calendar";
 import { stopId } from "@/utils/trip-stop";
 import { dateLabel } from "./calendar-time";
 import { linkButton } from "./styles";
-import type { VisitSchedule } from "./use-visit-schedule";
+import type { SlotSchedule } from "./use-slot-schedule";
 
 // List reorders show a vertical cursor; dragging a card body onto the calendar keeps its own.
 const reorderPlugins = <T,>(defaults: T[]) => [
@@ -23,12 +23,12 @@ const reorderPlugins = <T,>(defaults: T[]) => [
   Cursor.configure({ cursor: "ns-resize" }),
 ];
 
-const visitLabel = (visit?: ScheduledVisit) =>
-  visit
-    ? `${dateLabel(visit.date, false)} · ${timeLabel(visit.startMinute)}–${timeLabel(visit.endMinute)}`
+const slotLabel = (slot?: TimeSlot) =>
+  slot
+    ? `${dateLabel(slot.date, false)} · ${timeLabel(slot.startMinute)}–${timeLabel(slot.endMinute)}`
     : "Not scheduled";
 
-/** Sortable stops. Card bodies also drag onto the calendar to schedule a visit. */
+/** Sortable stops. Card bodies also drag onto the calendar to add a time slot. */
 export function CalendarStopList({
   schedule,
   activeId,
@@ -39,7 +39,7 @@ export function CalendarStopList({
   onEditHours,
   onDuplicate,
 }: {
-  schedule: VisitSchedule;
+  schedule: SlotSchedule;
   activeId?: string;
   selectedId?: string;
   canDrag: boolean;
@@ -71,18 +71,18 @@ export function CalendarStopList({
       >
         {schedule.stops.map((stop, index) => {
           const id = stopId(stop);
-          const visit = schedule.visitsByStop.get(id);
+          const slot = schedule.slotsByStop.get(id);
           const active = activeId === id;
           return (
             <SortableCalendarStop
               key={stop.clientId}
               stop={stop}
               index={index}
-              className={`rounded-xl border p-2.5 transition-colors ${active ? "border-blue-300 bg-blue-50" : visit ? "border-neutral-100 bg-neutral-50" : "border-neutral-200 bg-white"}`}
+              className={`rounded-xl border p-2.5 transition-colors ${active ? "border-blue-300 bg-blue-50" : slot ? "border-neutral-100 bg-neutral-50" : "border-neutral-200 bg-white"}`}
             >
               <Button
                 type="button"
-                data-calendar-stop={canDrag && !visit?.locked ? id : undefined}
+                data-calendar-stop={canDrag && !slot?.locked ? id : undefined}
                 data-name={stop.name}
                 data-duration={schedule.lengthOf(id)}
                 disabled={disabled}
@@ -91,18 +91,18 @@ export function CalendarStopList({
                 className="flex w-full cursor-s-resize gap-2 text-left outline-blue-500 disabled:cursor-default md:cursor-e-resize"
               >
                 <span
-                  className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] ${visit ? "bg-neutral-200 text-neutral-500" : "bg-blue-100 text-blue-600"}`}
+                  className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] ${slot ? "bg-neutral-200 text-neutral-500" : "bg-blue-100 text-blue-600"}`}
                 >
                   {index + 1}
                 </span>
                 <span className="min-w-0">
                   <span
-                    className={`block text-xs leading-relaxed font-medium ${visit && !active ? "text-neutral-500" : "text-neutral-800"}`}
+                    className={`block text-xs leading-relaxed font-medium ${slot && !active ? "text-neutral-500" : "text-neutral-800"}`}
                   >
                     {stop.name}
                   </span>
                   <span className="mt-0.5 block text-[10px] text-neutral-400">
-                    {visitLabel(visit)}
+                    {slotLabel(slot)}
                   </span>
                 </span>
               </Button>

@@ -26,7 +26,7 @@ export const DraggableTripStops = ({
   stop: TripStopDraft;
   onClickHandler: (coords: Coordinates, zoom?: number) => void;
 }) => {
-  const { ref, handleRef, isDragging, disabled, visit, changed, unscheduled } =
+  const { ref, handleRef, isDragging, disabled, slot, changed, unscheduled } =
     useTripStopSortable(stop, index);
 
   return (
@@ -59,9 +59,9 @@ export const DraggableTripStops = ({
           <span className="hidden truncate text-xs text-neutral-500 capitalize sm:block">
             {stop.areaAddress || "No address"}
           </span>
-          {visit ? (
+          {slot ? (
             <span className="mt-1 block text-xs text-blue-700">
-              {timeLabel(visit.startMinute)}–{timeLabel(visit.endMinute)}
+              {timeLabel(slot.startMinute)}–{timeLabel(slot.endMinute)}
             </span>
           ) : null}
         </span>
@@ -72,7 +72,7 @@ export const DraggableTripStops = ({
           {unscheduled ? "Unscheduled" : "Time changed"}
         </span>
       )}
-      {visit?.locked && (
+      {slot?.locked && (
         <span
           className="text-[10px] text-neutral-500"
           title="Remove the reservation on the calendar to rearrange"
@@ -100,12 +100,12 @@ export const PlaceActionsMenu = ({
   index: number;
   onJumpToLocation: () => void;
 }) => {
-  const { trip, busy, visitsByStop } = useTripStopSorting();
+  const { trip, busy, slotsByStop } = useTripStopSorting();
   const { removeStop, moveStop } = useTripStore(
     useShallow(({ removeStop, moveStop }) => ({ removeStop, moveStop })),
   );
 
-  const visit = visitsByStop.get(stopId(stop));
+  const slot = slotsByStop.get(stopId(stop));
   const days =
     trip?.startDate && trip.endDate
       ? dateDays(trip.startDate, trip.endDate)
@@ -138,7 +138,7 @@ export const PlaceActionsMenu = ({
               Fly to location
             </MenuItem>
 
-            {index !== 0 && !visit?.locked ? (
+            {index !== 0 && !slot?.locked ? (
               <MenuItem
                 aria-label={`Move ${stop.name} up`}
                 disabled={busy}
@@ -153,7 +153,7 @@ export const PlaceActionsMenu = ({
               </MenuItem>
             ) : null}
 
-            {!(trip && index === trip.stops.length - 1) && !visit?.locked ? (
+            {!(trip && index === trip.stops.length - 1) && !slot?.locked ? (
               <MenuItem
                 aria-label={`Move ${stop.name} down`}
                 disabled={busy}
@@ -168,12 +168,12 @@ export const PlaceActionsMenu = ({
               </MenuItem>
             ) : null}
 
-            {visit && !visit.locked && days.length > 1 && (
+            {slot && !slot.locked && days.length > 1 && (
               <Field.Root className="flex items-center gap-2 px-2 py-2 text-xs">
                 <Field.Label>Move {stop.name} to day</Field.Label>
                 <Field.Control
                   render={<select />}
-                  value={visit.date}
+                  value={slot.date}
                   disabled={busy}
                   className="rounded border border-neutral-200 p-1"
                   onValueChange={(day) => moveStop(index, index, day)}

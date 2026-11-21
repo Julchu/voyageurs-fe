@@ -1,4 +1,4 @@
-import type { ScheduledVisit } from "@/types/trip-api";
+import type { TimeSlot } from "@/types/trip-api";
 
 export const DAY = 1440;
 export const weekdays = [
@@ -12,7 +12,7 @@ export const weekdays = [
 ];
 
 // The planner stores wall-clock times, not instants. Use UTC consistently as a
-// neutral clock so a change in the browser's time zone cannot shift a visit.
+// neutral clock so a change in the browser's time zone cannot shift a slot.
 export const parseDate = (date: string) => new Date(`${date}T00:00:00Z`);
 export const atMinute = (date: string, minute: number) =>
   new Date(parseDate(date).getTime() + minute * 60_000);
@@ -28,16 +28,15 @@ export const dateLabel = (date: string, withYear = true) =>
     timeZone: "UTC",
   }).format(parseDate(date));
 
-/** Where a visit would go: a trip day, a start minute and a length in minutes. */
-export type Slot = { date: string; startMinute: number; length: number };
+/** When a time slot is: its trip day, start and end minute. */
+export type SlotTime = Pick<TimeSlot, "date" | "startMinute" | "endMinute">;
 
-export const slotAt = (start: Date, length: number): Slot => ({
-  date: dayOf(start),
-  startMinute: minuteOf(start),
-  length,
-});
+export const slotAt = (start: Date, length: number): SlotTime => {
+  const startMinute = minuteOf(start);
+  return { date: dayOf(start), startMinute, endMinute: startMinute + length };
+};
 export const slotBetween = (start: Date, end: Date) =>
   slotAt(start, (end.getTime() - start.getTime()) / 60_000);
 
-export const visitDuration = (visit: ScheduledVisit) =>
-  visit.endMinute - visit.startMinute;
+export const slotDuration = (slot: TimeSlot) =>
+  slot.endMinute - slot.startMinute;

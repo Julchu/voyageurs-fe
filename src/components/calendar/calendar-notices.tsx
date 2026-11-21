@@ -1,5 +1,5 @@
 import { Button } from "@base-ui/react/button";
-import type { ScheduledVisit } from "@/types/trip-api";
+import type { TimeSlot } from "@/types/trip-api";
 import { timeLabel } from "@/utils/trip-calendar";
 
 export function NoDatesState() {
@@ -21,37 +21,36 @@ export function NoDatesState() {
 }
 
 export function OutsideDatesNotice({
-  visits,
+  slots,
   nameOf,
   disabled,
   onRemove,
 }: {
-  visits: ScheduledVisit[];
+  slots: TimeSlot[];
   nameOf: (stopId: string) => string;
   disabled: boolean;
-  onRemove: (visit: ScheduledVisit) => void;
+  onRemove: (slot: TimeSlot) => void;
 }) {
   return (
     <div className="max-h-32 shrink-0 overflow-auto overscroll-none border-t border-amber-100 bg-amber-50 px-4 py-3">
       <p className="mb-2 text-xs text-amber-800">
-        Visits outside the selected dates
+        Time slots outside the selected dates
       </p>
-      {visits.map((visit) => (
+      {slots.map((slot) => (
         <div
-          key={visit.id}
+          key={slot.id}
           className="flex items-center justify-between gap-2 py-1 text-xs text-amber-900"
         >
           <span>
-            {nameOf(visit.stopId)} · {visit.date} ·{" "}
-            {timeLabel(visit.startMinute)}
+            {nameOf(slot.stopId)} · {slot.date} · {timeLabel(slot.startMinute)}
           </span>
           <Button
             type="button"
             className="underline"
             disabled={disabled}
-            onClick={() => onRemove(visit)}
+            onClick={() => onRemove(slot)}
           >
-            Remove visit
+            Remove time slot
           </Button>
         </div>
       ))}

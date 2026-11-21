@@ -1,27 +1,25 @@
 import { useState } from "react";
 import { Button } from "@base-ui/react/button";
 import { DayPicker } from "@daypicker/react";
-import type { ScheduledVisit } from "@/types/trip-api";
+import type { TimeSlot } from "@/types/trip-api";
 import { timeLabel } from "@/utils/trip-calendar";
-import { dateLabel, dayOf, parseDate, type Slot } from "./calendar-time";
+import { dateLabel, dayOf, parseDate, type SlotTime } from "./calendar-time";
 import { DoneFooter, RangePopover, TimeRangeSelects } from "./range-popover";
 import { calendarButton, dayPickerClassNames } from "./styles";
 
-type VisitTime = Pick<ScheduledVisit, "date" | "startMinute" | "endMinute">;
-
-/** One input for a visit's day and time. Visits can't cross midnight. */
-function VisitTimePicker({
+/** One input for a time slot's day and time. Time slots can't cross midnight. */
+function SlotTimePicker({
   value,
   dates,
   disabled,
   invalid,
   onChange,
 }: {
-  value: VisitTime;
+  value: SlotTime;
   dates: string[];
   disabled?: boolean;
   invalid: boolean;
-  onChange: (value: VisitTime) => void;
+  onChange: (value: SlotTime) => void;
 }) {
   const first = parseDate(dates[0]);
   const last = parseDate(dates.at(-1)!);
@@ -29,8 +27,8 @@ function VisitTimePicker({
   return (
     <RangePopover
       label={label}
-      placeholder="Select visit time"
-      ariaLabel="Visit time"
+      placeholder="Select time slot"
+      ariaLabel="Time slot"
       disabled={disabled}
     >
       <DayPicker
@@ -59,9 +57,9 @@ function VisitTimePicker({
   );
 }
 
-export function VisitFields({
+export function SlotFields({
   name,
-  visit,
+  slot,
   dates,
   disabled,
   onPlace,
@@ -69,40 +67,38 @@ export function VisitFields({
   onRemove,
 }: {
   name: string;
-  visit?: ScheduledVisit;
+  slot?: TimeSlot;
   dates: string[];
   disabled: boolean;
-  onPlace: (slot: Slot) => void;
+  onPlace: (time: SlotTime) => void;
   onReserve: () => void;
   onRemove: () => void;
 }) {
-  const locked = disabled || visit?.locked;
-  const [time, setTime] = useState<VisitTime>(() => ({
-    date: visit?.date ?? dates[0],
-    startMinute: visit?.startMinute ?? 540,
-    endMinute: visit?.endMinute ?? 570,
+  const locked = disabled || slot?.locked;
+  const [time, setTime] = useState<SlotTime>(() => ({
+    date: slot?.date ?? dates[0],
+    startMinute: slot?.startMinute ?? 540,
+    endMinute: slot?.endMinute ?? 570,
   }));
-  const length = time.endMinute - time.startMinute;
-  const invalid = length <= 0;
+  const invalid = time.endMinute <= time.startMinute;
   const canPlace = !locked && dates.length > 0 && !invalid;
   return (
     <form
       className="space-y-2 text-xs text-neutral-600"
       onSubmit={(e) => {
         e.preventDefault();
-        if (canPlace)
-          onPlace({ date: time.date, startMinute: time.startMinute, length });
+        if (canPlace) onPlace(time);
       }}
     >
       <p className="font-medium text-blue-700">
         {name}
-        {visit?.locked && " · Reserved"}
+        {slot?.locked && " · Reserved"}
       </p>
       <div className="flex flex-wrap items-end gap-2">
         {dates.length ? (
           <div className="flex min-w-56 flex-col gap-1">
-            Visit
-            <VisitTimePicker
+            Time slot
+            <SlotTimePicker
               value={time}
               dates={dates}
               disabled={locked}
@@ -111,12 +107,12 @@ export function VisitFields({
             />
           </div>
         ) : (
-          <p className="text-neutral-500">Set trip dates to schedule visits.</p>
+          <p className="text-neutral-500">Set trip dates to add time slots.</p>
         )}
         <Button type="submit" className={calendarButton} disabled={!canPlace}>
-          {visit ? "Update visit" : "Schedule visit"}
+          {slot ? "Update time slot" : "Add time slot"}
         </Button>
-        {visit && (
+        {slot && (
           <>
             <Button
               type="button"
@@ -124,7 +120,7 @@ export function VisitFields({
               disabled={disabled}
               onClick={onReserve}
             >
-              {visit.locked ? "Unreserve" : "Reserve"}
+              {slot.locked ? "Unreserve" : "Reserve"}
             </Button>
             <Button
               type="button"
@@ -132,7 +128,7 @@ export function VisitFields({
               disabled={disabled}
               onClick={onRemove}
             >
-              Remove visit
+              Remove time slot
             </Button>
           </>
         )}

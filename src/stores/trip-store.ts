@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import type { Place } from "@/utils/interfaces";
 import type { TripDto } from "@/types/trip-api";
 import type { TripDraft } from "@/types/trip-draft";
-import type { AvailabilityWindow, ScheduledVisit } from "@/types/trip-api";
+import type { AvailabilityWindow, TimeSlot } from "@/types/trip-api";
 import type { CollectionLoadState } from "./utils/collection-load";
 import { createTripDraftActions } from "./trip-draft-actions";
 import { createTripCalendarActions } from "./trip-calendar-actions";
@@ -33,9 +33,9 @@ export type TripActions = {
   resetDraft: () => void;
   // Calendar
   setTripDates: (startDate: string | null, endDate: string | null) => void;
-  setVisit: (visit: ScheduledVisit) => void;
-  removeVisit: (visitId: string) => void;
-  toggleReserved: (visitId: string) => void;
+  setTimeSlot: (slot: TimeSlot) => void;
+  removeTimeSlot: (slotId: string) => void;
+  toggleReserved: (slotId: string) => void;
   setOpenHours: (stopId: string, windows: AvailabilityWindow[]) => void;
   // Server
   clearTrips: () => void;

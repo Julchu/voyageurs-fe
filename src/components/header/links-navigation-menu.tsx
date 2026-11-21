@@ -24,7 +24,7 @@ const navigationLinks = [
   {
     href: "/calendar",
     title: "Calendar",
-    description: "Plan visits and opening hours",
+    description: "Plan time slots and opening hours",
   },
 ] as const;
 

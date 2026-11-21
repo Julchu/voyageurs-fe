@@ -6,58 +6,61 @@ import { useShallow } from "zustand/react/shallow";
 import { EditorFooter } from "@/components/ui/editor-footer";
 import { useTripDraft } from "@/hooks/use-trip-draft";
 import { useTripStore } from "@/providers/trip-store-provider";
-import type { ScheduledVisit } from "@/types/trip-api";
+import type { TimeSlot } from "@/types/trip-api";
 import type { TripStopDraft } from "@/types/trip-draft";
-import type { Slot } from "./calendar-time";
+import type { SlotTime } from "./calendar-time";
 import { NoDatesState, OutsideDatesNotice } from "./calendar-notices";
 import { CalendarStopList } from "./calendar-stop-list";
 import { OpenHoursEditor } from "./open-hours-editor";
 import { TripDateRange } from "./trip-date-range";
-import { useVisitSchedule } from "./use-visit-schedule";
-import { VisitFields } from "./visit-fields";
-import { VisitWeek } from "./visit-week";
+import { useSlotSchedule } from "./use-slot-schedule";
+import { SlotFields } from "./slot-fields";
+import { SlotWeek } from "./slot-week";
 
 /** The stop being scheduled, or the stop whose open hours are being edited. */
-type Focus = { stopId: string; mode: "visit" | "hours" };
+type Focus = { stopId: string; mode: "slot" | "hours" };
 
 export function TripCalendar() {
   const clientId = useTripStore(({ currentTrip }) => currentTrip?.clientId);
   return <CalendarEditor key={clientId ?? "empty"} />;
 }
 
-/** Schedules the same trip draft the drawer edits. Visit times also set the stop order. */
+/** Schedules the same trip draft the drawer edits. Time slots also set the stop order. */
 function CalendarEditor() {
   const { trip, isDirty, isSaving, canSave, save, reset } = useTripDraft();
-  const schedule = useVisitSchedule(trip, isSaving);
-  const { addStop, setTripDates, removeVisit, toggleReserved } = useTripStore(
-    useShallow(({ addStop, setTripDates, removeVisit, toggleReserved }) => ({
-      addStop,
-      setTripDates,
-      removeVisit,
-      toggleReserved,
-    })),
-  );
+  const schedule = useSlotSchedule(trip, isSaving);
+  const { addStop, setTripDates, removeTimeSlot, toggleReserved } =
+    useTripStore(
+      useShallow(
+        ({ addStop, setTripDates, removeTimeSlot, toggleReserved }) => ({
+          addStop,
+          setTripDates,
+          removeTimeSlot,
+          toggleReserved,
+        }),
+      ),
+    );
   const [focus, setFocus] = useState<Focus | null>(null);
   const { dates } = schedule;
   const focusedStop = focus ? schedule.stopsById.get(focus.stopId) : undefined;
   const editingStop = focus?.mode === "hours" ? focusedStop : undefined;
-  const selectedStop = focus?.mode === "visit" ? focusedStop : undefined;
-  const selectedId = focus?.mode === "visit" ? focus.stopId : undefined;
-  const selectedVisit = selectedId
-    ? schedule.visitsByStop.get(selectedId)
+  const selectedStop = focus?.mode === "slot" ? focusedStop : undefined;
+  const selectedId = focus?.mode === "slot" ? focus.stopId : undefined;
+  const selectedSlot = selectedId
+    ? schedule.slotsByStop.get(selectedId)
     : undefined;
 
   // TODO: Add styled feedback for invalid dates, unavailable times, and rejected drops.
 
-  const select = (id: string) => setFocus({ stopId: id, mode: "visit" });
-  const place = (id: string, slot: Slot) => {
-    const placed = schedule.place(id, slot);
+  const select = (id: string) => setFocus({ stopId: id, mode: "slot" });
+  const place = (id: string, time: SlotTime) => {
+    const placed = schedule.place(id, time);
     if (placed) select(id);
     return placed;
   };
-  const unschedule = (visit: ScheduledVisit) => {
-    removeVisit(visit.id);
-    if (visit.stopId === selectedId) setFocus(null);
+  const unschedule = (slot: TimeSlot) => {
+    removeTimeSlot(slot.id);
+    if (slot.stopId === selectedId) setFocus(null);
   };
   // A duplicate is just another stop at the same place.
   const duplicate = (stop: TripStopDraft) => {
@@ -107,24 +110,22 @@ function CalendarEditor() {
               <>
                 <div className="shrink-0 space-y-3 border-b border-neutral-100 p-4">
                   {selectedId && selectedStop ? (
-                    <VisitFields
+                    <SlotFields
                       key={JSON.stringify([
                         selectedId,
-                        selectedVisit,
+                        selectedSlot,
                         dates[0],
                         dates.at(-1),
                       ])}
                       name={selectedStop.name}
-                      visit={selectedVisit}
+                      slot={selectedSlot}
                       dates={dates}
                       disabled={isSaving}
                       onPlace={(slot) => place(selectedId, slot)}
                       onReserve={() =>
-                        selectedVisit && toggleReserved(selectedVisit.id)
+                        selectedSlot && toggleReserved(selectedSlot.id)
                       }
-                      onRemove={() =>
-                        selectedVisit && unschedule(selectedVisit)
-                      }
+                      onRemove={() => selectedSlot && unschedule(selectedSlot)}
                     />
                   ) : (
                     <p className="text-xs text-neutral-500">
@@ -134,7 +135,7 @@ function CalendarEditor() {
                   )}
                 </div>
                 {dates.length ? (
-                  <VisitWeek
+                  <SlotWeek
                     schedule={schedule}
                     selectedId={selectedId}
                     disabled={isSaving}
@@ -146,7 +147,7 @@ function CalendarEditor() {
                 )}
                 {schedule.outsideDates.length > 0 && (
                   <OutsideDatesNotice
-                    visits={schedule.outsideDates}
+                    slots={schedule.outsideDates}
                     nameOf={schedule.nameOf}
                     disabled={isSaving}
                     onRemove={unschedule}

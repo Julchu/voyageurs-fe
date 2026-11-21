@@ -1,20 +1,20 @@
-import type { ScheduledVisit } from "@/types/trip-api";
+import type { TimeSlot } from "@/types/trip-api";
 import type { TripStopDraft } from "@/types/trip-draft";
 import type { TripActionCreator } from "./trip-store";
 import { draftEditor } from "./trip-draft-actions";
 import { placeKey, stopId } from "@/utils/trip-stop";
-import { compareVisits } from "@/utils/trip-time";
+import { compareSlots } from "@/utils/trip-time";
 
-/** Scheduled stops follow their visit times; unscheduled stops keep their place. */
+/** Scheduled stops follow their time slots; unscheduled stops keep their place. */
 const orderBySchedule = (
   stops: TripStopDraft[],
-  visits: ScheduledVisit[],
+  slots: TimeSlot[],
 ): TripStopDraft[] => {
-  const byStop = new Map(visits.map((visit) => [visit.stopId, visit]));
+  const byStop = new Map(slots.map((slot) => [slot.stopId, slot]));
   const scheduled = stops
     .filter((stop) => byStop.has(stopId(stop)))
     .sort((a, b) =>
-      compareVisits(byStop.get(stopId(a))!, byStop.get(stopId(b))!),
+      compareSlots(byStop.get(stopId(a))!, byStop.get(stopId(b))!),
     );
   let index = 0;
   return stops.map((stop) =>
@@ -24,8 +24,8 @@ const orderBySchedule = (
 
 export const createTripCalendarActions: TripActionCreator<
   | "setTripDates"
-  | "setVisit"
-  | "removeVisit"
+  | "setTimeSlot"
+  | "removeTimeSlot"
   | "toggleReserved"
   | "setOpenHours"
 > = (set, get) => {
@@ -34,25 +34,29 @@ export const createTripCalendarActions: TripActionCreator<
   return {
     setTripDates: (startDate, endDate) =>
       edit((trip) => ({ ...trip, startDate, endDate })),
-    setVisit: (visit) =>
+    setTimeSlot: (slot) =>
       edit((trip) => {
-        const visits = [
-          ...trip.visits.filter((item) => item.stopId !== visit.stopId),
-          visit,
-        ].sort(compareVisits);
+        const slots = [
+          ...trip.timeSlots.filter((item) => item.stopId !== slot.stopId),
+          slot,
+        ].sort(compareSlots);
         // The backend needs scheduled stops in time order.
-        return { ...trip, visits, stops: orderBySchedule(trip.stops, visits) };
+        return {
+          ...trip,
+          timeSlots: slots,
+          stops: orderBySchedule(trip.stops, slots),
+        };
       }),
-    removeVisit: (visitId) =>
+    removeTimeSlot: (slotId) =>
       edit((trip) => ({
         ...trip,
-        visits: trip.visits.filter((visit) => visit.id !== visitId),
+        timeSlots: trip.timeSlots.filter((slot) => slot.id !== slotId),
       })),
-    toggleReserved: (visitId) =>
+    toggleReserved: (slotId) =>
       edit((trip) => ({
         ...trip,
-        visits: trip.visits.map((visit) =>
-          visit.id === visitId ? { ...visit, locked: !visit.locked } : visit,
+        timeSlots: trip.timeSlots.map((slot) =>
+          slot.id === slotId ? { ...slot, locked: !slot.locked } : slot,
         ),
       })),
     // Open hours belong to the place, so every stop there gets the same hours.

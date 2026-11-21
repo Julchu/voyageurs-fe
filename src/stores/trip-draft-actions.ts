@@ -16,7 +16,7 @@ const newTrip = (
   stops: [],
   startDate: null,
   endDate: null,
-  visits: [],
+  timeSlots: [],
 });
 
 /** A new, unscheduled stop. It shares open hours with other stops at the same place. */
@@ -89,7 +89,7 @@ export const createTripDraftActions: TripActionCreator<
       edit((trip) => ({
         ...trip,
         stops: trip.stops.filter((stop) => stopId(stop) !== id),
-        visits: trip.visits.filter((visit) => visit.stopId !== id),
+        timeSlots: trip.timeSlots.filter((slot) => slot.stopId !== id),
       })),
     moveStop: (from, to, targetDate) => {
       const { currentTrip: trip, tripSaveStatus } = get();
@@ -98,27 +98,27 @@ export const createTripDraftActions: TripActionCreator<
       const stops = trip.stops.slice();
       const [stop] = stops.splice(from, 1);
       if (!stop) return;
-      // A day move lands at the end of that day: before the first later visit.
+      // A day move lands at the end of that day: before the first later slot.
       const later = stops.findIndex((item) => {
-        const visit = trip.visits.find((v) => v.stopId === stopId(item));
-        return !!targetDate && !!visit && visit.date > targetDate;
+        const slot = trip.timeSlots.find((v) => v.stopId === stopId(item));
+        return !!targetDate && !!slot && slot.date > targetDate;
       });
       const index = !targetDate ? to : later < 0 ? stops.length : later;
       stops.splice(index, 0, stop);
       try {
-        const visits = placeMove(
+        const slots = placeMove(
           stops.map((item) => ({
             publicId: stopId(item),
             availability: item.availability,
           })),
-          trip.visits,
+          trip.timeSlots,
           {
             stopId: stopId(stop),
-            ...scheduledNeighbours(stops.map(stopId), index, trip.visits),
+            ...scheduledNeighbours(stops.map(stopId), index, trip.timeSlots),
             targetDate,
           },
         );
-        edit(() => ({ ...trip, stops, visits }));
+        edit(() => ({ ...trip, stops, timeSlots: slots }));
       } catch (error) {
         set({
           tripSaveStatus: "error",

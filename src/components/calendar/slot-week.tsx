@@ -4,17 +4,17 @@ import type {
   EventInput,
   EventResizeDoneInfo,
 } from "@fullcalendar/react";
-import type { ScheduledVisit } from "@/types/trip-api";
+import type { TimeSlot } from "@/types/trip-api";
 import {
   DAY,
-  type Slot,
+  type SlotTime,
   atMinute,
   dayOf,
   slotAt,
   slotBetween,
 } from "./calendar-time";
 import { toBusinessHours } from "./open-hours";
-import type { VisitSchedule } from "./use-visit-schedule";
+import type { SlotSchedule } from "./use-slot-schedule";
 import { selectedEventClass } from "./week-calendar-theme";
 
 // Client-only: Node and browser ICU format date ranges with different
@@ -29,41 +29,38 @@ const invalidColors = {
   contrastColor: "var(--color-red-900)",
 };
 
-/** The trip's days as a rolling week. Drop, drag or click to place visits. */
-export function VisitWeek({
+/** The trip's days as a rolling week. Drop, drag or click to place time slots. */
+export function SlotWeek({
   schedule,
   selectedId,
   disabled,
   onSelect,
   onPlace,
 }: {
-  schedule: VisitSchedule;
+  schedule: SlotSchedule;
   selectedId?: string;
   disabled: boolean;
   onSelect: (stopId: string) => void;
-  onPlace: (stopId: string, slot: Slot) => boolean;
+  onPlace: (stopId: string, time: SlotTime) => boolean;
 }) {
   const { dates } = schedule;
   const openHours =
     (selectedId && schedule.stopsById.get(selectedId)?.availability) || [];
 
-  const toEvent = (visit: ScheduledVisit): EventInput => {
-    const name = schedule.nameOf(visit.stopId);
+  const toEvent = (slot: TimeSlot): EventInput => {
+    const name = schedule.nameOf(slot.stopId);
     return {
-      id: visit.id,
-      title: visit.locked ? `Reserved · ${name}` : name,
-      start: atMinute(visit.date, visit.startMinute),
-      end: atMinute(visit.date, visit.endMinute),
-      editable: !disabled && !visit.locked,
-      extendedProps: { stopId: visit.stopId },
-      className: visit.stopId === selectedId ? selectedEventClass : undefined,
-      ...(!schedule.isValid(visit) && invalidColors),
+      id: slot.id,
+      title: slot.locked ? `Reserved · ${name}` : name,
+      start: atMinute(slot.date, slot.startMinute),
+      end: atMinute(slot.date, slot.endMinute),
+      editable: !disabled && !slot.locked,
+      extendedProps: { stopId: slot.stopId },
+      className: slot.stopId === selectedId ? selectedEventClass : undefined,
+      ...(!schedule.isValid(slot) && invalidColors),
     };
   };
-  const moveVisit = ({
-    event,
-    revert,
-  }: EventDropInfo | EventResizeDoneInfo) => {
+  const moveSlot = ({ event, revert }: EventDropInfo | EventResizeDoneInfo) => {
     if (!event.start || !event.end) return revert();
     const placed = onPlace(
       event.extendedProps.stopId,
@@ -87,7 +84,7 @@ export function VisitWeek({
       droppable={!disabled}
       // Shade closed times for the selected stop.
       businessHours={toBusinessHours(openHours)}
-      events={schedule.visits.map(toEvent)}
+      events={schedule.slots.map(toEvent)}
       eventClick={({ event }) => {
         if (!disabled) onSelect(event.extendedProps.stopId);
       }}
@@ -99,8 +96,8 @@ export function VisitWeek({
         !!event &&
         !!schedule.fit(event.extendedProps.stopId, slotBetween(start, end))
       }
-      eventDrop={moveVisit}
-      eventResize={moveVisit}
+      eventDrop={moveSlot}
+      eventResize={moveSlot}
       eventReceive={({ event, revert }) => {
         // The draft owns events. Discard FullCalendar's temporary copy.
         revert();

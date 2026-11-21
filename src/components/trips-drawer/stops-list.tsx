@@ -8,7 +8,7 @@ import { stopId } from "@/utils/trip-stop";
 import { Fragment } from "react";
 
 export const StopsList = ({ map }: MapNavigation) => {
-  const { trip, busy, visitsByStop, handleDragEnd } = useTripStopSorting();
+  const { trip, busy, slotsByStop, handleDragEnd } = useTripStopSorting();
   const { flyTo } = useMapHook({ map });
 
   if (!trip)
@@ -35,15 +35,15 @@ export const StopsList = ({ map }: MapNavigation) => {
         <DragDropProvider onDragEnd={handleDragEnd}>
           <ol className="flex flex-col gap-2 overflow-x-hidden">
             {trip.stops.map((stop, index) => {
-              const visit = visitsByStop.get(stopId(stop));
+              const slot = slotsByStop.get(stopId(stop));
               const previous = trip.stops[index - 1];
               const previousDay =
-                previous && visitsByStop.get(stopId(previous))?.date;
+                previous && slotsByStop.get(stopId(previous))?.date;
 
               return (
                 <Fragment key={stop.clientId}>
-                  {index === 0 || visit?.date !== previousDay ? (
-                    <TripDayHeading date={visit?.date} disabled={busy} />
+                  {index === 0 || slot?.date !== previousDay ? (
+                    <TripDayHeading date={slot?.date} disabled={busy} />
                   ) : null}
                   <DraggableTripStops
                     index={index}

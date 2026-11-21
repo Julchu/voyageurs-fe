@@ -18,9 +18,9 @@ export function useTripStopSorting() {
       busy: state.tripSaveStatus === "saving",
     })),
   );
-  const visitsByStop = useMemo(
-    () => new Map(trip?.visits.map((visit) => [visit.stopId, visit])),
-    [trip?.visits],
+  const slotsByStop = useMemo(
+    () => new Map(trip?.timeSlots.map((slot) => [slot.stopId, slot])),
+    [trip?.timeSlots],
   );
   const handleDragEnd = (event: DragEndEvent) => {
     if (event.canceled || busy) return;
@@ -31,31 +31,31 @@ export function useTripStopSorting() {
     if (typeof targetDate === "string") moveStop(from, from, targetDate);
     else if (from !== source.index) moveStop(from, source.index);
   };
-  return { trip, busy, visitsByStop, handleDragEnd };
+  return { trip, busy, slotsByStop, handleDragEnd };
 }
 
 export function useTripStopSortable(stop: TripStopDraft, index: number) {
-  const { busy, visit, savedVisit } = useTripStore(
+  const { busy, slot, savedSlot } = useTripStore(
     useShallow((state) => ({
       busy: state.tripSaveStatus === "saving",
-      visit: state.currentTrip?.visits.find((v) => v.stopId === stopId(stop)),
-      savedVisit: serverTrip(state.trips, state.currentTrip)?.visits.find(
+      slot: state.currentTrip?.timeSlots.find((v) => v.stopId === stopId(stop)),
+      savedSlot: serverTrip(state.trips, state.currentTrip)?.timeSlots.find(
         (v) => v.stopId === stop.publicId,
       ),
     })),
   );
-  const disabled = busy || !!visit?.locked;
+  const disabled = busy || !!slot?.locked;
   const sortable = useSortable({
     id: stop.clientId,
     index,
     disabled: { draggable: disabled, droppable: busy },
   });
   const changed =
-    !!visit &&
-    !!savedVisit &&
-    (visit.date !== savedVisit.date ||
-      visit.startMinute !== savedVisit.startMinute ||
-      visit.endMinute !== savedVisit.endMinute);
-  const unscheduled = !visit && !!savedVisit;
-  return { ...sortable, disabled, visit, changed, unscheduled };
+    !!slot &&
+    !!savedSlot &&
+    (slot.date !== savedSlot.date ||
+      slot.startMinute !== savedSlot.startMinute ||
+      slot.endMinute !== savedSlot.endMinute);
+  const unscheduled = !slot && !!savedSlot;
+  return { ...sortable, disabled, slot, changed, unscheduled };
 }

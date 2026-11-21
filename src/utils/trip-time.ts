@@ -1,16 +1,16 @@
-import type { AvailabilityWindow, ScheduledVisit } from "@/types/trip-api";
+import type { AvailabilityWindow, TimeSlot } from "@/types/trip-api";
 
 // Dates and minutes are local trip time. UTC is only a neutral clock, never a time zone.
 export const dateMinute = (date: string, minute = 0) =>
   Date.parse(`${date}T00:00:00Z`) / 60_000 + minute;
 export const weekday = (date: string) =>
   new Date(`${date}T00:00:00Z`).getUTCDay();
-export const visitStart = (visit: ScheduledVisit) =>
-  dateMinute(visit.date, visit.startMinute);
-export const visitEnd = (visit: ScheduledVisit) =>
-  dateMinute(visit.date, visit.endMinute);
+export const slotStart = (slot: TimeSlot) =>
+  dateMinute(slot.date, slot.startMinute);
+export const slotEnd = (slot: TimeSlot) =>
+  dateMinute(slot.date, slot.endMinute);
 
-export const compareVisits = (a: ScheduledVisit, b: ScheduledVisit) =>
+export const compareSlots = (a: TimeSlot, b: TimeSlot) =>
   a.date.localeCompare(b.date) ||
   a.startMinute - b.startMinute ||
   a.id.localeCompare(b.id);
@@ -45,21 +45,21 @@ export const isAvailable = (
   return true;
 };
 
-/** A valid, open time that doesn't overlap another visit. */
+/** A valid, open time that doesn't overlap another slot. */
 export const canSchedule = (
-  visits: ScheduledVisit[],
-  visit: ScheduledVisit,
+  slots: TimeSlot[],
+  slot: TimeSlot,
   availability: AvailabilityWindow[],
 ) =>
   isAvailable(
     availability,
-    weekday(visit.date),
-    visit.startMinute,
-    visit.endMinute,
+    weekday(slot.date),
+    slot.startMinute,
+    slot.endMinute,
   ) &&
-  !visits.some(
+  !slots.some(
     (other) =>
-      other.id !== visit.id &&
-      visitStart(other) < visitEnd(visit) &&
-      visitEnd(other) > visitStart(visit),
+      other.id !== slot.id &&
+      slotStart(other) < slotEnd(slot) &&
+      slotEnd(other) > slotStart(slot),
   );
