@@ -28,7 +28,6 @@ export const TripContent = ({ map }: MapNavigation) => {
 
   const showNameInput =
     !!currentTrip && (!userInfo || !currentTrip.publicId || isEditingTrip);
-  const showActions = !!userInfo && (isEditingTrip || isDirty);
 
   const onSaveHandler = () => {
     void save();
@@ -84,17 +83,15 @@ export const TripContent = ({ map }: MapNavigation) => {
         <StopsList map={map} />
       </div>
 
-      {showActions && (
-        <EditorFooter
-          isDirty={isDirty}
-          isEditing={isEditingTrip}
-          isSaving={isSaving}
-          canSave={canSave}
-          resetLabel="Restore"
-          onSave={onSaveHandler}
-          onReset={onResetHandler}
-        />
-      )}
+      <EditorFooter
+        isDirty={isDirty}
+        isEditing={isEditingTrip}
+        isSaving={isSaving}
+        canSave={canSave}
+        resetLabel="Restore"
+        onSave={onSaveHandler}
+        onReset={onResetHandler}
+      />
     </div>
   );
 };
