@@ -1,5 +1,5 @@
-import type { AvailabilityWindow, ScheduledVisit } from "@/types/trip-api";
-import { canSchedule, compareVisits, visitEnd, visitStart } from "./trip-time";
+import type { AvailabilityWindow, TimeSlot } from "@/types/trip-api";
+import { canSchedule, compareSlots, slotEnd, slotStart } from "./trip-time";
 
 // Keep `placeMove` identical to the backend's trip.calendar.ts.
 type AvailableStop = { publicId: string; availability: AvailabilityWindow[] };
@@ -15,19 +15,19 @@ export type StopMove = {
 /** Shortest free time an unscheduled stop needs between its scheduled neighbours. */
 export const MIN_GAP_MINUTES = 30;
 
-/** Minutes between two visits; a missing neighbour leaves unlimited room. */
-export const gapMinutes = (previous?: ScheduledVisit, next?: ScheduledVisit) =>
+/** Minutes between two slots; a missing neighbour leaves unlimited room. */
+export const gapMinutes = (previous?: TimeSlot, next?: TimeSlot) =>
   previous && next
-    ? visitStart(next) - visitEnd(previous)
+    ? slotStart(next) - slotEnd(previous)
     : Number.POSITIVE_INFINITY;
 
 /** Nearest scheduled stops before and after `index` in a list of stop IDs. */
 export const scheduledNeighbours = (
   order: string[],
   index: number,
-  visits: ScheduledVisit[],
+  slots: TimeSlot[],
 ) => {
-  const scheduled = new Set(visits.map((visit) => visit.stopId));
+  const scheduled = new Set(slots.map((slot) => slot.stopId));
   return {
     previousStopId:
       order
@@ -39,7 +39,7 @@ export const scheduledNeighbours = (
 };
 
 /**
- * Apply one list move without pushing, shrinking or creating visits.
+ * Apply one list move without pushing, shrinking or creating slots.
  *
  * A scheduled stop keeps its clock time on its own date, the previous stop's
  * date or the next stop's date (only `targetDate` for a day move). If none
@@ -48,9 +48,9 @@ export const scheduledNeighbours = (
  */
 export const placeMove = (
   stops: AvailableStop[],
-  visits: ScheduledVisit[],
+  slots: TimeSlot[],
   move: StopMove,
-): ScheduledVisit[] => {
+): TimeSlot[] => {
   const hours = new Map(
     stops.map((stop) => [stop.publicId, stop.availability]),
   );
@@ -59,10 +59,12 @@ export const placeMove = (
   );
   if (new Set(ids).size !== ids.length || ids.some((id) => !hours.has(id)))
     throw new Error("Choose distinct stops from this trip to reorder.");
-  const byStop = new Map(visits.map((visit) => [visit.stopId, visit]));
+  const byStop = new Map(slots.map((slot) => [slot.stopId, slot]));
   const moved = byStop.get(move.stopId);
   if (moved?.locked)
-    throw new Error("Remove the reservation before rearranging this visit.");
+    throw new Error(
+      "Remove the reservation before rearranging this time slot.",
+    );
   const previous = move.previousStopId
     ? byStop.get(move.previousStopId)
     : undefined;
@@ -70,7 +72,7 @@ export const placeMove = (
   if ((move.previousStopId && !previous) || (move.nextStopId && !next))
     throw new Error("The neighbouring stops changed. Reset and try again.");
   if (gapMinutes(previous, next) < 0)
-    throw new Error("The neighbouring visits are in reverse time order.");
+    throw new Error("The neighbouring time slots are in reverse time order.");
 
   if (moved) {
     const dates = move.targetDate
@@ -85,18 +87,18 @@ export const placeMove = (
         gapMinutes(candidate, next) < 0
       )
         continue;
-      if (!canSchedule(visits, candidate, hours.get(move.stopId)!)) continue;
-      if (date === moved.date) return visits;
-      return [...visits.filter((visit) => visit !== moved), candidate].sort(
-        compareVisits,
+      if (!canSchedule(slots, candidate, hours.get(move.stopId)!)) continue;
+      if (date === moved.date) return slots;
+      return [...slots.filter((slot) => slot !== moved), candidate].sort(
+        compareSlots,
       );
     }
   }
   if (gapMinutes(previous, next) < MIN_GAP_MINUTES)
     throw new Error(
       moved
-        ? "This visit's time doesn't fit there, and there is no free half hour between the neighbouring visits."
-        : "There is no free half hour between the neighbouring visits.",
+        ? "This time slot doesn't fit there, and there is no free half hour between the neighbouring time slots."
+        : "There is no free half hour between the neighbouring time slots.",
     );
-  return moved ? visits.filter((visit) => visit !== moved) : visits;
+  return moved ? slots.filter((slot) => slot !== moved) : slots;
 };
