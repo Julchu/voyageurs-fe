@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { GoogleIcon } from "@/components/ui/icons/google-icon";
@@ -92,7 +93,7 @@ export const UserMenu = () => {
               </Menu.Item>
             ) : (
               <Menu.Item
-                render={<a href="/api/login" />}
+                render={<Link href="/api/login" />}
                 className="text-md relative flex h-6 items-center justify-center gap-x-2 rounded-lg px-2 py-4 leading-none transition-colors duration-150 outline-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
               >
                 <GoogleIcon />
