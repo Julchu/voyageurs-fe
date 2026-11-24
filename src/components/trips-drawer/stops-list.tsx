@@ -1,4 +1,3 @@
-import { DragDropProvider } from "@dnd-kit/react";
 import { Fragment } from "react";
 import { flyTo } from "@/components/map-box/map-actions";
 import { useMapStore } from "@/components/map-box/map-store";
@@ -14,7 +13,7 @@ import type { TimeSlot } from "@/types/trip-api";
 import { dateDays } from "@/utils/trip-time";
 import { stopId } from "@/utils/trip-stop";
 import { serverTrip } from "@/utils/trip-sync";
-import { TripDayHeading } from "./stop-drag-controls";
+import { StopDragProvider, TripDayHeading } from "./stop-drag-controls";
 
 const slotMoved = (slot: TimeSlot, saved: TimeSlot) =>
   slot.date !== saved.date ||
@@ -23,7 +22,8 @@ const slotMoved = (slot: TimeSlot, saved: TimeSlot) =>
 
 export const StopsList = () => {
   const map = useMapStore((state) => state.map);
-  const { trip, busy, slotsByStop, handleDragEnd } = useTripStopSorting();
+  const { trip, busy, slotsByStop, handleDragEnd, handleDragOver } =
+    useTripStopSorting();
   const saved = useTripStore(({ trips, currentTrip }) =>
     serverTrip(trips, currentTrip),
   );
@@ -72,7 +72,7 @@ export const StopsList = () => {
       ) : null}
 
       <div className="min-h-0 flex-auto touch-auto overflow-y-auto overscroll-none">
-        <DragDropProvider onDragEnd={handleDragEnd}>
+        <StopDragProvider onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
           <ol className="flex flex-col gap-2 overflow-x-hidden">
             {rows.map((row) => (
               <Fragment key={row.stop.clientId}>
@@ -88,7 +88,7 @@ export const StopsList = () => {
               </Fragment>
             ))}
           </ol>
-        </DragDropProvider>
+        </StopDragProvider>
       </div>
     </div>
   );

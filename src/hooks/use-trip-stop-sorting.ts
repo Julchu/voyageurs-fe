@@ -1,7 +1,8 @@
 import { useShallow } from "zustand/react/shallow";
-import type { DragEndEvent } from "@dnd-kit/dom";
+import type { DragEndEvent, DragOverEvent } from "@dnd-kit/dom";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import { useTripStore } from "@/providers/trip-store-provider";
+import { canMoveStop } from "@/stores/trip-edits";
 import type { TripStopDraft } from "@/types/trip-draft";
 
 /** Drag-to-reorder for the drawer and calendar lists. Both move stops in the same draft. */
@@ -25,7 +26,15 @@ export function useTripStopSorting() {
     if (typeof targetDate === "string") moveStop(from, from, targetDate);
     else if (from !== source.index) moveStop(from, source.index);
   };
-  return { trip, busy, slotsByStop, handleDragEnd };
+  // dnd-kit only reverts its live reorder on cancel, so block invalid spots before they open.
+  const handleDragOver = (event: DragOverEvent) => {
+    const { source, target } = event.operation;
+    if (!isSortable(source) || !isSortable(target) || source.id === target.id)
+      return;
+    if (!canMoveStop(trip, source.initialIndex, target.index))
+      event.preventDefault();
+  };
+  return { trip, busy, slotsByStop, handleDragEnd, handleDragOver };
 }
 
 /** One sortable stop. Nothing moves while saving; a reserved stop stays put but still takes drops. */

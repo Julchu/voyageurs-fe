@@ -1,9 +1,30 @@
 "use client";
 
-import { useId } from "react";
+import { type ComponentProps, useId, useLayoutEffect, useState } from "react";
 import { Button } from "@base-ui/react/button";
-import { useDroppable } from "@dnd-kit/react";
+import { DragDropManager, type Draggable } from "@dnd-kit/dom";
+import { DragDropProvider, useDroppable } from "@dnd-kit/react";
+import { isSortable } from "@dnd-kit/react/sortable";
 import { GripIcon } from "@/components/ui/icons/stop-card-icons";
+import { useTripStore } from "@/providers/trip-store-provider";
+import { canMoveStop } from "@/stores/trip-edits";
+
+/** DragDropProvider that ends a live drag before dnd-kit tears down its manager. */
+export function StopDragProvider({
+  plugins,
+  ...props
+}: ComponentProps<typeof DragDropProvider>) {
+  const [manager] = useState(() => new DragDropManager({ plugins }));
+  // dnd-kit destroys the manager in useInsertionEffect, where the re-renders a live drag triggers are not allowed.
+  // This parent layout cleanup runs first. Skip idle: StrictMode also runs it on mount.
+  useLayoutEffect(
+    () => () => {
+      if (!manager.dragOperation.status.idle) manager.destroy();
+    },
+    [manager],
+  );
+  return <DragDropProvider {...props} manager={manager} />;
+}
 
 export function StopDragHandle({
   name,
@@ -35,10 +56,20 @@ export function TripDayHeading({
   disabled: boolean;
   as?: "li" | "div" | "tr";
 }) {
+  const trip = useTripStore(({ currentTrip }) => currentTrip);
   const { ref, isDropTarget } = useDroppable({
     id: useId(),
     data: { targetDate: date },
     disabled: disabled || !date,
+    // A heading that would reject this day move can't become the drop target.
+    // `accept` is typed with the abstract Draggable; at runtime it's the DOM one.
+    accept: (draggable) => {
+      const source = draggable as Draggable;
+      return (
+        isSortable(source) &&
+        canMoveStop(trip, source.initialIndex, source.initialIndex, date)
+      );
+    },
   });
   const label = date
     ? new Intl.DateTimeFormat("en", {

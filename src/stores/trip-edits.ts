@@ -104,6 +104,16 @@ export const moveStop = (
   return { ...trip, stops, timeSlots };
 };
 
+/** Whether `moveStop` accepts this move. */
+export const canMoveStop = (...args: Parameters<typeof moveStop>) => {
+  try {
+    moveStop(...args);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 /** Scheduled stops follow their time slots; unscheduled stops keep their place. */
 const orderBySchedule = (stops: TripStopDraft[], slots: TimeSlot[]) => {
   const byStop = new Map(slots.map((slot) => [slot.stopId, slot]));
