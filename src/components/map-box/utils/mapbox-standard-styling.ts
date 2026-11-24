@@ -6,7 +6,7 @@ import type {
 import { mapTimeFromDate } from "@/utils/map-time";
 
 /** Official Mapbox Standard (not Studio forks). */
-export const STANDARD_STYLE_URL = "mapbox://styles/mapbox/standard";
+const STANDARD_STYLE_URL = "mapbox://styles/mapbox/standard";
 
 /**
  * Standard draws hotels, parks, museums, cafes, restaurants, and the rest of

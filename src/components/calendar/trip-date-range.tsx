@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@base-ui/react/button";
 import { DayPicker } from "@daypicker/react";
-import { dateLabel, dayOf, parseDate } from "./calendar-time";
+import { dateLabel, dayOf, parseDate } from "@/utils/trip-time";
 import { RangePopover } from "./range-popover";
 import { calendarButton, dayPickerClassNames, pickerFooter } from "./styles";
 

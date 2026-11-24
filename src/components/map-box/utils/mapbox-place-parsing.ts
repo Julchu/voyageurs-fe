@@ -1,11 +1,11 @@
-import type { Place, PlaceDetails, PlacePhoto } from "@/utils/interfaces";
+import type { Place, PlaceDetails, PlacePhoto } from "@/types/place";
 import type {
   MapboxMetadata,
   MapboxPlaceRecord,
   MapboxSearchFeature,
   MapboxSuggestion,
+  SearchSuggestion,
 } from "@/types/mapbox";
-import type { SearchSuggestion } from "./mapbox-search-box";
 
 /** Places API POI ids: "urn:mbxpoi:…", or that urn in base64 ("dXJuOm1ieHBvaTo…"). */
 export const isPoiId = (id?: string): id is string =>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@base-ui/react/button";
-import { weekdays } from "./calendar-time";
+import { weekdays } from "@/utils/trip-time";
 import { type WeekdayRange, weekdayRangeLabel } from "./open-hours";
 import { DoneFooter, RangePopover, TimeRangeSelects } from "./range-popover";
 

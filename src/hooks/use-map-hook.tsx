@@ -1,6 +1,7 @@
 import { type RefObject, useCallback } from "react";
 import type { Map } from "mapbox-gl";
-import type { Coordinates, MapTimeType } from "@/utils/interfaces";
+import type { Coordinates } from "@/types/place";
+import type { MapTimeType } from "@/utils/map-time";
 import { updateRouteAppearance } from "@/components/map-box/utils/route-layer";
 
 export const useMapHook = ({ map }: { map?: RefObject<Map | null> }) => {

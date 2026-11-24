@@ -1,4 +1,5 @@
 import "server-only";
+import { NextResponse } from "next/server";
 import { getAccessToken } from "@/server/session-token";
 
 const BACKEND_TIMEOUT_MS = 5000;
@@ -11,7 +12,7 @@ type BackendResult<T> = {
 };
 
 /** One place that calls the backend: adds the token, timeout and reads the { success, data, error } envelope. */
-export const backendFetch = async <T>(
+const backendFetch = async <T>(
   path: string,
   init?: RequestInit,
 ): Promise<BackendResult<T>> => {
@@ -53,4 +54,12 @@ export const serverFetch = async <T>(
   const result = await backendFetch<T>(endpoint);
   // TODO: tell "logged out" apart from "backend down" so an outage doesn't look like a logout
   return result.ok ? (result.data as T) : null;
+};
+
+/** A BFF route's response: the backend's data, or `{ error }`, with its status. */
+export const proxyJson = async (path: string, init?: RequestInit) => {
+  const result = await backendFetch(path, init);
+  return NextResponse.json(result.ok ? result.data : { error: result.error }, {
+    status: result.status,
+  });
 };

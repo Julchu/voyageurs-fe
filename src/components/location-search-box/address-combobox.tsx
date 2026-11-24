@@ -1,6 +1,8 @@
 import { Combobox } from "@base-ui/react/combobox";
 import { MapSearchIcon } from "@/components/ui/icons/map-icons";
-import type { Place } from "@/utils/interfaces";
+import type { Place } from "@/types/place";
+
+export const MIN_QUERY_LENGTH = 2;
 
 export type AddressComboboxItem = Pick<
   Place,
@@ -43,8 +45,8 @@ export const AddressCombobox = <Item extends AddressComboboxItem>({
   const status = loading
     ? "Searching…"
     : (error ??
-      (trimmedQuery.length === 1
-        ? "Type at least 2 characters to search."
+      (trimmedQuery && trimmedQuery.length < MIN_QUERY_LENGTH
+        ? `Type at least ${MIN_QUERY_LENGTH} characters to search.`
         : undefined));
 
   return (

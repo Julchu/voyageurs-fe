@@ -1,4 +1,4 @@
-import type { Coordinates } from "@/utils/interfaces";
+import type { Coordinates } from "@/types/place";
 
 export type Params = Record<string, string | number | undefined>;
 

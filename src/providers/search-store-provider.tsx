@@ -1,7 +1,7 @@
 "use client";
 
 import { type PropsWithChildren, useState } from "react";
-import type { PlaceSearch } from "@/utils/interfaces";
+import type { PlaceSearch } from "@/types/place";
 import {
   createSearchStore,
   initSearchStore,

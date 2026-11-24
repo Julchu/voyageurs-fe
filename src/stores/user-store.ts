@@ -1,5 +1,6 @@
 import { createStore } from "zustand";
-import type { Coordinates, UserInfo } from "@/utils/interfaces";
+import type { Coordinates } from "@/types/place";
+import type { UserInfo } from "@/types/user";
 
 export type UserState = {
   userInfo: UserInfo | null;

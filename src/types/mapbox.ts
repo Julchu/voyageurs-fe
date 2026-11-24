@@ -1,7 +1,7 @@
 // Mapbox's category catalog is open-ended; these IDs are not a fixed enum.
 export type MapboxCategoryId = string;
 
-export type MapboxPhoto =
+type MapboxPhoto =
   | string
   | { url?: string; width?: number | null; height?: number | null };
 
@@ -11,6 +11,16 @@ export type MapboxMetadata = {
   website?: string;
   phone?: string;
   opening_hours?: string;
+};
+
+/** A Search Box suggestion. It has no coordinates until it is retrieved. */
+export type SearchSuggestion = {
+  mapboxId: string;
+  name: string;
+  featureType: string;
+  streetAddress: string;
+  areaAddress: string;
+  category: string;
 };
 
 export type MapboxSuggestion = {

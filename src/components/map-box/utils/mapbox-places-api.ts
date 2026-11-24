@@ -1,4 +1,4 @@
-import type { Place } from "@/utils/interfaces";
+import type { Place } from "@/types/place";
 import type { MapboxPlaceRecord } from "@/types/mapbox";
 import { mapboxGet } from "./mapbox-api";
 import { isPoiId, placeFromRecord } from "./mapbox-place-parsing";

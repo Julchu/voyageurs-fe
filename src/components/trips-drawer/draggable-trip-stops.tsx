@@ -3,7 +3,7 @@ import {
   useTripStopSortable,
 } from "@/hooks/use-trip-stop-sorting";
 import { StopDragHandle } from "./stop-drag-controls";
-import type { Coordinates } from "@/utils/interfaces";
+import type { Coordinates } from "@/types/place";
 import type { TripStopDraft } from "@/types/trip-draft";
 import { MoveDownArrow, MoveUpArrow } from "@/components/ui/icons/move-icons";
 import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
@@ -14,7 +14,7 @@ import { useTripStore } from "@/providers/trip-store-provider";
 import { useShallow } from "zustand/react/shallow";
 import { VerticalEllipsisIcon } from "@/components/ui/icons/stop-card-icons";
 import { FlyToIcon } from "@/components/ui/icons/map-icons";
-import { dateDays, timeLabel } from "@/utils/trip-calendar";
+import { dateDays, timeLabel } from "@/utils/trip-time";
 import { stopId } from "@/utils/trip-stop";
 
 export const DraggableTripStops = ({

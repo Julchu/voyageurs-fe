@@ -5,14 +5,8 @@ import type {
   EventResizeDoneInfo,
 } from "@fullcalendar/react";
 import type { TimeSlot } from "@/types/trip-api";
-import {
-  DAY,
-  type SlotTime,
-  atMinute,
-  dayOf,
-  slotAt,
-  slotBetween,
-} from "./calendar-time";
+import { DAY_MINUTES as DAY, atMinute, dayOf } from "@/utils/trip-time";
+import { type SlotTime, slotAt, slotBetween } from "./calendar-time";
 import { toBusinessHours } from "./open-hours";
 import type { SlotSchedule } from "./use-slot-schedule";
 import { selectedEventClass } from "./week-calendar-theme";

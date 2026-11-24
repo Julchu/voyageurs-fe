@@ -1,4 +1,4 @@
-import type { Place } from "./interfaces";
+import type { Place } from "@/types/place";
 
 /** Only the fields we keep. Display-only data (photos, details) is dropped. */
 export const placeRecord = (place: Place): Place => ({

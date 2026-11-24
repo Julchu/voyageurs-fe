@@ -1,4 +1,4 @@
-import type { Coordinates } from "./interfaces";
+import type { Coordinates } from "@/types/place";
 
 const EARTH_RADIUS_METERS = 6_371_000;
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;

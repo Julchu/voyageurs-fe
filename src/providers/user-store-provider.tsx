@@ -1,7 +1,7 @@
 "use client";
 
 import { type PropsWithChildren, useState } from "react";
-import type { UserInfo } from "@/utils/interfaces";
+import type { UserInfo } from "@/types/user";
 import {
   createUserStore,
   initUserStore,

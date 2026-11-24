@@ -3,11 +3,13 @@ import { useUserStore } from "@/providers/user-store-provider";
 import { useEffect, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Button } from "@base-ui/react/button";
+import { cn } from "cn";
 import { XIcon } from "@/components/ui/icons/close-icons";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 import { resolveMapboxPlace } from "@/components/map-box/utils/poi-click-place";
 import { placeRecord } from "@/utils/place-record";
-import type { Place } from "@/utils/interfaces";
+import { placeIdentity } from "@/utils/place-identity";
+import type { Place } from "@/types/place";
 import Image from "next/image";
 import {
   DESKTOP_SEARCH_COLUMN,
@@ -19,7 +21,7 @@ import { MapAddIcon } from "@/components/ui/icons/map-icons";
 import { PlaceCategoryBadge } from "./place-category-badge";
 import { getPlacePlaceholder } from "./utils/place-category";
 import { TripadvisorPhotoCredits } from "./tripadvisor-credits";
-import { fetchTripadvisorPhotos } from "@/components/map-box/utils/tripadvisor-photos";
+import { fetchTripadvisorPhotos } from "@/api/tripadvisor-photos";
 
 type LookupState = {
   status: "loading" | "ready" | "error";
@@ -182,12 +184,13 @@ export const SelectedAddressPopup = () => {
         return (
           <Dialog.Portal>
             <div
-              className={`${MOBILE_PANEL_VIEWPORT} z-100 sm:top-auto sm:right-auto sm:bottom-60 sm:h-auto ${DESKTOP_SEARCH_COLUMN}`}
+              className={cn(
+                MOBILE_PANEL_VIEWPORT,
+                "z-100 sm:top-auto sm:right-auto sm:bottom-60 sm:h-auto",
+                DESKTOP_SEARCH_COLUMN,
+              )}
             >
-              <PlaceCard
-                key={`${payload.clientId ?? payload.publicId ?? payload.id ?? payload.mapboxId ?? payload.name}:${payload.coordinates.lat}:${payload.coordinates.lng}`}
-                payload={payload}
-              />
+              <PlaceCard key={placeIdentity(payload)} payload={payload} />
             </div>
           </Dialog.Portal>
         );

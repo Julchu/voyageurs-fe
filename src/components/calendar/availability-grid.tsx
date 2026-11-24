@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@base-ui/react/button";
 import type { EventDropInfo, EventResizeDoneInfo } from "@fullcalendar/react";
 import type { AvailabilityWindow } from "@/types/trip-api";
-import { DAY, atMinute, dayOf } from "./calendar-time";
+import { DAY_MINUTES as DAY, atMinute, dayOf } from "@/utils/trip-time";
 import {
   type Block,
   blockId,

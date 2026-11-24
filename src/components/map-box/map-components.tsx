@@ -1,7 +1,7 @@
 "use client";
 
 import { MapAndControls } from "@/components/map-box/map";
-import { type Coordinates } from "@/utils/interfaces";
+import { type Coordinates } from "@/types/place";
 import { VisitDrawer } from "@/components/visits-drawer/visit-drawer";
 import { SelectedAddressPopup } from "@/components/place-info-card/selected-address-popup";
 

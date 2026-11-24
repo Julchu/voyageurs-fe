@@ -1,8 +1,7 @@
 import { type ReactNode, useId } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { CaretDownIcon } from "@/components/ui/icons/caret-icons";
-import { timeLabel } from "@/utils/trip-calendar";
-import { DAY } from "./calendar-time";
+import { DAY_MINUTES as DAY, timeLabel } from "@/utils/trip-time";
 import { calendarButton, calendarInput, pickerFooter } from "./styles";
 
 type TimeOption = { value: number; label: string };

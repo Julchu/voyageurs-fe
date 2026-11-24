@@ -1,5 +1,6 @@
 import type { Map as MapboxMap } from "mapbox-gl";
 import { placeFromFeature } from "@/components/map-box/utils/poi-click-place";
+import { placeIdentity } from "@/utils/place-identity";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 
 export const addPoiInteractions = (map: MapboxMap) => {
@@ -17,7 +18,7 @@ export const addPoiInteractions = (map: MapboxMap) => {
       handler: (e) => {
         const place = e.feature ? placeFromFeature(e.feature) : null;
         if (!place) return;
-        const key = `${place.name}:${place.coordinates.lat}:${place.coordinates.lng}`;
+        const key = placeIdentity(place);
         // poi and landmark-icons can both report one click. Ignore the
         // duplicate in this turn, then allow the place to be opened again.
         if (openedKey === key) return true;
