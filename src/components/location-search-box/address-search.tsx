@@ -5,13 +5,12 @@ import { useMapStore } from "@/components/map-box/map-store";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import type { PlaceSearch } from "@/types/place";
 import type { SearchSuggestion } from "@/types/mapbox";
-import { useSearchStore } from "@/providers/search-store-provider";
+import { useSearches } from "@/hooks/use-searches";
 import {
   createSearchBoxSessionToken,
   searchBoxRetrieve,
   searchBoxSuggest,
 } from "@/components/map-box/utils/mapbox-search-box";
-import { placeRecord } from "@/utils/place-record";
 import { placeIdentity } from "@/utils/place-identity";
 import {
   AddressCombobox,
@@ -20,7 +19,6 @@ import {
 } from "./address-combobox";
 import { DESKTOP_SEARCH_COLUMN } from "@/components/map-box/map-panel-layout";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
-import { useShallow } from "zustand/react/shallow";
 
 const MAPBOX_SUGGESTION_LIMIT = 10;
 const SUGGEST_DEBOUNCE_MS = 300;
@@ -40,9 +38,7 @@ type AddressOption = AddressComboboxItem &
 
 export const AddressSearch = () => {
   const map = useMapStore((state) => state.map);
-  const { searches, logSearch } = useSearchStore(
-    useShallow(({ searches, logSearch }) => ({ searches, logSearch })),
-  );
+  const { searches, logSearch } = useSearches();
   const sessionRef = useRef<{
     token: string;
     startedAt: number;
@@ -143,7 +139,7 @@ export const AddressSearch = () => {
       if (place) {
         openPlacePopup.openWithPayload(place);
         flyTo(map, place.coordinates);
-        void logSearch({ ...placeRecord(place), query: searchQuery });
+        void logSearch({ ...place, query: searchQuery });
       }
     });
   };

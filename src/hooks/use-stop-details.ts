@@ -35,11 +35,11 @@ export const useStopDetails = () => {
     })),
   );
   const tripId = saved?.publicId;
-  const { draft, editDetails, clearDetails } = useStopDetailsStore(
+  const { draft, editDetails, clearTrip } = useStopDetailsStore(
     useShallow((state) => ({
       draft: tripId ? state.drafts[tripId] : undefined,
       editDetails: state.editDetails,
-      clearDetails: state.clearDetails,
+      clearTrip: state.clearTrip,
     })),
   );
   const places = new Map(saved?.places.map((place) => [place.key, place]));
@@ -71,10 +71,10 @@ export const useStopDetails = () => {
     if (tripId) editDetails(tripId, row.key, { ...row.details, ...patch });
   };
   const save = async () => {
-    if (tripId && (await saveDetails(changes))) clearDetails(tripId);
+    if (tripId && (await saveDetails(changes))) clearTrip(tripId);
   };
   const reset = () => {
-    if (tripId) clearDetails(tripId);
+    if (tripId) clearTrip(tripId);
   };
 
   return {

@@ -10,11 +10,9 @@ import {
 } from "@/components/ui/popup-styles";
 import { GoogleIcon } from "@/components/ui/icons/google-icon";
 import { useUserStore } from "@/providers/user-store-provider";
-import { useTripStore } from "@/providers/trip-store-provider";
-import { useStopDetailsStore } from "@/providers/stop-details-store-provider";
+import { useLogout } from "@/hooks/use-logout";
 import { tripDrawerHandle } from "@/components/trips-drawer/trip-drawer";
 import { Drawer } from "@base-ui/react/drawer";
-import { useShallow } from "zustand/react/shallow";
 import { visitDrawerHandle } from "@/components/visits-drawer/visit-drawer";
 
 const userMenuItem =
@@ -22,27 +20,14 @@ const userMenuItem =
 
 export const UserMenu = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { userInfo, logout } = useUserStore(
-    useShallow(({ userInfo, logout }) => ({ userInfo, logout })),
-  );
-
-  const clearTrips = useTripStore(({ clearTrips }) => clearTrips);
-  const clearDetails = useStopDetailsStore(({ clearDetails }) => clearDetails);
+  const userInfo = useUserStore(({ userInfo }) => userInfo);
+  const logout = useLogout();
 
   const logoutHandler = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Unable to logout", error);
-    } finally {
-      clearTrips();
-      clearDetails();
-      // TODO: Clear saved searches from memory and browser storage on logout,
-      // and ignore search responses started before logout.
-      setIsLoggingOut(false);
-    }
+    await logout();
+    setIsLoggingOut(false);
   };
 
   return (
