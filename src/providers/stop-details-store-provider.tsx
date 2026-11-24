@@ -1,19 +1,9 @@
 "use client";
 
-import { type PropsWithChildren, useState } from "react";
-import {
-  createStopDetailsStore,
-  type StopDetailsStore,
-} from "@/stores/stop-details-store";
+import { createStopDetailsStore } from "@/stores/stop-details-store";
 import { createStoreContext } from "./create-store-context";
 
-const { Provider, useSelector } = createStoreContext<StopDetailsStore>(
-  "useStopDetailsStore",
-);
+const store = createStoreContext("useStopDetailsStore", createStopDetailsStore);
 
-export const useStopDetailsStore = useSelector;
-
-export const StopDetailsStoreProvider = ({ children }: PropsWithChildren) => {
-  const [store] = useState(createStopDetailsStore);
-  return <Provider value={store}>{children}</Provider>;
-};
+export const StopDetailsStoreProvider = store.Provider;
+export const useStopDetailsStore = store.useSelector;

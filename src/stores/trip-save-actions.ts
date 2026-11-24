@@ -1,18 +1,15 @@
+import { listTrips, sendTrip } from "@/api/trips";
 import type { TripDto } from "@/types/trip-api";
 import type { TripActionCreator } from "./trip-store";
 import { initTripStore } from "./trip-draft-actions";
 import {
   calendarChanges,
   rebaseDraft,
-  sendTrip,
   serverTrip,
   stopListChanges,
   toTripDraft,
 } from "@/utils/trip-sync";
-import {
-  fetchCollection,
-  shouldFetchCollection,
-} from "./utils/collection-load";
+import { shouldFetchCollection } from "./utils/collection-load";
 
 const withTrip = (trips: TripDto[], trip: TripDto) =>
   trips.some((item) => item.publicId === trip.publicId)
@@ -41,7 +38,7 @@ export const createTripSaveActions: TripActionCreator<
       const beforeFetch = new Set(get().trips);
       set({ tripsLoadState: "loading" });
       try {
-        const trips = await fetchCollection<TripDto>("/api/trips", "Trip");
+        const trips = await listTrips();
         if (version !== requestVersion) return;
         set(({ currentTrip, trips: localTrips }) => {
           // A list request may finish after a save. Keep those newer results.

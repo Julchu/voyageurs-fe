@@ -1,29 +1,16 @@
 "use client";
 
-import { type PropsWithChildren, useState } from "react";
 import type { PlaceSearch } from "@/types/place";
-import {
-  createSearchStore,
-  initSearchStore,
-  type SearchStore,
-} from "@/stores/search-store";
+import { createSearchStore, initSearchStore } from "@/stores/search-store";
 import { createStoreContext } from "./create-store-context";
 
-const { Provider, useSelector } =
-  createStoreContext<SearchStore>("useSearchStore");
+const store = createStoreContext(
+  "useSearchStore",
+  (props: { searches: PlaceSearch[]; searchesServerLoaded: boolean }) =>
+    createSearchStore(
+      initSearchStore(props.searches, props.searchesServerLoaded),
+    ),
+);
 
-export const useSearchStore = useSelector;
-
-export const SearchStoreProvider = ({
-  children,
-  searches,
-  searchesServerLoaded,
-}: PropsWithChildren<{
-  searches: PlaceSearch[];
-  searchesServerLoaded: boolean;
-}>) => {
-  const [store] = useState(() =>
-    createSearchStore(initSearchStore(searches, searchesServerLoaded)),
-  );
-  return <Provider value={store}>{children}</Provider>;
-};
+export const SearchStoreProvider = store.Provider;
+export const useSearchStore = store.useSelector;

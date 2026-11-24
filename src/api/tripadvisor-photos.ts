@@ -1,4 +1,5 @@
 import type { Place, PlacePhoto } from "@/types/place";
+import { apiJson } from "@/api/client";
 
 type TripadvisorPhotosResponse = {
   photos?: Omit<PlacePhoto, "provider">[];
@@ -10,7 +11,7 @@ type TripadvisorPhotosResponse = {
  * Display only: `placeRecord()` whitelists fields, so these are never persisted.
  */
 export const fetchTripadvisorPhotos = async (
-  place: Pick<Place, "name" | "coordinates" | "mapboxId">,
+  place: Pick<Place, "name" | "coordinates">,
   signal?: AbortSignal,
 ): Promise<Pick<Place, "photos" | "tripadvisorUrl"> | undefined> => {
   const params = new URLSearchParams({
@@ -18,15 +19,13 @@ export const fetchTripadvisorPhotos = async (
     lat: String(place.coordinates.lat),
     lng: String(place.coordinates.lng),
   });
-  if (place.mapboxId) params.set("mapboxId", place.mapboxId);
 
   try {
-    const response = await fetch(`/api/tripadvisor/photos?${params}`, {
-      signal,
-    });
-    if (!response.ok) return;
     const { photos = [], tripadvisorUrl } =
-      (await response.json()) as TripadvisorPhotosResponse;
+      await apiJson<TripadvisorPhotosResponse>(
+        `/api/tripadvisor/photos?${params}`,
+        { signal },
+      );
     // A Tripadvisor photo may only be shown with its link-back.
     if (!photos.length || !tripadvisorUrl) return;
     return {

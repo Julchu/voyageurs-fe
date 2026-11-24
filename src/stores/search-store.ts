@@ -2,9 +2,9 @@ import { createStore } from "zustand";
 import { persist } from "zustand/middleware";
 import type { PlaceSearch, PlaceSearchInput } from "@/types/place";
 import { errorMessage } from "@/utils/errors";
+import { listSearches, postSearch } from "@/api/searches";
 import {
   type CollectionLoadState,
-  fetchCollection,
   shouldFetchCollection,
 } from "@/stores/utils/collection-load";
 
@@ -49,23 +49,6 @@ const localSearch = (entry: PlaceSearchInput): PlaceSearch => ({
   updatedAt: null,
 });
 
-/** The saved search, or null when signed out. */
-const postSearch = async (
-  entry: PlaceSearchInput,
-): Promise<PlaceSearch | null> => {
-  const response = await fetch("/api/searches", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(entry),
-  });
-  if (response.status === 401) return null;
-
-  const body = await response.json();
-  if (!response.ok) throw new Error(body.error ?? "Unable to log search");
-  if (!body?.publicId) throw new Error("Invalid search response");
-  return body as PlaceSearch;
-};
-
 export const createSearchStore = (initialState: SearchState) =>
   createStore<SearchStore>()(
     persist(
@@ -76,10 +59,7 @@ export const createSearchStore = (initialState: SearchState) =>
           if (!shouldFetchCollection(get().searchesLoadState)) return;
           set({ searchesLoadState: "loading" });
           try {
-            const searches = await fetchCollection<PlaceSearch>(
-              "/api/searches",
-              "Search",
-            );
+            const searches = await listSearches();
             set({ searches, searchesLoadState: "loaded", error: null });
           } catch (error) {
             console.error("Unable to retrieve searches", error);
