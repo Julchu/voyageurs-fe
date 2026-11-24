@@ -2,14 +2,14 @@ import { useTripStopSorting } from "@/hooks/use-trip-stop-sorting";
 import { TripDayHeading } from "./stop-drag-controls";
 import { DragDropProvider } from "@dnd-kit/react";
 import { DraggableTripStops } from "@/components/trips-drawer/draggable-trip-stops";
-import { useMapHook } from "@/hooks/use-map-hook";
-import { MapNavigation } from "@/components/trips-drawer/types";
+import { flyTo } from "@/components/map-box/map-actions";
+import { useMapStore } from "@/components/map-box/map-store";
 import { stopId } from "@/utils/trip-stop";
 import { Fragment } from "react";
 
-export const StopsList = ({ map }: MapNavigation) => {
+export const StopsList = () => {
+  const map = useMapStore((state) => state.map);
   const { trip, busy, slotsByStop, handleDragEnd } = useTripStopSorting();
-  const { flyTo } = useMapHook({ map });
 
   if (!trip)
     return (
@@ -48,7 +48,7 @@ export const StopsList = ({ map }: MapNavigation) => {
                   <DraggableTripStops
                     index={index}
                     stop={stop}
-                    onClickHandler={flyTo}
+                    onClickHandler={(coordinates) => flyTo(map, coordinates)}
                   />
                 </Fragment>
               );

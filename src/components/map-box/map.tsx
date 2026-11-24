@@ -1,8 +1,8 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapBoxGL, { type Map as MapboxMap } from "mapbox-gl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { cn } from "cn";
 import { Controls } from "@/components/map-controls/controls";
-import type { Coordinates } from "@/types/place";
 import {
   applyStandardOverrides,
   buildStandardStyle,
@@ -10,96 +10,85 @@ import {
 import { addPoiInteractions } from "@/components/map-box/utils/poi-interactions";
 import { AddressSearch } from "@/components/location-search-box/address-search";
 import { TripDrawer } from "@/components/trips-drawer/trip-drawer";
+import { useMapStore } from "@/components/map-box/map-store";
 import { useMapLocation } from "@/components/map-box/use-map-location";
 import { useTripMap } from "@/components/map-box/use-trip-map";
 import { darkMode } from "@/utils/map-time";
+import { useHydrated } from "@/hooks/use-hydrated";
 
-export const MapAndControls = ({
-  initialCoords,
-}: {
-  initialCoords: Coordinates;
-}) => {
-  const map = useRef<MapboxMap | null>(null);
+const DEFAULT_CENTER: [lng: number, lat: number] = [-79.387054, 43.642567];
+
+export const MapAndControls = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  // The starting center is only used when mounting the map.
-  const initialCenter = useRef(initialCoords);
-  const [mapLoading, setMapLoading] = useState(true);
-  const [mapFocus, setMapFocus] = useState<Coordinates | null>(null);
+  const setMap = useMapStore((state) => state.setMap);
+  // Local time is client-only: the server renders the light background.
+  const dark = useHydrated() && darkMode();
 
   useEffect(() => {
     if (!mapContainer.current) return;
     let removeInteractions: (() => void) | undefined;
     let cancelOverrides: (() => void) | undefined;
 
+    mapBoxGL.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    let map: MapboxMap;
     try {
-      mapBoxGL.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-      const { lng, lat } = initialCenter.current;
-      const mapInstance = new mapBoxGL.Map({
+      map = new mapBoxGL.Map({
         attributionControl: false,
         container: mapContainer.current,
-        center: [lng, lat],
+        center: DEFAULT_CENTER,
         zoom: 15.5,
         antialias: true,
         crossSourceCollisions: true,
         performanceMetricsCollection: false,
         style: buildStandardStyle(),
       });
-      map.current = mapInstance;
-
-      mapInstance.on("style.load", () => {
-        cancelOverrides?.();
-        cancelOverrides = applyStandardOverrides(mapInstance);
-        mapInstance.resize();
-      });
-      mapInstance.on("load", () => {
-        removeInteractions = addPoiInteractions(mapInstance);
-      });
-      mapInstance.on("idle", () => {
-        const { lat, lng } = mapInstance.getCenter();
-        setMapFocus((previous) =>
-          previous?.lat === lat && previous.lng === lng
-            ? previous
-            : { lat, lng },
-        );
-        setMapLoading(false);
-      });
     } catch (error) {
+      // TODO: show a map error state instead of the loading spinner.
       console.error("Map failed to start", error);
-      queueMicrotask(() => setMapLoading(false));
+      return;
     }
 
+    map.on("style.load", () => {
+      cancelOverrides?.();
+      cancelOverrides = applyStandardOverrides(map);
+      map.resize();
+    });
+    map.on("load", () => {
+      removeInteractions = addPoiInteractions(map);
+      setMap(map);
+    });
+
     return () => {
+      setMap(null);
       cancelOverrides?.();
       removeInteractions?.();
-      map.current?.remove();
-      map.current = null;
+      map.remove();
     };
-  }, []);
+  }, [setMap]);
 
-  const { locationLoading, triggerGeolocator } = useMapLocation(
-    map,
-    mapLoading,
-  );
-  useTripMap(map, mapLoading);
+  const { locationLoading, triggerGeolocator } = useMapLocation();
+  useTripMap();
 
   return (
     <div
-      className={`relative h-full w-full overflow-hidden drop-shadow-lg ${
-        darkMode() ? "bg-slate-800" : "bg-gray-100"
-      }`}
+      className={cn(
+        "relative h-full w-full overflow-hidden drop-shadow-lg",
+        dark ? "bg-slate-800" : "bg-gray-100",
+      )}
     >
       <div
-        className={`h-full w-full [&_.mapboxgl-ctrl-bottom-left]:hidden [&_.mapboxgl-ctrl-top-right]:hidden ${locationLoading ? "animate-pulse" : ""}`}
+        className={cn(
+          "h-full w-full [&_.mapboxgl-ctrl-bottom-left]:hidden [&_.mapboxgl-ctrl-top-right]:hidden",
+          locationLoading && "animate-pulse",
+        )}
         ref={mapContainer}
       />
       <Controls
-        map={map}
-        mapLoading={mapLoading}
         locationLoading={locationLoading}
         triggerGeolocator={triggerGeolocator}
       />
-      <AddressSearch proximity={mapFocus ?? initialCoords} map={map} />
-      <TripDrawer map={map} />
+      <AddressSearch />
+      <TripDrawer />
     </div>
   );
 };

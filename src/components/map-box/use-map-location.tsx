@@ -1,60 +1,68 @@
-import { type RefObject, useEffect, useState } from "react";
-import { type Map as MapboxMap, Marker } from "mapbox-gl";
-import { renderToStaticMarkup } from "react-dom/server";
+import { useEffect, useRef, useState } from "react";
+import { Marker } from "mapbox-gl";
+import { createRoot } from "react-dom/client";
+import { useMapStore } from "@/components/map-box/map-store";
+import { flyTo } from "@/components/map-box/map-actions";
 import { useUserStore } from "@/providers/user-store-provider";
 import { AnimatedPinFilledIcon } from "@/components/ui/icons/pin-icons";
 
-export const useMapLocation = (
-  map: RefObject<MapboxMap | null>,
-  mapLoading: boolean,
-) => {
+export const useMapLocation = () => {
+  const map = useMapStore((state) => state.map);
   const lastLocation = useUserStore((state) => state.lastLocation);
   const setLastLocation = useUserStore((state) => state.setLastLocation);
   const [locationLoading, setLocationLoading] = useState(false);
+  const currentMap = useRef(map);
 
   useEffect(() => {
-    if (!map.current || mapLoading || !lastLocation) return;
+    currentMap.current = map;
+    return () => {
+      currentMap.current = null;
+    };
+  }, [map]);
+
+  useEffect(() => {
+    if (!map || !lastLocation) return;
 
     const element = document.createElement("div");
     element.className = "marker";
-    element.innerHTML = renderToStaticMarkup(
+    const root = createRoot(element);
+    root.render(
       <AnimatedPinFilledIcon className="h-6 w-6 fill-blue-500 stroke-none" />,
     );
     const marker = new Marker({ element, clickTolerance: 40 })
       .setLngLat([lastLocation.lng, lastLocation.lat])
-      .addTo(map.current);
+      .addTo(map);
 
     return () => {
       marker.remove();
+      // A root can't unmount while React is committing.
+      queueMicrotask(() => root.unmount());
     };
-  }, [map, mapLoading, lastLocation]);
+  }, [map, lastLocation]);
 
   useEffect(() => {
-    const mapInstance = map.current;
-    if (!mapInstance || mapLoading) return;
+    if (!map) return;
     const onMoveEnd = () => setLocationLoading(false);
-    mapInstance.on("moveend", onMoveEnd);
+    map.on("moveend", onMoveEnd);
     return () => {
-      mapInstance.off("moveend", onMoveEnd);
+      map.off("moveend", onMoveEnd);
     };
-  }, [map, mapLoading]);
+  }, [map]);
 
   const triggerGeolocator = () => {
-    const mapInstance = map.current;
-    if (!mapInstance || mapLoading) return;
+    if (!map) return;
     setLocationLoading(true);
 
     navigator.geolocation.getCurrentPosition(
       ({ coords: { longitude: lng, latitude: lat } }) => {
         // A location request can finish after the map has unmounted.
-        if (map.current !== mapInstance) return;
-        const coordinates = { lng, lat };
-        setLastLocation(coordinates);
-        mapInstance.flyTo({ center: [lng, lat], zoom: 15 });
-        if (!mapInstance.isMoving()) setLocationLoading(false);
+        if (currentMap.current !== map) return;
+        setLastLocation({ lng, lat });
+        flyTo(map, { lng, lat });
+        if (!map.isMoving()) setLocationLoading(false);
       },
       (error) => {
-        if (map.current !== mapInstance) return;
+        if (currentMap.current !== map) return;
         console.error("Error geolocating", error);
         setLocationLoading(false);
       },

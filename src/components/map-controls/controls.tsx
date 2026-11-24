@@ -1,5 +1,5 @@
-import { type RefObject, useState } from "react";
-import type { Map } from "mapbox-gl";
+import { useState } from "react";
+import { cn } from "cn";
 import {
   DawnIcon,
   DayIcon,
@@ -10,7 +10,8 @@ import {
   PowerIcon,
 } from "@/components/ui/icons/control-icons";
 import { Spinner } from "@/components/ui/icons/spinner";
-import { useMapHook } from "@/hooks/use-map-hook";
+import { updateRouteAppearance } from "@/components/map-box/utils/route-layer";
+import { useMapStore } from "@/components/map-box/map-store";
 import { useUserStore } from "@/providers/user-store-provider";
 import { Toolbar } from "@base-ui/react/toolbar";
 import { MapTimeEnum, MapTimeValues, mapTimeFromDate } from "@/utils/map-time";
@@ -26,33 +27,36 @@ const mapTimeIcons = {
 };
 
 export const Controls = ({
-  map,
-  mapLoading,
   locationLoading,
   triggerGeolocator,
 }: {
-  map: RefObject<Map | null>;
-  mapLoading: boolean;
   locationLoading: boolean;
   triggerGeolocator: () => void;
 }) => {
+  const map = useMapStore((state) => state.map);
   const userInfo = useUserStore((state) => state.userInfo);
 
   const [currentMapTimeMode, setCurrentMapTimeMode] = useState(() =>
     mapTimeFromDate(),
   );
 
-  const [performanceMode, setPerformanceModeState] = useState(false);
+  const [performanceMode, setPerformanceMode] = useState(false);
 
-  const { triggerNorth, setLightMode, setPerformanceMode } = useMapHook({
-    map,
-  });
+  if (!map)
+    return (
+      <div
+        role="status"
+        aria-label="Loading map"
+        className="pointer-events-none absolute inset-0 grid place-items-center"
+      >
+        <Spinner className="h-10 w-10 animate-spin fill-blue-500" />
+      </div>
+    );
 
   const togglePerformanceMode = () => {
-    if (!map.current) return;
     const nextMode = !performanceMode;
+    map.setConfigProperty("basemap", "show3dObjects", !nextMode);
     setPerformanceMode(nextMode);
-    setPerformanceModeState(nextMode);
   };
 
   const rotateMapTime = () => {
@@ -60,18 +64,12 @@ export const Controls = ({
     const nextIndex =
       currentIndex === -1 ? 0 : (currentIndex + 1) % MapTimeValues.length;
     const nextMode = MapTimeValues[nextIndex];
-    setLightMode(nextMode);
+    map.setConfigProperty("basemap", "lightPreset", nextMode);
+    updateRouteAppearance(map);
     setCurrentMapTimeMode(nextMode);
   };
 
   const MapTimeIcon = mapTimeIcons[currentMapTimeMode];
-
-  if (mapLoading)
-    return (
-      <div className="absolute top-1/2 right-1/2 bottom-1/2 left-1/2 bg-none">
-        <Spinner className="h-10 w-10 animate-spin fill-blue-500" />
-      </div>
-    );
 
   return (
     <Toolbar.Root orientation="vertical" className="absolute bottom-4 left-4">
@@ -84,14 +82,17 @@ export const Controls = ({
         >
           <LocationIcon className="absolute h-6 w-6 stroke-white" />
           <LocationIcon
-            className={`absolute h-6 w-6 stroke-white ${locationLoading ? "animate-ping" : ""}`}
+            className={cn(
+              "absolute h-6 w-6 stroke-white",
+              locationLoading && "animate-ping",
+            )}
           />
         </Toolbar.Button>
 
         <Toolbar.Button
           className={controlButton}
           aria-label="Point map north"
-          onClick={triggerNorth}
+          onClick={() => map.resetNorth({ duration: 2000 })}
         >
           <NorthIcon className={"h-6 w-6 stroke-white"} />
         </Toolbar.Button>

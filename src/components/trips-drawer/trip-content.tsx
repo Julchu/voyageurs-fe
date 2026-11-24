@@ -7,7 +7,6 @@ import { cn } from "cn";
 import { StopsList } from "@/components/trips-drawer/stops-list";
 import { TripSelector } from "@/components/trips-drawer/trip-selector";
 import { EditorFooter } from "@/components/ui/editor-footer";
-import { MapNavigation } from "@/components/trips-drawer/types";
 import { XIcon } from "@/components/ui/icons/close-icons";
 import { PencilPinIcon, PinMenuButton } from "@/components/ui/icons/pin-icons";
 import { MenuItem } from "@/components/ui/menu-item";
@@ -16,7 +15,7 @@ import { useTripDraft } from "@/hooks/use-trip-draft";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useUserStore } from "@/providers/user-store-provider";
 
-export const TripContent = ({ map }: MapNavigation) => {
+export const TripContent = () => {
   const signedIn = useUserStore(({ userInfo }) => !!userInfo);
   const [isEditingTrip, setIsEditingTrip] = useState(false);
   const renameTrip = useTripStore(({ renameTrip }) => renameTrip);
@@ -69,7 +68,7 @@ export const TripContent = ({ map }: MapNavigation) => {
       <Separator className="h-px bg-gray-200" />
 
       <div className="flex min-h-0 flex-auto flex-col p-4 font-medium">
-        <StopsList map={map} />
+        <StopsList />
       </div>
 
       <EditorFooter
