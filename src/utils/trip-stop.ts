@@ -8,3 +8,7 @@ export const stopId = (stop: Pick<TripStopDraft, "publicId" | "clientId">) =>
 export const placeKey = (
   stop: Pick<TripStopDraft, "mapboxId" | "coordinates">,
 ) => stop.mapboxId?.trim() || `${stop.coordinates.lat},${stop.coordinates.lng}`;
+
+/** "1 stop", "3 stops". */
+export const stopCountLabel = (count: number) =>
+  `${count} ${count === 1 ? "stop" : "stops"}`;

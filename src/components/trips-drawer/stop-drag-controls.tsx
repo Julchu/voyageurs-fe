@@ -1,13 +1,17 @@
 "use client";
 
 import { type ComponentProps, useId, useLayoutEffect, useState } from "react";
+import { cn } from "cn";
 import { Button } from "@base-ui/react/button";
 import { DragDropManager, type Draggable } from "@dnd-kit/dom";
 import { DragDropProvider, useDroppable } from "@dnd-kit/react";
 import { isSortable } from "@dnd-kit/react/sortable";
+import { sectionLabel } from "@/components/ui/button-styles";
 import { GripIcon } from "@/components/ui/icons/stop-card-icons";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { canMoveStop } from "@/stores/trip-edits";
+import { stopCountLabel } from "@/utils/trip-stop";
+import { parseDate, weekdays } from "@/utils/trip-time";
 
 /** DragDropProvider that ends a live drag before dnd-kit tears down its manager. */
 export function StopDragProvider({
@@ -40,19 +44,22 @@ export function StopDragHandle({
       ref={handleRef}
       disabled={disabled}
       aria-label={`Reorder ${name}`}
-      className="flex size-8 shrink-0 cursor-grab touch-none items-center justify-center rounded text-neutral-400 outline-blue-500 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
+      className="flex size-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-neutral-400 outline-blue-500 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
     >
-      <GripIcon aria-hidden="true" className="size-6 fill-blue-500" />
+      <GripIcon aria-hidden="true" className="size-5 fill-neutral-400" />
     </Button>
   );
 }
 
 export function TripDayHeading({
   date,
+  count,
   disabled,
   as = "li",
 }: {
-  date?: string;
+  date: string;
+  /** Stops on this day. */
+  count: number;
   disabled: boolean;
   as?: "li" | "div" | "tr";
 }) {
@@ -60,7 +67,7 @@ export function TripDayHeading({
   const { ref, isDropTarget } = useDroppable({
     id: useId(),
     data: { targetDate: date },
-    disabled: disabled || !date,
+    disabled,
     // A heading that would reject this day move can't become the drop target.
     // `accept` is typed with the abstract Draggable; at runtime it's the DOM one.
     accept: (draggable) => {
@@ -71,20 +78,17 @@ export function TripDayHeading({
       );
     },
   });
-  const label = date
-    ? new Intl.DateTimeFormat("en", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        timeZone: "UTC",
-      }).format(new Date(`${date}T00:00:00Z`))
-    : "Unscheduled";
+  const day = parseDate(date);
   const heading = (
-    <h3 className="text-xs font-semibold tracking-wide text-neutral-500">
-      {label}
-      {date && !disabled && (
-        <span className="ml-2 text-[10px] font-normal">
+    <h3 className="flex items-center gap-2">
+      <span className={sectionLabel}>
+        {weekdays[day.getUTCDay()].slice(0, 3)} {day.getUTCDate()}
+      </span>
+      <span className="text-xs text-neutral-400">
+        · {stopCountLabel(count)}
+      </span>
+      {isDropTarget && (
+        <span className="ml-auto text-xs font-semibold text-blue-500">
           Drop here to append
         </span>
       )}
@@ -94,7 +98,10 @@ export function TripDayHeading({
   return (
     <Tag
       ref={ref}
-      className={`rounded pt-3 pb-1 first:pt-0 ${isDropTarget ? "bg-blue-100 ring-1 ring-blue-300" : ""}`}
+      className={cn(
+        "rounded-2xl px-2 pt-4 pb-1 first:pt-1",
+        isDropTarget && "bg-blue-50 outline-2 outline-blue-300 outline-dashed",
+      )}
     >
       {as === "tr" ? (
         <td colSpan={8} className="border-b border-neutral-100 px-4 py-3">

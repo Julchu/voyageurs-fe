@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Drawer } from "@base-ui/react/drawer";
 import { cn } from "cn";
 import { useMediaQuery } from "@base-ui/react/unstable-use-media-query";
@@ -13,6 +15,11 @@ export const tripDrawerHandle = Drawer.createHandle();
 
 export const TripDrawer = () => {
   const isDesktop = useMediaQuery(DESKTOP_MAP_QUERY, { defaultMatches: false });
+  const pathname = usePathname();
+
+  useEffect(() => {
+    tripDrawerHandle.close();
+  }, [pathname]);
 
   return (
     <Drawer.Root
