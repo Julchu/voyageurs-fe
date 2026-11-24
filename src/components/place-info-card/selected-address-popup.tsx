@@ -7,7 +7,6 @@ import { cn } from "cn";
 import { XIcon } from "@/components/ui/icons/close-icons";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 import { resolveMapboxPlace } from "@/components/map-box/utils/poi-click-place";
-import { placeRecord } from "@/utils/place-record";
 import { placeIdentity } from "@/utils/place-identity";
 import type { Place } from "@/types/place";
 import Image from "next/image";
@@ -43,34 +42,23 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
   useEffect(() => {
     if (payload.placeInfoLoaded) return;
     const controller = new AbortController();
-    void resolveMapboxPlace(payload, controller.signal).then((next) => {
-      if (controller.signal.aborted) return;
-      if (next) setPlace(next);
+    const { signal } = controller;
+    void (async () => {
+      const found = await resolveMapboxPlace(payload, signal);
+      if (signal.aborted) return;
+      if (found) setPlace(found);
       setLookup((current) => ({
         ...current,
-        status: next ? "ready" : "error",
+        status: found ? "ready" : "error",
       }));
-    });
-    return () => controller.abort();
-  }, [payload, lookup.attempt]);
 
-  // Tripadvisor is billed per lookup: signed-in only, map POIs only, and only when Mapbox has no photos.
-  const needsTripadvisor =
-    signedIn &&
-    !payload.placeInfoLoaded &&
-    lookup.status !== "loading" &&
-    !place.photos?.length;
-
-  useEffect(() => {
-    if (!needsTripadvisor) return;
-    const controller = new AbortController();
-    void fetchTripadvisorPhotos(place, controller.signal).then((photos) => {
-      if (photos && !controller.signal.aborted) {
-        setPlace((current) => ({ ...current, ...photos }));
-      }
-    });
+      // Tripadvisor is billed per lookup: signed-in only, only after a found place with no Mapbox photos.
+      if (!found || !signedIn || found.photos?.length) return;
+      const photos = await fetchTripadvisorPhotos(found, signal);
+      if (photos && !signal.aborted) setPlace({ ...found, ...photos });
+    })();
     return () => controller.abort();
-  }, [needsTripadvisor, place]);
+  }, [payload, lookup.attempt, signedIn]);
 
   const photo = place.photos?.find(
     (photo) => !failedPhotos.includes(photo.url),
@@ -121,19 +109,27 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
               <Dialog.Title className="truncate text-xl leading-tight font-semibold">
                 {place.name}
               </Dialog.Title>
-              <Dialog.Description
-                className={`mt-2 text-sm text-neutral-600 ${!addressPending && place.streetAddress ? "capitalize" : ""}`}
-              >
-                {addressPending
-                  ? "Loading place…"
-                  : place.streetAddress || "Street address unavailable"}
-              </Dialog.Description>
-              <Dialog.Description
-                className={`mt-1 text-sm text-neutral-600 ${!lookingUp && place.areaAddress ? "capitalize" : ""}`}
-              >
-                {lookingUp && !place.areaAddress
-                  ? "Loading place…"
-                  : place.areaAddress || "Area address unavailable"}
+              <Dialog.Description className="mt-2 text-sm text-neutral-600">
+                <span
+                  className={cn(
+                    "block",
+                    !addressPending && place.streetAddress && "capitalize",
+                  )}
+                >
+                  {addressPending
+                    ? "Loading place…"
+                    : place.streetAddress || "Street address unavailable"}
+                </span>
+                <span
+                  className={cn(
+                    "mt-1 block",
+                    !lookingUp && place.areaAddress && "capitalize",
+                  )}
+                >
+                  {lookingUp && !place.areaAddress
+                    ? "Loading place…"
+                    : place.areaAddress || "Area address unavailable"}
+                </span>
               </Dialog.Description>
             </div>
           </div>
@@ -165,8 +161,8 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
           <div className="flex items-center sm:ml-auto sm:border-neutral-200 sm:pl-4">
             <Dialog.Close
               onClick={() => {
-                addStop(placeRecord(place));
-                tripDrawerHandle.open("");
+                addStop(place);
+                tripDrawerHandle.open(null);
               }}
               disabled={lookingUp}
               className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-blue-600 px-3 text-sm leading-none font-medium whitespace-nowrap text-white select-none hover:not-data-disabled:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
