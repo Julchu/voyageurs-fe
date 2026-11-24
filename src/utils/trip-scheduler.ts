@@ -86,24 +86,23 @@ export const placeMove = (
     throw new Error("The neighbouring time slots are in reverse time order.");
 
   if (moved) {
+    const fits = (candidate: TimeSlot) =>
+      gapMinutes(previous, candidate) >= 0 &&
+      gapMinutes(candidate, next) >= 0 &&
+      canSchedule(slots, candidate, movedHours);
     const dates = move.targetDate
       ? [move.targetDate]
       : [moved.date, previous?.date, next?.date].filter(
           (date) => date !== undefined,
         );
-    for (const date of new Set(dates)) {
-      const candidate = { ...moved, date };
-      if (
-        gapMinutes(previous, candidate) < 0 ||
-        gapMinutes(candidate, next) < 0
-      )
-        continue;
-      if (!canSchedule(slots, candidate, movedHours)) continue;
-      if (date === moved.date) return slots;
-      return [...slots.filter((slot) => slot !== moved), candidate].sort(
+    const placed = [...new Set(dates)]
+      .map((date) => ({ ...moved, date }))
+      .find(fits);
+    if (placed?.date === moved.date) return slots;
+    if (placed)
+      return [...slots.filter((slot) => slot !== moved), placed].sort(
         compareSlots,
       );
-    }
   }
   if (gapMinutes(previous, next) < MIN_GAP_MINUTES)
     throw new Error(
