@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: PropsWithChildren) {
   return (
-    <html lang={"en"} className={"bg-background-grey"}>
+    <html lang={"en"} className="bg-background-grey">
       <head>
         {process.env.NODE_ENV === "development" && (
           <Script

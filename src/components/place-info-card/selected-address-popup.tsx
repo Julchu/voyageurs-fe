@@ -36,7 +36,7 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
     attempt: 0,
   });
   const [failedPhotos, setFailedPhotos] = useState<string[]>([]);
-  const signedIn = useUserStore(({ userInfo }) => Boolean(userInfo));
+  const signedIn = useUserStore(({ userInfo }) => !!userInfo);
 
   // POIs load Places details on open; addresses already have their search fields.
   useEffect(() => {
@@ -177,25 +177,23 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
   );
 };
 
-export const SelectedAddressPopup = () => {
-  return (
-    <Dialog.Root handle={openPlacePopup} modal={false} disablePointerDismissal>
-      {({ payload }) => {
-        if (!payload) return;
-        return (
-          <Dialog.Portal>
-            <div
-              className={cn(
-                MOBILE_PANEL_VIEWPORT,
-                "z-100 sm:top-auto sm:right-auto sm:bottom-60 sm:h-auto",
-                DESKTOP_SEARCH_COLUMN,
-              )}
-            >
-              <PlaceCard key={placeIdentity(payload)} payload={payload} />
-            </div>
-          </Dialog.Portal>
-        );
-      }}
-    </Dialog.Root>
-  );
-};
+export const SelectedAddressPopup = () => (
+  <Dialog.Root handle={openPlacePopup} modal={false} disablePointerDismissal>
+    {({ payload }) => {
+      if (!payload) return;
+      return (
+        <Dialog.Portal>
+          <div
+            className={cn(
+              MOBILE_PANEL_VIEWPORT,
+              "z-100 sm:top-auto sm:right-auto sm:bottom-60 sm:h-auto",
+              DESKTOP_SEARCH_COLUMN,
+            )}
+          >
+            <PlaceCard key={placeIdentity(payload)} payload={payload} />
+          </div>
+        </Dialog.Portal>
+      );
+    }}
+  </Dialog.Root>
+);

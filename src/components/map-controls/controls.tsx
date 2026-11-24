@@ -94,7 +94,7 @@ export const Controls = ({
           aria-label="Point map north"
           onClick={() => map.resetNorth({ duration: 2000 })}
         >
-          <NorthIcon className={"h-6 w-6 stroke-white"} />
+          <NorthIcon className="h-6 w-6 stroke-white" />
         </Toolbar.Button>
 
         {userInfo ? (
