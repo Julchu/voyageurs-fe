@@ -18,7 +18,7 @@ export default function Layout({ children }: PropsWithChildren) {
       <head>
         {process.env.NODE_ENV === "development" && (
           <Script
-            src="//unpkg.com/react-scan/dist/auto.global.js"
+            src="//unpkg.com/react-scan@0.5.7/dist/auto.global.js"
             crossOrigin="anonymous"
             strategy="beforeInteractive"
           />

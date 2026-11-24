@@ -23,7 +23,6 @@
     "next": "^16.4.5",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "temporal-polyfill": "^1.0.8",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
@@ -37,7 +36,6 @@
     "eslint": "9.26.0",
     "eslint-config-next": "16.3.6",
     "eslint-config-prettier": "^10.1.1",
-    "eslint-plugin-react-hooks": "^5.2.0",
     "prettier": "3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4.3.0",
