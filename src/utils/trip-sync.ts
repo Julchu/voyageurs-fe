@@ -3,7 +3,6 @@ import type {
   CreateTripInput,
   TimeSlot,
   TripDto,
-  TripPatch,
   TripStopDto,
   TripStopInput,
 } from "@/types/trip-api";
@@ -150,32 +149,3 @@ export const calendarChanges = (
 
 export const isTripDirty = (draft: TripDraft, saved?: TripDto) =>
   !saved || !!stopListChanges(draft, saved) || !!calendarChanges(draft, saved);
-
-/** POST a new trip, or PATCH one part of a saved trip at its current version. */
-export const sendTrip = async (
-  saved: Pick<TripDto, "publicId" | "version"> | undefined,
-  patch: TripPatch,
-): Promise<TripDto> => {
-  const response = await fetch(
-    saved ? `/api/trips/${saved.publicId}` : "/api/trips",
-    {
-      method: saved ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        saved ? { version: saved.version, ...patch } : patch,
-      ),
-    },
-  );
-  const payload = await response.json().catch(() => null);
-  if (!response.ok)
-    throw new Error(
-      payload?.error ?? `Unable to save trip (${response.status})`,
-    );
-  if (
-    typeof payload?.publicId !== "string" ||
-    !Number.isInteger(payload.version) ||
-    !Array.isArray(payload.stops)
-  )
-    throw new Error("Invalid trip save response");
-  return payload as TripDto;
-};

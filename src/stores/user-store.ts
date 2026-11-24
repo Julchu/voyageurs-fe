@@ -1,46 +1,35 @@
 import { createStore } from "zustand";
+import { apiJson } from "@/api/client";
 import type { Coordinates } from "@/types/place";
 import type { UserInfo } from "@/types/user";
 
-export type UserState = {
+type UserState = {
   userInfo: UserInfo | null;
   lastLocation?: Coordinates;
 };
 
-export type UserActions = {
-  setLastLocation: (coords: Coordinates) => void;
+type UserActions = {
+  setLastLocation: (lastLocation: Coordinates) => void;
+  /** Ends the session. Use `useLogout`, which also clears the other stores. */
   logout: () => Promise<void>;
 };
 
-export type UserStore = UserState & UserActions;
+type UserStore = UserState & UserActions;
 
 export const initUserStore = (userInfo?: UserInfo | null): UserState => ({
   userInfo: userInfo ?? null,
   lastLocation: userInfo?.lastLocation,
 });
 
-export const createUserStore = (initialState: UserState = initUserStore()) => {
-  return createStore<UserStore>()((set) => ({
+export const createUserStore = (initialState: UserState) =>
+  createStore<UserStore>()((set) => ({
     ...initialState,
-    setLastLocation: (coords) =>
-      set((state) => ({
-        lastLocation: coords,
-        userInfo: state.userInfo
-          ? {
-              ...state.userInfo,
-              lastLocation: coords,
-            }
-          : state.userInfo,
-      })),
+    setLastLocation: (lastLocation) => set({ lastLocation }),
     logout: async () => {
       try {
-        const response = await fetch("/api/logout", { method: "POST" });
-        if (!response.ok) {
-          throw new Error(`Logout request failed (${response.status})`);
-        }
+        await apiJson("/api/logout", { method: "POST" });
       } finally {
         set(initUserStore());
       }
     },
   }));
-};
