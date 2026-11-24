@@ -57,9 +57,8 @@ export const getPlacePlaceholder = (
   const { placeholders } = getPlaceCategory(place.category);
   // Vary by place without random changes on rerender, reopening, or hydration.
   const seed = `${place.name}:${place.coordinates.lat}:${place.coordinates.lng}`;
-  let hash = 0;
-  for (let index = 0; index < seed.length; index++) {
-    hash = (Math.imul(31, hash) + seed.charCodeAt(index)) >>> 0;
-  }
+  const hash = seed
+    .split("")
+    .reduce((sum, char) => (Math.imul(31, sum) + char.charCodeAt(0)) >>> 0, 0);
   return `/place-placeholders/${placeholders[hash % placeholders.length]}.svg`;
 };

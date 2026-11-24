@@ -64,6 +64,19 @@ export const removeStop = (trip: TripDraft, id: string): TripDraft => ({
   timeSlots: trip.timeSlots.filter((slot) => slot.stopId !== id),
 });
 
+/** Where a day move lands: the end of that day, before the first stop slotted later. */
+const dayEndIndex = (
+  stops: TripStopDraft[],
+  slots: TimeSlot[],
+  date: string,
+) => {
+  const later = new Set(
+    slots.filter((slot) => slot.date > date).map((slot) => slot.stopId),
+  );
+  const index = stops.findIndex((stop) => later.has(stopId(stop)));
+  return index < 0 ? stops.length : index;
+};
+
 /** A list move, or a day move when `targetDate` is set. Throws when the schedule can't take it. */
 export const moveStop = (
   trip: TripDraft,
@@ -71,17 +84,11 @@ export const moveStop = (
   to: number,
   targetDate?: string,
 ): TripDraft => {
-  if (!targetDate && from === to) return trip;
-  const stops = trip.stops.slice();
-  const [stop] = stops.splice(from, 1);
-  if (!stop) return trip;
-  // A day move lands at the end of that day: before the first later slot.
-  const later = stops.findIndex((item) => {
-    const slot = trip.timeSlots.find((v) => v.stopId === stopId(item));
-    return !!targetDate && !!slot && slot.date > targetDate;
-  });
-  const index = !targetDate ? to : later < 0 ? stops.length : later;
-  stops.splice(index, 0, stop);
+  const stop = trip.stops[from];
+  if (!stop || (!targetDate && from === to)) return trip;
+  const rest = trip.stops.filter((_, index) => index !== from);
+  const index = targetDate ? dayEndIndex(rest, trip.timeSlots, targetDate) : to;
+  const stops = [...rest.slice(0, index), stop, ...rest.slice(index)];
   const timeSlots = placeMove(
     stops.map((item) => ({
       publicId: stopId(item),
