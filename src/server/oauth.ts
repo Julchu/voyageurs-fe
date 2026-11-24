@@ -1,20 +1,16 @@
+import "server-only";
+import { cookieBase } from "@/server/cookies";
+
 export const OAUTH_STATE_COOKIE = "voyageurs_oauth_state";
 export const OAUTH_VERIFIER_COOKIE = "voyageurs_oauth_verifier";
-export const OAUTH_COOKIE_PATH = "/api/login";
-const OAUTH_COOKIE_MAX_AGE = 10 * 60;
 
-export const oauthCookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: OAUTH_COOKIE_PATH,
-  maxAge: OAUTH_COOKIE_MAX_AGE,
-});
+export const oauthCookieOptions = {
+  ...cookieBase,
+  path: "/api/login",
+  maxAge: 10 * 60,
+};
 
-export const oauthCookieClearOptions = () => ({
-  ...oauthCookieOptions(),
-  maxAge: 0,
-});
+export const oauthCookieClearOptions = { ...oauthCookieOptions, maxAge: 0 };
 
 export const googleRedirectUri = (requestUrl: string) => {
   const configured = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URIS;

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { backendRequest } from "@/server/backend";
 import { getAccessToken } from "@/server/session-token";
 import {
   googleRedirectUri,
@@ -36,9 +37,8 @@ export async function GET(req: NextRequest) {
   googleUrl.searchParams.set("code_challenge_method", "S256");
 
   const response = NextResponse.redirect(googleUrl);
-  const cookieOptions = oauthCookieOptions();
-  response.cookies.set(OAUTH_STATE_COOKIE, state, cookieOptions);
-  response.cookies.set(OAUTH_VERIFIER_COOKIE, codeVerifier, cookieOptions);
+  response.cookies.set(OAUTH_STATE_COOKIE, state, oauthCookieOptions);
+  response.cookies.set(OAUTH_VERIFIER_COOKIE, codeVerifier, oauthCookieOptions);
   return response;
 }
 
@@ -49,14 +49,7 @@ export async function POST() {
       return NextResponse.json({ userInfo: null });
     }
 
-    const loginResponse = await fetch(
-      `${process.env.VOYAGEURS_BACKEND_URL}/user`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+    const loginResponse = await backendRequest("user", { token });
 
     const { success, data } = await loginResponse.json();
     if (!success) {

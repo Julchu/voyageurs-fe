@@ -1,5 +1,5 @@
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { backendRequest, forwardedFor } from "@/server/backend";
 import {
   OAUTH_STATE_COOKIE,
   OAUTH_VERIFIER_COOKIE,
@@ -13,9 +13,8 @@ const finishLogin = (req: NextRequest, failed: boolean) => {
   // const destination = new URL(failed ? "/?login=failed" : "/", base);
   const destination = new URL(failed ? "/" : "/", base);
   const response = NextResponse.redirect(destination);
-  const clearOptions = oauthCookieClearOptions();
-  response.cookies.set(OAUTH_STATE_COOKIE, "", clearOptions);
-  response.cookies.set(OAUTH_VERIFIER_COOKIE, "", clearOptions);
+  response.cookies.set(OAUTH_STATE_COOKIE, "", oauthCookieClearOptions);
+  response.cookies.set(OAUTH_VERIFIER_COOKIE, "", oauthCookieClearOptions);
   return response;
 };
 
@@ -23,9 +22,8 @@ export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
   const oauthError = req.nextUrl.searchParams.get("error");
-  const jar = await cookies();
-  const expectedState = jar.get(OAUTH_STATE_COOKIE)?.value;
-  const codeVerifier = jar.get(OAUTH_VERIFIER_COOKIE)?.value;
+  const expectedState = req.cookies.get(OAUTH_STATE_COOKIE)?.value;
+  const codeVerifier = req.cookies.get(OAUTH_VERIFIER_COOKIE)?.value;
 
   if (
     oauthError ||
@@ -39,14 +37,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const loginResponse = await fetch(
-      `${process.env.VOYAGEURS_BACKEND_URL}/user/login/google`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, codeVerifier }),
-      },
-    );
+    const loginResponse = await backendRequest("user/login/google", {
+      method: "POST",
+      headers: forwardedFor(req),
+      body: JSON.stringify({ code, codeVerifier }),
+    });
 
     if (!loginResponse.ok) return finishLogin(req, true);
 

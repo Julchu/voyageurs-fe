@@ -3,6 +3,12 @@
 import { NavigationMenu } from "@base-ui/react/navigation-menu";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
+import { cn } from "cn";
+import {
+  popupArrow,
+  popupMotion,
+  popupSurface,
+} from "@/components/ui/popup-styles";
 
 const navigationLinks = [
   {
@@ -54,9 +60,9 @@ export const LinksNavigationMenu = () => {
                     closeOnClick
                     render={<NextLink href={link.href} />}
                   >
-                    <h5 className="m-0 text-sm leading-4 font-medium tracking-widest">
+                    <span className="m-0 block text-sm leading-4 font-medium tracking-widest">
                       {link.title}
-                    </h5>
+                    </span>
                     <p className="m-0 text-sm text-neutral-500 transition-colors duration-150 group-hover:text-white/80 group-focus-visible:text-white/80 motion-reduce:transition-none">
                       {link.description}
                     </p>
@@ -74,14 +80,21 @@ export const LinksNavigationMenu = () => {
           sideOffset={16}
           collisionPadding={{ top: 5, bottom: 5, left: 16, right: 16 }}
           collisionAvoidance={{ side: "none" }}
-          className="h-[var(--positioner-height)] w-[var(--positioner-width)] max-w-[var(--available-width)] transition-[top,left,right,bottom] duration-[var(--duration)] ease-[var(--easing)] data-instant:transition-none"
-          style={{
-            ["--duration" as string]: "0.35s",
-            ["--easing" as string]: "cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
+          className="h-[var(--positioner-height)] w-[var(--positioner-width)] max-w-[var(--available-width)] transition-[top,left,right,bottom] duration-[var(--duration)] ease-[var(--easing)] [--duration:0.35s] [--easing:cubic-bezier(0.22,1,0.36,1)] data-instant:transition-none"
         >
-          <NavigationMenu.Popup className="relative h-[var(--popup-height)] w-[var(--popup-width)] origin-[var(--transform-origin)] rounded-xl bg-white text-neutral-950 shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] transition-[scale,opacity] duration-150 ease-out outline-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none">
-            <NavigationMenu.Arrow className="relative block h-1.5 w-3 overflow-clip transition-[left,right] duration-[var(--duration)] ease-[var(--easing)] before:absolute before:bottom-0 before:left-1/2 before:h-[calc(6px*sqrt(2))] before:w-[calc(6px*sqrt(2))] before:[transform:translate(-50%,50%)_rotate(45deg)] before:bg-white before:content-[''] data-[side=bottom]:top-[-6px] data-[side=left]:right-[-9px] data-[side=left]:rotate-90 data-[side=right]:left-[-9px] data-[side=right]:-rotate-90 data-[side=top]:bottom-[-6px] data-[side=top]:rotate-180" />
+          <NavigationMenu.Popup
+            className={cn(
+              popupSurface,
+              popupMotion,
+              "relative h-[var(--popup-height)] w-[var(--popup-width)] rounded-xl",
+            )}
+          >
+            <NavigationMenu.Arrow
+              className={cn(
+                popupArrow,
+                "transition-[left,right] duration-[var(--duration)] ease-[var(--easing)]",
+              )}
+            />
             <NavigationMenu.Viewport className="relative h-full w-full overflow-hidden" />
           </NavigationMenu.Popup>
         </NavigationMenu.Positioner>

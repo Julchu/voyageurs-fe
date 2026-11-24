@@ -22,6 +22,7 @@ import { PlaceCategoryBadge } from "./place-category-badge";
 import { getPlacePlaceholder } from "./utils/place-category";
 import { TripadvisorPhotoCredits } from "./tripadvisor-credits";
 import { fetchTripadvisorPhotos } from "@/api/tripadvisor-photos";
+import { popupMotion } from "@/components/ui/popup-styles";
 
 type LookupState = {
   status: "loading" | "ready" | "error";
@@ -79,7 +80,11 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
 
   return (
     <Dialog.Popup
-      className={`pointer-events-auto relative flex ${MOBILE_PANEL_SIZE} flex-col overflow-hidden overscroll-contain bg-white text-neutral-950 shadow transition-[scale,opacity] duration-100 ease-out outline-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none sm:h-auto sm:max-h-[max(0px,calc(100dvh-16rem))] sm:overflow-y-auto`}
+      className={cn(
+        popupMotion,
+        MOBILE_PANEL_SIZE,
+        "pointer-events-auto relative flex flex-col overflow-hidden overscroll-contain bg-white text-neutral-950 shadow outline-none sm:h-auto sm:max-h-[max(0px,calc(100dvh-16rem))] sm:overflow-y-auto",
+      )}
     >
       <Dialog.Close
         aria-label="Close place card"

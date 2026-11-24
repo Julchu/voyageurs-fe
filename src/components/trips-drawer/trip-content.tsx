@@ -12,6 +12,9 @@ import { XIcon } from "@/components/ui/icons/close-icons";
 import { useTripDraft } from "@/hooks/use-trip-draft";
 import { PencilPinIcon, PinMenuButton } from "@/components/ui/icons/pin-icons";
 import { useState } from "react";
+import { cn } from "cn";
+import { MenuItem } from "@/components/ui/menu-item";
+import { popupMotion, popupSurface } from "@/components/ui/popup-styles";
 
 export const TripContent = ({ map }: MapNavigation) => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
@@ -116,9 +119,11 @@ export const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => {
           className={"z-50 outline-hidden"}
         >
           <Menu.Popup
-            className={
-              "flex origin-[var(--transform-origin)] flex-col rounded-lg bg-white p-2 text-black shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),_0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)] outline-hidden transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none"
-            }
+            className={cn(
+              popupSurface,
+              popupMotion,
+              "flex flex-col rounded-lg p-2",
+            )}
           >
             <MenuItem onClick={onEdit}>
               <PencilPinIcon
@@ -141,12 +146,3 @@ export const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => {
     </Menu.Root>
   );
 };
-
-const MenuItem = (props: Menu.Item.Props) => (
-  <Menu.Item
-    className={
-      "group flex cursor-pointer items-center gap-2 rounded-lg p-2 text-sm leading-4 text-black outline-hidden transition-colors duration-150 select-none data-disabled:cursor-default data-disabled:text-neutral-500 data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
-    }
-    {...props}
-  />
-);

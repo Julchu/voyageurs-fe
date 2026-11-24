@@ -1,28 +1,22 @@
-import { NextResponse } from "next/server";
-import {
-  getAccessToken,
-  getRefreshToken,
-  sessionCookieClearOptions,
-} from "@/server/session-token";
+import { NextRequest, NextResponse } from "next/server";
+import { backendRequest, forwardedFor } from "@/server/backend";
+import { cookieBase } from "@/server/cookies";
+import { env } from "@/server/env";
+import { getAccessToken, getRefreshToken } from "@/server/session-token";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   let status = 200;
 
   try {
-    const accessToken = await getAccessToken();
+    const headers = new Headers(forwardedFor(req));
     const refreshToken = await getRefreshToken();
+    if (refreshToken) headers.set("X-Refresh-Token", refreshToken);
 
-    const backendResponse = await fetch(
-      `${process.env.VOYAGEURS_BACKEND_URL}/user/logout`,
-      {
-        method: "POST",
-        headers: {
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-          ...(refreshToken ? { "X-Refresh-Token": refreshToken } : {}),
-        },
-        signal: AbortSignal.timeout(10_000),
-      },
-    );
+    const backendResponse = await backendRequest("user/logout", {
+      method: "POST",
+      token: await getAccessToken(),
+      headers,
+    });
 
     if (!backendResponse.ok) {
       console.error("Backend logout failed", backendResponse.status);
@@ -37,10 +31,9 @@ export async function POST() {
   }
 
   const response = NextResponse.json({ userInfo: null }, { status });
-  const clearOptions = sessionCookieClearOptions();
-  const accessKey = process.env.ACCESS_TOKEN_KEY;
-  const refreshKey = process.env.REFRESH_TOKEN_KEY;
-  if (accessKey) response.cookies.set(accessKey, "", clearOptions);
-  if (refreshKey) response.cookies.set(refreshKey, "", clearOptions);
+  const { accessKey, refreshKey } = env();
+  for (const name of [accessKey, refreshKey]) {
+    response.cookies.set(name, "", { ...cookieBase, maxAge: 0 });
+  }
   return response;
 }
