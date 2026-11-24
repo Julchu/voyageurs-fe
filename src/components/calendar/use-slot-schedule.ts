@@ -4,13 +4,12 @@ import type { TripDraft } from "@/types/trip-draft";
 import { stopId } from "@/utils/trip-stop";
 import {
   DAY_MINUTES as DAY,
+  SLOT_MINUTES as MIN_SLOT,
   canSchedule,
   dateDays,
   slotDuration,
 } from "@/utils/trip-time";
 import type { SlotTime } from "./calendar-time";
-
-const MIN_SLOT = 30;
 
 /** Lookups and placement rules for a trip's time slots. Each stays within one trip day. */
 export function useSlotSchedule(

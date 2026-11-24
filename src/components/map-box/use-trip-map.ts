@@ -49,22 +49,19 @@ export const useTripMap = () => {
   useEffect(() => {
     if (!map) return;
 
-    const current = new Set<string>();
     stops.forEach((stop, index) => {
-      current.add(stop.clientId);
-      let marker = markers.current.get(stop.clientId);
-      if (!marker) {
-        marker = createStopMarker(map, stop);
-        markers.current.set(stop.clientId, marker);
-      }
+      const marker =
+        markers.current.get(stop.clientId) ?? createStopMarker(map, stop);
+      markers.current.set(stop.clientId, marker);
       updateStopMarker(marker, stop, index);
     });
 
-    for (const [id, marker] of markers.current) {
-      if (current.has(id)) continue;
-      marker.remove();
-      markers.current.delete(id);
-    }
+    const current = new Set(stops.map((stop) => stop.clientId));
+    for (const [id, marker] of markers.current)
+      if (!current.has(id)) {
+        marker.remove();
+        markers.current.delete(id);
+      }
   }, [map, stops]);
 
   // Markers belong to one map instance.

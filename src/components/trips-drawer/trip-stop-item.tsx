@@ -1,6 +1,5 @@
 import { Field } from "@base-ui/react/field";
 import { Menu } from "@base-ui/react/menu";
-import { useSortable } from "@dnd-kit/react/sortable";
 import { cn } from "cn";
 import { FlyToIcon } from "@/components/ui/icons/map-icons";
 import { MoveDownArrow, MoveUpArrow } from "@/components/ui/icons/move-icons";
@@ -8,6 +7,7 @@ import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
 import { VerticalEllipsisIcon } from "@/components/ui/icons/stop-card-icons";
 import { MenuItem } from "@/components/ui/menu-item";
 import { popupMotion, popupSurface } from "@/components/ui/popup-styles";
+import { useStopSortable } from "@/hooks/use-trip-stop-sorting";
 import type { TimeSlot } from "@/types/trip-api";
 import type { TripStopDraft } from "@/types/trip-draft";
 import { timeLabel } from "@/utils/trip-time";
@@ -44,12 +44,11 @@ export const TripStopItem = ({
   actions: StopActions;
 }) => {
   const { stop, index, slot, changed, unscheduled } = row;
-  const disabled = busy || !!slot?.locked;
-  const { ref, handleRef, isDragging } = useSortable({
-    id: stop.clientId,
+  const { ref, handleRef, isDragging, disabled } = useStopSortable(
+    stop,
     index,
-    disabled: { draggable: disabled, droppable: busy },
-  });
+    { busy, locked: !!slot?.locked },
+  );
 
   return (
     <li

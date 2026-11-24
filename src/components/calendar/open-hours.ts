@@ -1,5 +1,10 @@
 import type { AvailabilityWindow } from "@/types/trip-api";
-import { DAY_MINUTES as DAY, timeLabel, weekdays } from "@/utils/trip-time";
+import {
+  DAY_MINUTES as DAY,
+  SLOT_MINUTES,
+  timeLabel,
+  weekdays,
+} from "@/utils/trip-time";
 
 const WEEK = 7 * DAY;
 
@@ -20,8 +25,8 @@ export const isValidBlock = ({ start, end }: Block) =>
   start >= 0 &&
   end <= WEEK &&
   end > start &&
-  start % 30 === 0 &&
-  end % 30 === 0;
+  start % SLOT_MINUTES === 0 &&
+  end % SLOT_MINUTES === 0;
 
 export const toBlock = (range: WeekdayRange): Block => ({
   start: range.startDay * DAY + range.startMinute,

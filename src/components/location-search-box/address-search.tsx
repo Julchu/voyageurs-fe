@@ -12,6 +12,7 @@ import {
   searchBoxSuggest,
 } from "@/components/map-box/utils/mapbox-search-box";
 import { placeIdentity } from "@/utils/place-identity";
+import { uniqueBy } from "@/utils/unique-by";
 import {
   AddressCombobox,
   type AddressComboboxItem,
@@ -158,19 +159,16 @@ export const AddressSearch = () => {
           sessionToken: results.sessionToken,
         }))
       : [];
-  const recentByPlace = new Map<string, PlaceSearch>();
-  for (const search of searches) {
-    const id = placeIdentity(search);
-    if (!recentByPlace.has(id)) recentByPlace.set(id, search);
-  }
-  const recent: AddressOption[] = Array.from(recentByPlace, ([id, search]) => ({
-    id: `recent:${id}`,
-    name: search.name === SAVED_PLACE_NAME ? search.query : search.name,
-    streetAddress: search.streetAddress,
-    areaAddress: search.areaAddress,
-    kind: "recent",
-    search,
-  }));
+  const recent = uniqueBy(searches, placeIdentity).map(
+    (search): AddressOption => ({
+      id: `recent:${placeIdentity(search)}`,
+      name: search.name === SAVED_PLACE_NAME ? search.query : search.name,
+      streetAddress: search.streetAddress,
+      areaAddress: search.areaAddress,
+      kind: "recent",
+      search,
+    }),
+  );
 
   return (
     <div

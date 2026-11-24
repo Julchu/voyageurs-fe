@@ -84,18 +84,18 @@ const isAvailable = (
   )
     return false;
   if (!availability.length) return true;
-  for (let minute = start; minute < end; minute += SLOT_MINUTES) {
-    if (
-      !availability.some(
-        (w) =>
-          w.day === day &&
-          w.startMinute <= minute &&
-          w.endMinute >= minute + SLOT_MINUTES,
-      )
-    )
-      return false;
-  }
-  return true;
+  const halfHours = Array.from(
+    { length: (end - start) / SLOT_MINUTES },
+    (_, index) => start + index * SLOT_MINUTES,
+  );
+  return halfHours.every((minute) =>
+    availability.some(
+      (open) =>
+        open.day === day &&
+        open.startMinute <= minute &&
+        open.endMinute >= minute + SLOT_MINUTES,
+    ),
+  );
 };
 
 /** A valid, open time that doesn't overlap another slot. */
