@@ -1,6 +1,7 @@
-import { type RefObject, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { type Map as MapboxMap, Marker } from "mapbox-gl";
 import { useTripStore } from "@/providers/trip-store-provider";
+import { useMapStore } from "@/components/map-box/map-store";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 import { routeForStops } from "@/components/map-box/utils/directions";
 import { drawRoute } from "@/components/map-box/utils/route-layer";
@@ -40,23 +41,20 @@ const updateStopMarker = (
 };
 
 /** Numbered markers for the drawer's stops, plus the driving route between them. */
-export const useTripMap = (
-  map: RefObject<MapboxMap | null>,
-  mapLoading: boolean,
-) => {
-  const stops = useTripStore(({ currentTrip }) => currentTrip?.stops);
+export const useTripMap = () => {
+  const map = useMapStore((state) => state.map);
+  const stops = useTripStore(({ currentTrip }) => currentTrip.stops);
   const markers = useRef(new Map<string, Marker>());
 
   useEffect(() => {
-    const mapInstance = map.current;
-    if (!mapInstance || mapLoading) return;
+    if (!map) return;
 
     const current = new Set<string>();
-    stops?.forEach((stop, index) => {
+    stops.forEach((stop, index) => {
       current.add(stop.clientId);
       let marker = markers.current.get(stop.clientId);
       if (!marker) {
-        marker = createStopMarker(mapInstance, stop);
+        marker = createStopMarker(map, stop);
         markers.current.set(stop.clientId, marker);
       }
       updateStopMarker(marker, stop, index);
@@ -67,34 +65,34 @@ export const useTripMap = (
       marker.remove();
       markers.current.delete(id);
     }
-  }, [map, mapLoading, stops]);
+  }, [map, stops]);
 
+  // Markers belong to one map instance.
   useEffect(() => {
     const currentMarkers = markers.current;
     return () => {
       for (const marker of currentMarkers.values()) marker.remove();
       currentMarkers.clear();
     };
-  }, []);
+  }, [map]);
 
   // Keyed by coordinates only, so loading a stop's details doesn't trigger
   // another billed directions request.
   const routeKey = JSON.stringify(
-    stops?.map(({ coordinates: { lat, lng } }) => ({ lat, lng })) ?? [],
+    stops.map(({ coordinates: { lat, lng } }) => ({ lat, lng })),
   );
 
   useEffect(() => {
-    const mapInstance = map.current;
-    if (!mapInstance || mapLoading) return;
+    if (!map) return;
 
     const coordinates = JSON.parse(routeKey) as Coordinates[];
-    drawRoute(mapInstance, []);
+    drawRoute(map, []);
     if (!SHOW_ROUTE_LINE || coordinates.length < 2) return;
 
     let cancelled = false;
     const timer = window.setTimeout(() => {
       void routeForStops(coordinates).then((line) => {
-        if (!cancelled) drawRoute(mapInstance, line);
+        if (!cancelled) drawRoute(map, line);
       });
     }, ROUTE_DELAY_MS);
 
@@ -102,5 +100,5 @@ export const useTripMap = (
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [map, mapLoading, routeKey]);
+  }, [map, routeKey]);
 };

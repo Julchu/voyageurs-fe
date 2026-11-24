@@ -1,17 +1,16 @@
-import { type RefObject, useEffect, useRef, useState } from "react";
-import type { Map as MapboxMap } from "mapbox-gl";
-import { useMapHook } from "@/hooks/use-map-hook";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "cn";
+import { flyTo } from "@/components/map-box/map-actions";
+import { useMapStore } from "@/components/map-box/map-store";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import type { Coordinates, PlaceSearch } from "@/types/place";
+import type { PlaceSearch } from "@/types/place";
 import type { SearchSuggestion } from "@/types/mapbox";
-import { useSearchStore } from "@/providers/search-store-provider";
+import { useSearches } from "@/hooks/use-searches";
 import {
   createSearchBoxSessionToken,
   searchBoxRetrieve,
   searchBoxSuggest,
 } from "@/components/map-box/utils/mapbox-search-box";
-import { placeRecord } from "@/utils/place-record";
 import { placeIdentity } from "@/utils/place-identity";
 import {
   AddressCombobox,
@@ -20,7 +19,6 @@ import {
 } from "./address-combobox";
 import { DESKTOP_SEARCH_COLUMN } from "@/components/map-box/map-panel-layout";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
-import { useShallow } from "zustand/react/shallow";
 
 const MAPBOX_SUGGESTION_LIMIT = 10;
 const SUGGEST_DEBOUNCE_MS = 300;
@@ -38,24 +36,14 @@ type AddressOption = AddressComboboxItem &
     | { kind: "recent"; search: PlaceSearch }
   );
 
-export const AddressSearch = ({
-  proximity,
-  map,
-}: {
-  proximity: Coordinates;
-  map: RefObject<MapboxMap | null>;
-}) => {
-  const { lat, lng } = proximity;
-  const { flyTo } = useMapHook({ map });
-  const { searches, logSearch } = useSearchStore(
-    useShallow(({ searches, logSearch }) => ({ searches, logSearch })),
-  );
+export const AddressSearch = () => {
+  const map = useMapStore((state) => state.map);
+  const { searches, logSearch } = useSearches();
   const sessionRef = useRef<{
     token: string;
     startedAt: number;
     requests: number;
   } | null>(null);
-  const suggestAbortRef = useRef<AbortController | null>(null);
   const retrieveAbortRef = useRef<AbortController | null>(null);
 
   // `query` drives the controlled input; `debounced` drives the fetch, so a
@@ -98,10 +86,10 @@ export const AddressSearch = ({
     session.requests += 1;
 
     const controller = new AbortController();
-    suggestAbortRef.current = controller;
     void searchBoxSuggest(trimmed, {
       sessionToken: session.token,
-      proximity: { lat, lng },
+      // Read at request time so panning the map doesn't re-fire suggestions.
+      proximity: map?.getCenter(),
       types: SUGGEST_TYPES,
       limit: MAPBOX_SUGGESTION_LIMIT,
       signal: controller.signal,
@@ -120,22 +108,20 @@ export const AddressSearch = ({
           });
       });
     return () => controller.abort();
-  }, [debounced, query, open, lat, lng]);
+  }, [debounced, query, open, map]);
 
   const selectOption = (option: AddressOption) => {
-    if (retrieveAbortRef.current && !retrieveAbortRef.current.signal.aborted)
-      return;
+    if (retrieveStatus === "loading") return;
     const searchQuery = query.trim();
     setSelected(option);
     setQuery(option.name);
     setOpen(false);
     setResults(null);
     setRetrieveStatus("idle");
-    suggestAbortRef.current?.abort();
 
     if (option.kind === "recent") {
       openPlacePopup.openWithPayload(option.search);
-      flyTo(option.search.coordinates);
+      flyTo(map, option.search.coordinates);
       return;
     }
 
@@ -149,12 +135,11 @@ export const AddressSearch = ({
       signal: controller.signal,
     }).then((place) => {
       if (controller.signal.aborted) return;
-      retrieveAbortRef.current = null;
       setRetrieveStatus(place ? "idle" : "error");
       if (place) {
         openPlacePopup.openWithPayload(place);
-        flyTo(place.coordinates);
-        void logSearch({ ...placeRecord(place), query: searchQuery });
+        flyTo(map, place.coordinates);
+        void logSearch({ ...place, query: searchQuery });
       }
     });
   };
@@ -205,7 +190,6 @@ export const AddressSearch = ({
         onQueryChange={(value) => {
           setQuery(value);
           setSelected(null);
-          suggestAbortRef.current?.abort();
           setResults(null);
           setRetrieveStatus("idle");
           setOpen(true);

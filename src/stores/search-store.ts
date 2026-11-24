@@ -1,8 +1,8 @@
 import { createStore } from "zustand";
 import { persist } from "zustand/middleware";
 import type { PlaceSearch, PlaceSearchInput } from "@/types/place";
-import { errorMessage } from "@/utils/errors";
 import { listSearches, postSearch } from "@/api/searches";
+import { placeRecord } from "@/utils/place-record";
 import {
   type CollectionLoadState,
   shouldFetchCollection,
@@ -10,83 +10,101 @@ import {
 
 const MAX_SEARCHES = 100;
 
-export type SearchState = {
+type SearchState = {
+  /** The signed-in user's log, from the server. Never persisted. */
   searches: PlaceSearch[];
+  /** The signed-out log, kept only in this browser. */
+  localSearches: PlaceSearch[];
   searchesLoadState: CollectionLoadState;
-  error: string | null;
 };
 
-export type SearchActions = {
+type SearchActions = {
   fetchSearches: () => Promise<void>;
-  logSearch: (entry: PlaceSearchInput) => Promise<void>;
+  logSearch: (entry: PlaceSearchInput, signedIn: boolean) => Promise<void>;
+  /** Empties both logs, in memory and in this browser. */
+  clear: () => void;
 };
 
-export type SearchStore = SearchState & SearchActions;
+type SearchStore = SearchState & SearchActions;
 
 export const initSearchStore = (
   searches: PlaceSearch[],
   searchesServerLoaded = false,
 ): SearchState => ({
   searches,
+  localSearches: [],
   searchesLoadState: searchesServerLoaded ? "loaded" : "idle",
-  error: null,
 });
 
-/** Signed-out searches are only kept in this browser. */
-const localSearch = (entry: PlaceSearchInput): PlaceSearch => ({
-  // TODO: clean up (remove clientId)
-  id: entry.id,
-  mapboxId: entry.mapboxId,
-  clientId: crypto.randomUUID(),
+/** Only the fields we keep. Display-only data (photos, details) is dropped. */
+const searchRecord = (entry: PlaceSearchInput): PlaceSearchInput => ({
+  ...placeRecord(entry),
   query: entry.query,
-  name: entry.name,
-  category: entry.category,
-  streetAddress: entry.streetAddress,
-  areaAddress: entry.areaAddress,
-  coordinates: entry.coordinates,
+});
+
+const localSearch = (record: PlaceSearchInput): PlaceSearch => ({
+  ...record,
+  // TODO: clean up (remove clientId)
+  clientId: crypto.randomUUID(),
   searchedAt: new Date().toISOString(),
   createdAt: null,
   updatedAt: null,
 });
 
+const prepend = (search: PlaceSearch, list: PlaceSearch[]) =>
+  [search, ...list].slice(0, MAX_SEARCHES);
+
 export const createSearchStore = (initialState: SearchState) =>
   createStore<SearchStore>()(
     persist(
-      (set, get) => ({
+      (set, get, api) => ({
         ...initialState,
 
         fetchSearches: async () => {
           if (!shouldFetchCollection(get().searchesLoadState)) return;
           set({ searchesLoadState: "loading" });
           try {
-            const searches = await listSearches();
-            set({ searches, searchesLoadState: "loaded", error: null });
+            set({
+              searches: await listSearches(),
+              searchesLoadState: "loaded",
+            });
           } catch (error) {
             console.error("Unable to retrieve searches", error);
             set({ searchesLoadState: "error" });
           }
         },
 
-        logSearch: async (entry) => {
+        logSearch: async (entry, signedIn) => {
           try {
-            const search = (await postSearch(entry)) ?? localSearch(entry);
-            set(({ searches }) => ({
-              searches: [search, ...searches].slice(0, MAX_SEARCHES),
-            }));
+            const record = searchRecord(entry);
+            const saved = signedIn ? await postSearch(record) : null;
+            set(({ searches, localSearches }) =>
+              saved
+                ? { searches: prepend(saved, searches) }
+                : {
+                    localSearches: prepend(localSearch(record), localSearches),
+                  },
+            );
           } catch (error) {
-            set({ error: errorMessage(error, "Unable to log search") });
+            console.error("Unable to log search", error);
           }
+        },
+
+        clear: () => {
+          set(initSearchStore([]));
+          api.persist.clearStorage();
         },
       }),
       {
         name: "voyageurs-searches",
-        partialize: ({ searches }) => ({ searches }),
-        // Only the list is stored; load state always starts fresh.
-        merge: (persisted, current) => ({
-          ...current,
-          searches:
-            (persisted as Partial<SearchState> | undefined)?.searches ??
-            current.searches,
+        version: 1,
+        partialize: ({ localSearches }) => ({ localSearches }),
+        // v0 stored server and local searches in one list; keep only the local ones.
+        migrate: (persisted) => ({
+          localSearches: (
+            (persisted as { searches?: PlaceSearch[] } | undefined)?.searches ??
+            []
+          ).filter((search) => !search.publicId),
         }),
       },
     ),

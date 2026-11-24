@@ -1,6 +1,3 @@
-"use client";
-
-import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { DragEndEvent } from "@dnd-kit/dom";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
@@ -15,12 +12,11 @@ export function useTripStopSorting() {
     useShallow((state) => ({
       trip: state.currentTrip,
       moveStop: state.moveStop,
-      busy: state.tripSaveStatus === "saving",
+      busy: state.save.status === "saving",
     })),
   );
-  const slotsByStop = useMemo(
-    () => new Map(trip?.timeSlots.map((slot) => [slot.stopId, slot])),
-    [trip?.timeSlots],
+  const slotsByStop = new Map(
+    trip.timeSlots.map((slot) => [slot.stopId, slot]),
   );
   const handleDragEnd = (event: DragEndEvent) => {
     if (event.canceled || busy) return;
@@ -37,8 +33,8 @@ export function useTripStopSorting() {
 export function useTripStopSortable(stop: TripStopDraft, index: number) {
   const { busy, slot, savedSlot } = useTripStore(
     useShallow((state) => ({
-      busy: state.tripSaveStatus === "saving",
-      slot: state.currentTrip?.timeSlots.find((v) => v.stopId === stopId(stop)),
+      busy: state.save.status === "saving",
+      slot: state.currentTrip.timeSlots.find((v) => v.stopId === stopId(stop)),
       savedSlot: serverTrip(state.trips, state.currentTrip)?.timeSlots.find(
         (v) => v.stopId === stop.publicId,
       ),

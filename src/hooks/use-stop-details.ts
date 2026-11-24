@@ -1,8 +1,5 @@
-"use client";
-
-import { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
-import type { StopDetails } from "@/types/trip-api";
+import type { PlaceDetailsInput, StopDetails } from "@/types/trip-api";
 import type { TripStopDraft } from "@/types/trip-draft";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useStopDetailsStore } from "@/providers/stop-details-store-provider";
@@ -33,67 +30,56 @@ export const useStopDetails = () => {
     useShallow((state) => ({
       trip: state.currentTrip,
       saved: serverTrip(state.trips, state.currentTrip),
-      isSaving: state.tripSaveStatus === "saving",
+      isSaving: state.save.status === "saving",
       saveDetails: state.saveDetails,
     })),
   );
   const tripId = saved?.publicId;
-  const { draft, editDetails, clearDetails } = useStopDetailsStore(
+  const { draft, editDetails, clearTrip } = useStopDetailsStore(
     useShallow((state) => ({
       draft: tripId ? state.drafts[tripId] : undefined,
       editDetails: state.editDetails,
-      clearDetails: state.clearDetails,
+      clearTrip: state.clearTrip,
     })),
   );
-  const places = useMemo(
-    () => new Map(saved?.places.map((place) => [place.key, place])),
-    [saved],
-  );
+  const places = new Map(saved?.places.map((place) => [place.key, place]));
 
-  const rows = useMemo(() => {
-    const rows = new Map<string, StopDetailsRow>();
-    for (const stop of trip?.stops ?? []) {
-      const key = placeKey(stop);
-      if (rows.has(key)) continue;
+  const rows = new Map<string, StopDetailsRow>();
+  for (const stop of trip.stops) {
+    const key = placeKey(stop);
+    if (rows.has(key)) continue;
+    const place = places.get(key);
+    rows.set(key, {
+      key,
+      place: place ?? stop,
+      details:
+        draft?.[key] ?? (place ? stopDetailsFrom(place) : emptyStopDetails),
+      editable: !!place,
+    });
+  }
+
+  const changes = Object.entries(draft ?? {}).flatMap(
+    ([key, details]): PlaceDetailsInput[] => {
       const place = places.get(key);
-      rows.set(key, {
-        key,
-        place: place ?? stop,
-        details:
-          draft?.[key] ?? (place ? stopDetailsFrom(place) : emptyStopDetails),
-        editable: !!place,
-      });
-    }
-    return [...rows.values()];
-  }, [trip?.stops, places, draft]);
-
-  const changes = useMemo(
-    () =>
-      Object.entries(draft ?? {}).flatMap(([key, details]) => {
-        const place = places.get(key);
-        return place && !sameDetails(details, stopDetailsFrom(place))
-          ? [{ ...details, publicId: place.publicId }]
-          : [];
-      }),
-    [draft, places],
-  );
-
-  const edit = useCallback(
-    (row: StopDetailsRow, patch: Partial<StopDetails>) => {
-      if (tripId) editDetails(tripId, row.key, { ...row.details, ...patch });
+      return place && !sameDetails(details, stopDetailsFrom(place))
+        ? [{ ...details, publicId: place.publicId }]
+        : [];
     },
-    [tripId, editDetails],
   );
+
+  const edit = (row: StopDetailsRow, patch: Partial<StopDetails>) => {
+    if (tripId) editDetails(tripId, row.key, { ...row.details, ...patch });
+  };
   const save = async () => {
-    if (tripId && (await saveDetails(changes))) clearDetails(tripId);
+    if (tripId && (await saveDetails(changes))) clearTrip(tripId);
   };
   const reset = () => {
-    if (tripId) clearDetails(tripId);
+    if (tripId) clearTrip(tripId);
   };
 
   return {
     trip,
-    rows,
+    rows: [...rows.values()],
     edit,
     isDirty: changes.length > 0,
     isSaving,

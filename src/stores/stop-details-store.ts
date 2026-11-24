@@ -2,18 +2,18 @@ import { createStore } from "zustand";
 import { persist } from "zustand/middleware";
 import type { StopDetails } from "@/types/trip-api";
 
-export type StopDetailsState = {
+type StopDetailsState = {
   /** Unsaved place details: trip public ID → place key → details. */
   drafts: Record<string, Record<string, StopDetails>>;
 };
 
-export type StopDetailsActions = {
+type StopDetailsActions = {
   editDetails: (tripId: string, placeKey: string, details: StopDetails) => void;
-  /** Drop one trip's unsaved details, or all of them. */
-  clearDetails: (tripId?: string) => void;
+  clearTrip: (tripId: string) => void;
+  clearAll: () => void;
 };
 
-export type StopDetailsStore = StopDetailsState & StopDetailsActions;
+type StopDetailsStore = StopDetailsState & StopDetailsActions;
 
 export const createStopDetailsStore = () =>
   createStore<StopDetailsStore>()(
@@ -27,12 +27,13 @@ export const createStopDetailsStore = () =>
               [tripId]: { ...drafts[tripId], [placeKey]: details },
             },
           })),
-        clearDetails: (tripId) =>
-          set(({ drafts }) => {
-            const next = tripId ? { ...drafts } : {};
-            if (tripId) delete next[tripId];
-            return { drafts: next };
-          }),
+        clearTrip: (tripId) =>
+          set(({ drafts }) => ({
+            drafts: Object.fromEntries(
+              Object.entries(drafts).filter(([id]) => id !== tripId),
+            ),
+          })),
+        clearAll: () => set({ drafts: {} }),
       }),
       { name: "voyageurs-stop-details", version: 1 },
     ),

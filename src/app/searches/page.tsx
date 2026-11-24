@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { useUserStore } from "@/providers/user-store-provider";
 import { useSearchStore } from "@/providers/search-store-provider";
-import { useShallow } from "zustand/react/shallow";
+import { useHydrated } from "@/hooks/use-hydrated";
+import { useSearches } from "@/hooks/use-searches";
 
 const SearchesPage = () => {
   const userInfo = useUserStore(({ userInfo }) => userInfo);
-  const { searches, searchesLoadState } = useSearchStore(
-    useShallow(({ searches, searchesLoadState }) => ({
-      searches,
-      searchesLoadState,
-    })),
+  const { searches } = useSearches();
+  const searchesLoadState = useSearchStore(
+    ({ searchesLoadState }) => searchesLoadState,
   );
+  // Signed-out searches and local times exist only in the browser.
+  const listed = useHydrated() ? searches : [];
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto px-4 pt-20 pb-6">
@@ -35,7 +36,7 @@ const SearchesPage = () => {
         </p>
       ) : null}
       <ul className="flex flex-col gap-3">
-        {searches.map((search) => (
+        {listed.map((search) => (
           <li
             key={search.publicId ?? search.clientId}
             className="rounded-md border border-neutral-200 bg-white p-4"
