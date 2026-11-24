@@ -1,5 +1,5 @@
 import type { MapboxCategoryId } from "@/types/mapbox";
-import type { Place } from "@/utils/interfaces";
+import type { Place } from "@/types/place";
 
 const categories = {
   coffee: {
@@ -28,7 +28,7 @@ const categories = {
   },
 } as const;
 
-export type PlaceCategoryGroup = keyof typeof categories;
+type PlaceCategoryGroup = keyof typeof categories;
 
 // Match complete words, so "parking" is not treated as "park".
 const categoryGroups: [RegExp, PlaceCategoryGroup][] = [

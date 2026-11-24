@@ -11,9 +11,8 @@ import {
 } from "@/hooks/use-trip-stop-sorting";
 import type { TimeSlot } from "@/types/trip-api";
 import type { TripStopDraft } from "@/types/trip-draft";
-import { timeLabel } from "@/utils/trip-calendar";
+import { dateLabel, timeLabel } from "@/utils/trip-time";
 import { stopId } from "@/utils/trip-stop";
-import { dateLabel } from "./calendar-time";
 import { linkButton } from "./styles";
 import type { SlotSchedule } from "./use-slot-schedule";
 

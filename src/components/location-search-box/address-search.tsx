@@ -1,22 +1,36 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
 import { useMapHook } from "@/hooks/use-map-hook";
+import { cn } from "cn";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import type { Coordinates, PlaceSearch } from "@/utils/interfaces";
+import type { Coordinates, PlaceSearch } from "@/types/place";
+import type { SearchSuggestion } from "@/types/mapbox";
 import { useSearchStore } from "@/providers/search-store-provider";
 import {
   createSearchBoxSessionToken,
   searchBoxRetrieve,
   searchBoxSuggest,
-  type SearchSuggestion,
 } from "@/components/map-box/utils/mapbox-search-box";
 import { placeRecord } from "@/utils/place-record";
-import { AddressCombobox, type AddressComboboxItem } from "./address-combobox";
+import { placeIdentity } from "@/utils/place-identity";
+import {
+  AddressCombobox,
+  type AddressComboboxItem,
+  MIN_QUERY_LENGTH,
+} from "./address-combobox";
 import { DESKTOP_SEARCH_COLUMN } from "@/components/map-box/map-panel-layout";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 import { useShallow } from "zustand/react/shallow";
 
 const MAPBOX_SUGGESTION_LIMIT = 10;
+const SUGGEST_DEBOUNCE_MS = 300;
+const SUGGEST_TYPES =
+  "poi,address,street,place,locality,neighborhood,postcode,region,country";
+// Mapbox ends a session after retrieval, 180 seconds, or 50 suggestions.
+const SESSION_MAX_AGE_MS = 170_000;
+const SESSION_MAX_REQUESTS = 50;
+// Placeholder name for a search saved without a place name. Show the query instead.
+const SAVED_PLACE_NAME = "Saved place";
 
 type AddressOption = AddressComboboxItem &
   (
@@ -46,7 +60,10 @@ export const AddressSearch = ({
 
   // `query` drives the controlled input; `debounced` drives the fetch, so a
   // Search Box /suggest request fires per typing pause, not per keystroke.
-  const [query, debounced, setQuery] = useDebouncedValue("", 300);
+  const [query, debounced, setQuery] = useDebouncedValue(
+    "",
+    SUGGEST_DEBOUNCE_MS,
+  );
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<{
     query: string;
@@ -63,13 +80,13 @@ export const AddressSearch = ({
 
   useEffect(() => {
     const trimmed = debounced.trim();
-    if (!open || query.trim() !== trimmed || trimmed.length < 2) return;
+    if (!open || query.trim() !== trimmed || trimmed.length < MIN_QUERY_LENGTH)
+      return;
 
-    // Mapbox ends a session after retrieval, 180 seconds, or 50 suggestions.
     if (
       !sessionRef.current ||
-      Date.now() - sessionRef.current.startedAt >= 170_000 ||
-      sessionRef.current.requests >= 50
+      Date.now() - sessionRef.current.startedAt >= SESSION_MAX_AGE_MS ||
+      sessionRef.current.requests >= SESSION_MAX_REQUESTS
     ) {
       sessionRef.current = {
         token: createSearchBoxSessionToken(),
@@ -85,8 +102,7 @@ export const AddressSearch = ({
     void searchBoxSuggest(trimmed, {
       sessionToken: session.token,
       proximity: { lat, lng },
-      types:
-        "poi,address,street,place,locality,neighborhood,postcode,region,country",
+      types: SUGGEST_TYPES,
       limit: MAPBOX_SUGGESTION_LIMIT,
       signal: controller.signal,
     })
@@ -145,7 +161,9 @@ export const AddressSearch = ({
 
   const trimmedQuery = query.trim();
   const pending =
-    open && trimmedQuery.length >= 2 && results?.query !== trimmedQuery;
+    open &&
+    trimmedQuery.length >= MIN_QUERY_LENGTH &&
+    results?.query !== trimmedQuery;
   const hits: AddressOption[] =
     results?.query === trimmedQuery
       ? results.hits.map((hit) => ({
@@ -157,14 +175,12 @@ export const AddressSearch = ({
       : [];
   const recentByPlace = new Map<string, PlaceSearch>();
   for (const search of searches) {
-    const id =
-      search.mapboxId ??
-      `${search.name}:${search.coordinates.lat}:${search.coordinates.lng}`;
+    const id = placeIdentity(search);
     if (!recentByPlace.has(id)) recentByPlace.set(id, search);
   }
   const recent: AddressOption[] = Array.from(recentByPlace, ([id, search]) => ({
     id: `recent:${id}`,
-    name: search.name === "Saved place" ? search.query : search.name,
+    name: search.name === SAVED_PLACE_NAME ? search.query : search.name,
     streetAddress: search.streetAddress,
     areaAddress: search.areaAddress,
     kind: "recent",
@@ -173,7 +189,10 @@ export const AddressSearch = ({
 
   return (
     <div
-      className={`pointer-events-auto absolute right-4 bottom-4 left-18 sm:right-auto ${DESKTOP_SEARCH_COLUMN}`}
+      className={cn(
+        "pointer-events-auto absolute right-4 bottom-4 left-18 sm:right-auto",
+        DESKTOP_SEARCH_COLUMN,
+      )}
     >
       <AddressCombobox
         query={query}

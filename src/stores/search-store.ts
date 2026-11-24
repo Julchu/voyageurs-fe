@@ -1,7 +1,7 @@
 import { createStore } from "zustand";
 import { persist } from "zustand/middleware";
-import type { PlaceSearch, PlaceSearchInput } from "@/utils/interfaces";
-import { errorMessage } from "@/utils/data";
+import type { PlaceSearch, PlaceSearchInput } from "@/types/place";
+import { errorMessage } from "@/utils/errors";
 import {
   type CollectionLoadState,
   fetchCollection,

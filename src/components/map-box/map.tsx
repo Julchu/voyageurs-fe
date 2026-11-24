@@ -2,7 +2,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import mapBoxGL, { type Map as MapboxMap } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import { Controls } from "@/components/map-controls/controls";
-import type { Coordinates } from "@/utils/interfaces";
+import type { Coordinates } from "@/types/place";
 import {
   applyStandardOverrides,
   buildStandardStyle,
@@ -10,8 +10,8 @@ import {
 import { addPoiInteractions } from "@/components/map-box/utils/poi-interactions";
 import { AddressSearch } from "@/components/location-search-box/address-search";
 import { TripDrawer } from "@/components/trips-drawer/trip-drawer";
-import { useMapLocation } from "@/hooks/use-map-location";
-import { useTripMap } from "@/hooks/use-trip-map";
+import { useMapLocation } from "@/components/map-box/use-map-location";
+import { useTripMap } from "@/components/map-box/use-trip-map";
 import { darkMode } from "@/utils/map-time";
 
 export const MapAndControls = ({

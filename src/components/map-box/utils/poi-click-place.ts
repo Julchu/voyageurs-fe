@@ -1,5 +1,5 @@
 import type { TargetFeature } from "mapbox-gl";
-import type { Place } from "@/utils/interfaces";
+import type { Place } from "@/types/place";
 import { metersBetween } from "@/utils/distance";
 import { normalizePlaceName } from "@/utils/place-name";
 import { searchParams } from "./mapbox-api";

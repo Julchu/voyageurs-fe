@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { proxyJson } from "@/utils/backend-proxy";
+import { proxyJson } from "@/server/backend";
 
 /** Tripadvisor photos for a POI (`?name=&lat=&lng=&mapboxId=`). Terra terms: never cache or index them. */
 export const GET = async (request: NextRequest) => {

@@ -1,5 +1,9 @@
-import type { Place } from "@/utils/interfaces";
-import type { MapboxSearchResponse, MapboxSuggestion } from "@/types/mapbox";
+import type { Place } from "@/types/place";
+import type {
+  MapboxSearchResponse,
+  MapboxSuggestion,
+  SearchSuggestion,
+} from "@/types/mapbox";
 import {
   mapboxGet,
   searchParams,
@@ -9,15 +13,6 @@ import {
 import { placeFromSearch, suggestionFrom } from "./mapbox-place-parsing";
 
 /* Address bar: Search Box /suggest while typing, then /retrieve on pick. */
-
-export type SearchSuggestion = {
-  mapboxId: string;
-  name: string;
-  featureType: string;
-  streetAddress: string;
-  areaAddress: string;
-  category: string;
-};
 
 /** One billed session groups `/suggest` calls with the `/retrieve` that ends it. */
 type SessionOptions = { sessionToken: string; signal?: AbortSignal };

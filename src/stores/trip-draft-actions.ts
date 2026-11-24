@@ -1,6 +1,6 @@
 import type { TripDto } from "@/types/trip-api";
 import type { TripDraft, TripStopDraft } from "@/types/trip-draft";
-import type { Place } from "@/utils/interfaces";
+import type { Place } from "@/types/place";
 import type { TripActionCreator, TripState, TripStore } from "./trip-store";
 import type { StoreApi } from "zustand";
 import { toTripDraft } from "@/utils/trip-sync";

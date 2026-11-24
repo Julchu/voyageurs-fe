@@ -1,4 +1,12 @@
-import { MapTimeEnum, MapTimeType } from "@/utils/interfaces";
+/** Mapbox Standard light presets. The map-time control cycles through them in this order. */
+export const MapTimeEnum = {
+  NIGHT: "night",
+  DAWN: "dawn",
+  DAY: "day",
+  DUSK: "dusk",
+} as const;
+export type MapTimeType = (typeof MapTimeEnum)[keyof typeof MapTimeEnum];
+export const MapTimeValues = Object.values(MapTimeEnum);
 
 /** Local-time hour boundaries (24h clock, inclusive start / exclusive end). */
 const DAWN_START = 5;

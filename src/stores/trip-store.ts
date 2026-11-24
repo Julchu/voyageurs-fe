@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Place } from "@/utils/interfaces";
+import type { Place } from "@/types/place";
 import type { StopDetails, TripDto } from "@/types/trip-api";
 import type { TripDraft } from "@/types/trip-draft";
 import type { AvailabilityWindow, TimeSlot } from "@/types/trip-api";

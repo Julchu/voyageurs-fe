@@ -1,4 +1,4 @@
-import type { Place, PlacePhoto } from "@/utils/interfaces";
+import type { Place, PlacePhoto } from "@/types/place";
 
 type TripadvisorPhotosResponse = {
   photos?: Omit<PlacePhoto, "provider">[];

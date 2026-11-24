@@ -1,11 +1,17 @@
 import type { AvailabilityWindow, TimeSlot } from "@/types/trip-api";
-import { canSchedule, compareSlots, slotEnd, slotStart } from "./trip-time";
+import {
+  SLOT_MINUTES,
+  canSchedule,
+  compareSlots,
+  slotEnd,
+  slotStart,
+} from "./trip-time";
 
 // Keep `placeMove` identical to the backend's trip.calendar.ts.
 type AvailableStop = { publicId: string; availability: AvailabilityWindow[] };
 
 /** A list move. Neighbours are the nearest scheduled stops; `targetDate` marks a day move. */
-export type StopMove = {
+type StopMove = {
   stopId: string;
   previousStopId: string | null;
   nextStopId: string | null;
@@ -13,10 +19,10 @@ export type StopMove = {
 };
 
 /** Shortest free time an unscheduled stop needs between its scheduled neighbours. */
-export const MIN_GAP_MINUTES = 30;
+const MIN_GAP_MINUTES = SLOT_MINUTES;
 
 /** Minutes between two slots; a missing neighbour leaves unlimited room. */
-export const gapMinutes = (previous?: TimeSlot, next?: TimeSlot) =>
+const gapMinutes = (previous?: TimeSlot, next?: TimeSlot) =>
   previous && next
     ? slotStart(next) - slotEnd(previous)
     : Number.POSITIVE_INFINITY;
@@ -57,7 +63,12 @@ export const placeMove = (
   const ids = [move.stopId, move.previousStopId, move.nextStopId].filter(
     (id) => id !== null,
   );
-  if (new Set(ids).size !== ids.length || ids.some((id) => !hours.has(id)))
+  const movedHours = hours.get(move.stopId);
+  if (
+    !movedHours ||
+    new Set(ids).size !== ids.length ||
+    ids.some((id) => !hours.has(id))
+  )
     throw new Error("Choose distinct stops from this trip to reorder.");
   const byStop = new Map(slots.map((slot) => [slot.stopId, slot]));
   const moved = byStop.get(move.stopId);
@@ -87,7 +98,7 @@ export const placeMove = (
         gapMinutes(candidate, next) < 0
       )
         continue;
-      if (!canSchedule(slots, candidate, hours.get(move.stopId)!)) continue;
+      if (!canSchedule(slots, candidate, movedHours)) continue;
       if (date === moved.date) return slots;
       return [...slots.filter((slot) => slot !== moved), candidate].sort(
         compareSlots,

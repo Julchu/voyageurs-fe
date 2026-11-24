@@ -1,27 +1,26 @@
 import type { GeoJSONSource, Map as MapboxMap } from "mapbox-gl";
-import { MapTimeEnum, type MapTimeType } from "@/utils/interfaces";
+import { MapTimeEnum, MapTimeValues, type MapTimeType } from "@/utils/map-time";
 
 const SOURCE_ID = "voyageurs-route";
 const LINE_ID = "voyageurs-route-line";
 const LINE_WIDTH = 4;
 const LINE_OPACITY = 0.85;
+const EMISSIVE_STRENGTH = 0.85;
 const FADE_DURATION_MS = 450;
 const pendingFades = new WeakMap<MapboxMap, () => void>();
 
 // Tailwind v4 palette equivalents for Mapbox's color values.
 const ROUTE_COLORS: Record<MapTimeType, string> = {
   [MapTimeEnum.DAWN]: "#312c85", // bg-indigo-900
-  [MapTimeEnum.DAY]: "#312c85", // bg-cyan-400
+  [MapTimeEnum.DAY]: "#312c85", // bg-indigo-900
   [MapTimeEnum.DUSK]: "#9ae600", // bg-lime-400
-  [MapTimeEnum.NIGHT]: "#9ae600",
+  [MapTimeEnum.NIGHT]: "#9ae600", // bg-lime-400
 };
 
 const routeColor = (map: MapboxMap) => {
-  const mapTime = map.getConfigProperty(
-    "basemap",
-    "lightPreset",
-  ) as MapTimeType;
-  return ROUTE_COLORS[mapTime] ?? ROUTE_COLORS[MapTimeEnum.DAY];
+  const preset: unknown = map.getConfigProperty("basemap", "lightPreset");
+  const mapTime = MapTimeValues.find((time) => time === preset);
+  return ROUTE_COLORS[mapTime ?? MapTimeEnum.DAY];
 };
 
 const emptyLine = {
@@ -37,7 +36,7 @@ export const updateRouteAppearance = (map: MapboxMap) => {
   if (map.getLayer(LINE_ID)) {
     map.setPaintProperty(LINE_ID, "line-color", routeColor(map));
     map.setPaintProperty(LINE_ID, "line-width", LINE_WIDTH);
-    map.setPaintProperty(LINE_ID, "line-emissive-strength", 0.85);
+    map.setPaintProperty(LINE_ID, "line-emissive-strength", EMISSIVE_STRENGTH);
   }
 };
 
@@ -52,9 +51,9 @@ export const drawRoute = (map: MapboxMap, coordinates: [number, number][]) => {
     ...emptyLine,
     geometry: { type: "LineString" as const, coordinates },
   };
-  const existing = map.getSource(SOURCE_ID);
-  if (existing && existing.type === "geojson") {
-    (existing as GeoJSONSource).setData(data);
+  const existing = map.getSource<GeoJSONSource>(SOURCE_ID);
+  if (existing) {
+    existing.setData(data);
   } else if (coordinates.length >= 2) {
     if (!map.isStyleLoaded()) return;
     map.addSource(SOURCE_ID, { type: "geojson", data });
@@ -81,7 +80,7 @@ export const drawRoute = (map: MapboxMap, coordinates: [number, number][]) => {
         delay: 0,
       },
       // Keep route colors visible under Standard's night lighting.
-      "line-emissive-strength": 0.85,
+      "line-emissive-strength": EMISSIVE_STRENGTH,
     },
   });
   if (reduceMotion) return;

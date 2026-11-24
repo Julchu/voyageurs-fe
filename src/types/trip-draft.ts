@@ -1,4 +1,4 @@
-import type { Place } from "@/utils/interfaces";
+import type { Place } from "@/types/place";
 import type { TripDto, TripStopDto } from "./trip-api";
 
 type Timestamps = Partial<Pick<TripDto, "createdAt" | "updatedAt">>;

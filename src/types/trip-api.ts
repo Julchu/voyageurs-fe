@@ -48,10 +48,12 @@ export type CreateTripInput = {
   stops?: TripStopInput[];
 };
 
+export type PlaceDetailsInput = StopDetails & { publicId: string };
+
 /** The backend saves one part per request: stop list, place details, or calendar. */
 export type TripPatch =
   | CreateTripInput
-  | { placeDetails: (StopDetails & { publicId: string })[] }
+  | { placeDetails: PlaceDetailsInput[] }
   | { calendar: CalendarInput };
 
 type PlaceFields = {
@@ -65,7 +67,7 @@ type PlaceFields = {
 };
 
 /** One per place in a trip; `key` matches placeKey. */
-export type TripPlaceDto = StopDetails &
+type TripPlaceDto = StopDetails &
   PlaceFields & {
     publicId: string;
     key: string;

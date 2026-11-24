@@ -1,4 +1,4 @@
-import { proxyJson } from "@/utils/backend-proxy";
+import { proxyJson } from "@/server/backend";
 
 type TripRouteContext = {
   params: Promise<{ publicId: string }>;

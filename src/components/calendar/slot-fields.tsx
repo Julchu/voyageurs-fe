@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@base-ui/react/button";
 import { DayPicker } from "@daypicker/react";
 import type { TimeSlot } from "@/types/trip-api";
-import { timeLabel } from "@/utils/trip-calendar";
-import { dateLabel, dayOf, parseDate, type SlotTime } from "./calendar-time";
+import { dateLabel, dayOf, parseDate, timeLabel } from "@/utils/trip-time";
+import type { SlotTime } from "./calendar-time";
 import { DoneFooter, RangePopover, TimeRangeSelects } from "./range-popover";
 import { calendarButton, dayPickerClassNames } from "./styles";
 

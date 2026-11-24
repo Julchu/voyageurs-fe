@@ -1,6 +1,5 @@
 import type { AvailabilityWindow } from "@/types/trip-api";
-import { timeLabel } from "@/utils/trip-calendar";
-import { DAY, weekdays } from "./calendar-time";
+import { DAY_MINUTES as DAY, timeLabel, weekdays } from "@/utils/trip-time";
 
 const WEEK = 7 * DAY;
 

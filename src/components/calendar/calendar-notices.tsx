@@ -1,6 +1,6 @@
 import { Button } from "@base-ui/react/button";
 import type { TimeSlot } from "@/types/trip-api";
-import { timeLabel } from "@/utils/trip-calendar";
+import { timeLabel } from "@/utils/trip-time";
 
 export function NoDatesState() {
   return (

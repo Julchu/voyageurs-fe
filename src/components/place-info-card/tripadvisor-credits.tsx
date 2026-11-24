@@ -1,4 +1,4 @@
-import type { PlacePhoto } from "@/utils/interfaces";
+import type { PlacePhoto } from "@/types/place";
 
 /**
  * Required Tripadvisor attribution for a displayed photo: the mark plus a

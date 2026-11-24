@@ -12,9 +12,8 @@ import {
 import { Spinner } from "@/components/ui/icons/spinner";
 import { useMapHook } from "@/hooks/use-map-hook";
 import { useUserStore } from "@/providers/user-store-provider";
-import { MapTimeEnum, MapTimeValues } from "@/utils/interfaces";
 import { Toolbar } from "@base-ui/react/toolbar";
-import { mapTimeFromDate } from "@/utils/map-time";
+import { MapTimeEnum, MapTimeValues, mapTimeFromDate } from "@/utils/map-time";
 
 const controlButton =
   "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-blue-500/50 hover:bg-blue-500 focus-visible:bg-blue-500 motion-safe:transition-colors motion-safe:duration-200 motion-safe:ease-out";

@@ -5,7 +5,7 @@ import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-h
 import { routeForStops } from "@/components/map-box/utils/directions";
 import { drawRoute } from "@/components/map-box/utils/route-layer";
 import type { TripStopDraft } from "@/types/trip-draft";
-import type { Coordinates } from "@/utils/interfaces";
+import type { Coordinates } from "@/types/place";
 
 // TODO: route line disabled; set to true to re-enable
 const SHOW_ROUTE_LINE: boolean = false;

@@ -1,10 +1,14 @@
 import { useTripStore } from "@/providers/trip-store-provider";
 import type { TimeSlot } from "@/types/trip-api";
 import type { TripDraft } from "@/types/trip-draft";
-import { dateDays } from "@/utils/trip-calendar";
 import { stopId } from "@/utils/trip-stop";
-import { canSchedule } from "@/utils/trip-time";
-import { DAY, type SlotTime, slotDuration } from "./calendar-time";
+import {
+  DAY_MINUTES as DAY,
+  canSchedule,
+  dateDays,
+  slotDuration,
+} from "@/utils/trip-time";
+import type { SlotTime } from "./calendar-time";
 
 const MIN_SLOT = 30;
 
