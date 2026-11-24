@@ -3,7 +3,7 @@ import { Popover } from "@base-ui/react/popover";
 import { cn } from "cn";
 import { CaretDownIcon } from "@/components/ui/icons/caret-icons";
 import { DAY_MINUTES as DAY, timeLabel } from "@/utils/trip-time";
-import { calendarButton, calendarInput, pickerFooter } from "./styles";
+import { calendarInput } from "./styles";
 
 type TimeOption = { value: number; label: string };
 const timeOption = (value: number): TimeOption => ({
@@ -156,15 +156,6 @@ export function TimeRangeSelects({
           End must be after start.
         </p>
       )}
-    </div>
-  );
-}
-
-export function DoneFooter({ children }: { children?: ReactNode }) {
-  return (
-    <div className={pickerFooter}>
-      <span className="text-xs text-neutral-500">{children}</span>
-      <Popover.Close className={calendarButton}>Done</Popover.Close>
     </div>
   );
 }

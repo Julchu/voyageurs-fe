@@ -3,9 +3,6 @@ import type { ClassNames } from "@daypicker/react";
 const focusRing =
   "outline-blue-500 focus-visible:outline-2 focus-visible:-outline-offset-2";
 
-export const calendarButton =
-  "inline-flex min-h-9 items-center justify-center rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-700 transition-colors hover:border-blue-300 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-40";
-
 export const calendarInput =
   "min-h-10 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm font-medium text-neutral-800 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:opacity-50";
 

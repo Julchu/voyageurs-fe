@@ -1,9 +1,15 @@
 import { Button } from "@base-ui/react/button";
+import { cn } from "cn";
+import { badge, outlineButton } from "@/components/ui/button-styles";
+import {
+  ArrowLeftIcon,
+  InfoIcon,
+  PinIcon,
+} from "@/components/ui/icons/planner-icons";
 import { useTripStore } from "@/providers/trip-store-provider";
 import type { TripStopDraft } from "@/types/trip-draft";
 import { stopId } from "@/utils/trip-stop";
 import { AvailabilityGrid } from "./availability-grid";
-import { calendarButton } from "./styles";
 
 /** Weekly open hours for one stop's place. */
 export function OpenHoursEditor({
@@ -19,32 +25,39 @@ export function OpenHoursEditor({
   const id = stopId(stop);
   return (
     <>
-      <div className="shrink-0 space-y-3 border-b border-neutral-100 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-[10px] font-medium tracking-wide text-blue-600 uppercase">
-              Weekly open hours
-            </p>
-            <h2 className="mt-1 text-sm font-semibold">{stop.name}</h2>
-          </div>
-          <Button type="button" className={calendarButton} onClick={onBack}>
-            Back to trip calendar
-          </Button>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="max-w-xl text-xs leading-relaxed text-neutral-500">
-            Select a continuous time range to mark it open. Drag or resize a
-            block across days to change it. With no open hours, this stop is
-            available anytime. Times are local trip time.
+      <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-3 border-b border-neutral-100 px-4 py-3 md:px-6 md:py-4">
+        <Button type="button" className={outlineButton} onClick={onBack}>
+          <ArrowLeftIcon aria-hidden="true" className="size-4" />
+          Calendar
+        </Button>
+        <h2 className="order-3 w-full text-2xl font-bold md:order-none md:w-auto">
+          Open hours
+        </h2>
+        {/* Shrinks instead of wrapping onto its own line. */}
+        <span
+          className={cn(
+            badge,
+            "max-w-fit flex-1 basis-0 md:flex-none md:basis-auto",
+          )}
+        >
+          <PinIcon aria-hidden="true" className="size-4 shrink-0" />
+          <span className="truncate">{stop.name}</span>
+        </span>
+        <div className="order-4 flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-500 md:order-none md:ml-auto md:w-auto">
+          <p className="flex items-center gap-2">
+            <InfoIcon aria-hidden="true" className="size-4 shrink-0" />
+            <span>Drag on the grid to add · No hours = open anytime</span>
           </p>
-          <Button
-            type="button"
-            disabled={disabled || !stop.availability.length}
-            className={calendarButton}
-            onClick={() => setOpenHours(id, [])}
-          >
-            Clear open hours
-          </Button>
+          {stop.availability.length > 0 && (
+            <Button
+              type="button"
+              disabled={disabled}
+              className="cursor-pointer font-medium text-red-600 hover:underline disabled:opacity-50"
+              onClick={() => setOpenHours(id, [])}
+            >
+              Clear all
+            </Button>
+          )}
         </div>
       </div>
       <AvailabilityGrid
