@@ -1,22 +1,14 @@
 "use client";
 
-import { type PropsWithChildren, useState } from "react";
 import type { UserInfo } from "@/types/user";
-import {
-  createUserStore,
-  initUserStore,
-  type UserStore,
-} from "@/stores/user-store";
+import { createUserStore, initUserStore } from "@/stores/user-store";
 import { createStoreContext } from "./create-store-context";
 
-const { Provider, useSelector } = createStoreContext<UserStore>("useUserStore");
+const store = createStoreContext(
+  "useUserStore",
+  (props: { userInfo: UserInfo | null }) =>
+    createUserStore(initUserStore(props.userInfo)),
+);
 
-export const useUserStore = useSelector;
-
-export const UserStoreProvider = ({
-  children,
-  userInfo,
-}: PropsWithChildren<{ userInfo: UserInfo | null }>) => {
-  const [store] = useState(() => createUserStore(initUserStore(userInfo)));
-  return <Provider value={store}>{children}</Provider>;
-};
+export const UserStoreProvider = store.Provider;
+export const useUserStore = store.useSelector;

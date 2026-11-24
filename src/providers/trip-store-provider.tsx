@@ -1,25 +1,14 @@
 "use client";
 
-import { type PropsWithChildren, useState } from "react";
 import type { TripDto } from "@/types/trip-api";
-import {
-  createTripStore,
-  initTripStore,
-  type TripStore,
-} from "@/stores/trip-store";
+import { createTripStore, initTripStore } from "@/stores/trip-store";
 import { createStoreContext } from "./create-store-context";
 
-const { Provider, useSelector } = createStoreContext<TripStore>("useTripStore");
+const store = createStoreContext(
+  "useTripStore",
+  (props: { trips: TripDto[]; tripsServerLoaded: boolean }) =>
+    createTripStore(initTripStore(props.trips, props.tripsServerLoaded)),
+);
 
-export const useTripStore = useSelector;
-
-export const TripStoreProvider = ({
-  children,
-  trips,
-  tripsServerLoaded,
-}: PropsWithChildren<{ trips: TripDto[]; tripsServerLoaded: boolean }>) => {
-  const [store] = useState(() =>
-    createTripStore(initTripStore(trips, tripsServerLoaded)),
-  );
-  return <Provider value={store}>{children}</Provider>;
-};
+export const TripStoreProvider = store.Provider;
+export const useTripStore = store.useSelector;
