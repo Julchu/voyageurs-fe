@@ -1,5 +1,5 @@
 import "mapbox-gl/dist/mapbox-gl.css";
-import mapBoxGL, { type Map as MapboxMap } from "mapbox-gl";
+import mapBoxGL from "mapbox-gl";
 import { useEffect, useRef } from "react";
 import { cn } from "cn";
 import { Controls } from "@/components/map-controls/controls";
@@ -18,6 +18,25 @@ import { useHydrated } from "@/hooks/use-hydrated";
 
 const DEFAULT_CENTER: [lng: number, lat: number] = [-79.387054, 43.642567];
 
+const startMap = (container: HTMLDivElement) => {
+  mapBoxGL.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  try {
+    return new mapBoxGL.Map({
+      attributionControl: false,
+      container,
+      center: DEFAULT_CENTER,
+      zoom: 15.5,
+      antialias: true,
+      crossSourceCollisions: true,
+      performanceMetricsCollection: false,
+      style: buildStandardStyle(),
+    });
+  } catch (error) {
+    // TODO: show a map error state instead of the loading spinner.
+    console.error("Map failed to start", error);
+  }
+};
+
 export const MapAndControls = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const setMap = useMapStore((state) => state.setMap);
@@ -25,28 +44,10 @@ export const MapAndControls = () => {
   const dark = useHydrated() && darkMode();
 
   useEffect(() => {
-    if (!mapContainer.current) return;
+    const map = mapContainer.current && startMap(mapContainer.current);
+    if (!map) return;
     let removeInteractions: (() => void) | undefined;
     let cancelOverrides: (() => void) | undefined;
-
-    mapBoxGL.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    let map: MapboxMap;
-    try {
-      map = new mapBoxGL.Map({
-        attributionControl: false,
-        container: mapContainer.current,
-        center: DEFAULT_CENTER,
-        zoom: 15.5,
-        antialias: true,
-        crossSourceCollisions: true,
-        performanceMetricsCollection: false,
-        style: buildStandardStyle(),
-      });
-    } catch (error) {
-      // TODO: show a map error state instead of the loading spinner.
-      console.error("Map failed to start", error);
-      return;
-    }
 
     map.on("style.load", () => {
       cancelOverrides?.();

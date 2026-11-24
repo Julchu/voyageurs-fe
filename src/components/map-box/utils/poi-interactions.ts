@@ -3,20 +3,22 @@ import { placeFromFeature } from "@/components/map-box/utils/poi-click-place";
 import { placeIdentity } from "@/utils/place-identity";
 import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 
+type Interaction = Parameters<MapboxMap["addInteraction"]>[1];
+
+const FEATURESETS = ["poi", "landmark-icons"] as const;
+
+/** Click a POI or landmark to open its place card. Returns the cleanup. */
 export const addPoiInteractions = (map: MapboxMap) => {
-  const ids: string[] = [];
-  const featuresets = ["poi", "landmark-icons"] as const;
   let openedKey = "";
+  const setCursor = (cursor: string) => {
+    map.getCanvas().style.cursor = cursor;
+  };
 
-  for (const featuresetId of featuresets) {
-    const target = { featuresetId, importId: "basemap" };
-
-    const clickId = `${featuresetId}-click`;
-    map.addInteraction(clickId, {
+  const interactions: Pick<Interaction, "type" | "handler">[] = [
+    {
       type: "click",
-      target,
-      handler: (e) => {
-        const place = e.feature ? placeFromFeature(e.feature) : null;
+      handler: ({ feature }) => {
+        const place = feature ? placeFromFeature(feature) : null;
         if (!place) return;
         const key = placeIdentity(place);
         // poi and landmark-icons can both report one click. Ignore the
@@ -31,29 +33,21 @@ export const addPoiInteractions = (map: MapboxMap) => {
         openPlacePopup.openWithPayload(place);
         return true; // stop lower-priority interactions
       },
-    });
-    ids.push(clickId);
+    },
+    { type: "mouseenter", handler: () => setCursor("pointer") },
+    { type: "mouseleave", handler: () => setCursor("") },
+  ];
 
-    const enterId = `${featuresetId}-enter`;
-    map.addInteraction(enterId, {
-      type: "mouseenter",
-      target,
-      handler: () => {
-        map.getCanvas().style.cursor = "pointer";
-      },
-    });
-    ids.push(enterId);
-
-    const leaveId = `${featuresetId}-leave`;
-    map.addInteraction(leaveId, {
-      type: "mouseleave",
-      target,
-      handler: () => {
-        map.getCanvas().style.cursor = "";
-      },
-    });
-    ids.push(leaveId);
-  }
+  const ids = FEATURESETS.flatMap((featuresetId) =>
+    interactions.map((interaction) => {
+      const id = `${featuresetId}-${interaction.type}`;
+      map.addInteraction(id, {
+        ...interaction,
+        target: { featuresetId, importId: "basemap" },
+      });
+      return id;
+    }),
+  );
 
   return () => {
     for (const id of ids) map.removeInteraction(id);
