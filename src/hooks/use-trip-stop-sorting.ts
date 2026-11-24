@@ -3,8 +3,6 @@ import type { DragEndEvent } from "@dnd-kit/dom";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import { useTripStore } from "@/providers/trip-store-provider";
 import type { TripStopDraft } from "@/types/trip-draft";
-import { serverTrip } from "@/utils/trip-sync";
-import { stopId } from "@/utils/trip-stop";
 
 /** Drag-to-reorder for the drawer and calendar lists. Both move stops in the same draft. */
 export function useTripStopSorting() {
@@ -30,28 +28,17 @@ export function useTripStopSorting() {
   return { trip, busy, slotsByStop, handleDragEnd };
 }
 
-export function useTripStopSortable(stop: TripStopDraft, index: number) {
-  const { busy, slot, savedSlot } = useTripStore(
-    useShallow((state) => ({
-      busy: state.save.status === "saving",
-      slot: state.currentTrip.timeSlots.find((v) => v.stopId === stopId(stop)),
-      savedSlot: serverTrip(state.trips, state.currentTrip)?.timeSlots.find(
-        (v) => v.stopId === stop.publicId,
-      ),
-    })),
-  );
-  const disabled = busy || !!slot?.locked;
+/** One sortable stop. Nothing moves while saving; a reserved stop stays put but still takes drops. */
+export function useStopSortable(
+  stop: TripStopDraft,
+  index: number,
+  { busy, locked }: { busy: boolean; locked: boolean },
+) {
+  const disabled = busy || locked;
   const sortable = useSortable({
     id: stop.clientId,
     index,
     disabled: { draggable: disabled, droppable: busy },
   });
-  const changed =
-    !!slot &&
-    !!savedSlot &&
-    (slot.date !== savedSlot.date ||
-      slot.startMinute !== savedSlot.startMinute ||
-      slot.endMinute !== savedSlot.endMinute);
-  const unscheduled = !slot && !!savedSlot;
-  return { ...sortable, disabled, slot, changed, unscheduled };
+  return { ...sortable, disabled };
 }

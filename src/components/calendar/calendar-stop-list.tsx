@@ -6,7 +6,7 @@ import { Cursor } from "@dnd-kit/dom";
 import { Draggable } from "@fullcalendar/react/interaction";
 import { StopDragHandle } from "@/components/trips-drawer/stop-drag-controls";
 import {
-  useTripStopSortable,
+  useStopSortable,
   useTripStopSorting,
 } from "@/hooks/use-trip-stop-sorting";
 import type { TimeSlot } from "@/types/trip-api";
@@ -77,6 +77,8 @@ export function CalendarStopList({
               key={stop.clientId}
               stop={stop}
               index={index}
+              busy={disabled}
+              locked={!!slot?.locked}
               className={`rounded-xl border p-2.5 transition-colors ${active ? "border-blue-300 bg-blue-50" : slot ? "border-neutral-100 bg-neutral-50" : "border-neutral-200 bg-white"}`}
             >
               <Button
@@ -144,17 +146,22 @@ export function CalendarStopList({
 function SortableCalendarStop({
   stop,
   index,
+  busy,
+  locked,
   className,
   children,
 }: {
   stop: TripStopDraft;
   index: number;
+  busy: boolean;
+  locked: boolean;
   className: string;
   children: ReactNode;
 }) {
-  const { ref, handleRef, isDragging, disabled } = useTripStopSortable(
+  const { ref, handleRef, isDragging, disabled } = useStopSortable(
     stop,
     index,
+    { busy, locked },
   );
   return (
     <li
