@@ -1,6 +1,8 @@
 import { Combobox } from "@base-ui/react/combobox";
 import { MapSearchIcon } from "@/components/ui/icons/map-icons";
 import type { Place } from "@/types/place";
+import { cn } from "cn";
+import { popupMotion } from "@/components/ui/popup-styles";
 
 export const MIN_QUERY_LENGTH = 2;
 
@@ -107,7 +109,10 @@ export const AddressCombobox = <Item extends AddressComboboxItem>({
         >
           <Combobox.Popup
             aria-busy={loading}
-            className="max-h-[var(--available-height)] w-[var(--anchor-width)] max-w-[var(--available-width)] origin-[var(--transform-origin)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl bg-white p-2 text-base text-neutral-950 shadow transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none sm:max-h-38"
+            className={cn(
+              popupMotion,
+              "max-h-[var(--available-height)] w-[var(--anchor-width)] max-w-[var(--available-width)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl bg-white p-2 text-base text-neutral-950 shadow sm:max-h-38",
+            )}
           >
             <Combobox.Status
               className={

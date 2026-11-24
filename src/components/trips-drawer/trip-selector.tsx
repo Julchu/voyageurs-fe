@@ -1,5 +1,6 @@
 "use client";
 import { useMemo } from "react";
+import { cn } from "cn";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useShallow } from "zustand/react/shallow";
 import { Select } from "@base-ui/react/select";
@@ -10,11 +11,18 @@ import {
 } from "@/components/ui/icons/caret-icons";
 import { PinPencilIcon } from "@/components/ui/icons/pin-icons";
 import { MapCurrentIcon } from "@/components/ui/icons/map-icons";
+import { popupMotion, popupSurface } from "@/components/ui/popup-styles";
 
 type TripOption = {
   value: string;
   label: string;
 };
+
+// Select value for the "New Trip" entry. Trip values are IDs, so it can't clash.
+const NEW_TRIP = "new-trip";
+
+const itemClass =
+  "group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden transition-colors duration-150 select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none";
 
 export const TripSelector = () => {
   const { trips, selectTrip, currentTrip, createTrip } = useTripStore(
@@ -45,7 +53,7 @@ export const TripSelector = () => {
 
   const handleValueChange = (tripId: string | null) => {
     if (!tripId) return;
-    if (tripId === "new-trip") return createTrip("New Trip");
+    if (tripId === NEW_TRIP) return createTrip("New Trip");
     selectTrip(tripId);
   };
 
@@ -67,7 +75,13 @@ export const TripSelector = () => {
           align="center"
           sideOffset={4}
         >
-          <Select.Popup className="group relative min-w-[var(--anchor-width)] origin-[var(--transform-origin)] overflow-hidden rounded-lg bg-white text-neutral-950 shadow-[0px_10px_38px_-10px_rgba(22,23,24,0.35),0px_10px_20px_-15px_rgba(22,23,24,0.2)] transition-[scale,opacity] duration-150 ease-out outline-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 data-[side=none]:min-w-[calc(var(--anchor-width)+1.75rem)] data-[side=none]:translate-y-px data-[side=none]:data-ending-style:transition-none data-[side=none]:data-starting-style:scale-100 data-[side=none]:data-starting-style:opacity-100 data-[side=none]:data-starting-style:transition-none motion-reduce:transition-none">
+          <Select.Popup
+            className={cn(
+              popupSurface,
+              popupMotion,
+              "group relative min-w-[var(--anchor-width)] overflow-hidden rounded-lg data-[side=none]:min-w-[calc(var(--anchor-width)+1.75rem)] data-[side=none]:translate-y-px data-[side=none]:data-ending-style:transition-none data-[side=none]:data-starting-style:scale-100 data-[side=none]:data-starting-style:opacity-100 data-[side=none]:data-starting-style:transition-none",
+            )}
+          >
             <Select.ScrollUpArrow className="top-0 z-1 flex h-4 w-full cursor-default items-center justify-center bg-white text-center text-xs before:absolute before:left-0 before:h-full before:w-full before:content-[''] data-[side=none]:before:top-[-100%]">
               <CaretUpIcon className={"h-6 w-6 fill-none stroke-blue-500"} />
             </Select.ScrollUpArrow>
@@ -80,7 +94,7 @@ export const TripSelector = () => {
                       : value
                   }
                   value={value}
-                  className="group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden transition-colors duration-150 select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
+                  className={itemClass}
                 >
                   <Select.ItemIndicator className="col-start-1">
                     <MapCurrentIcon
@@ -94,11 +108,7 @@ export const TripSelector = () => {
                   </Select.ItemText>
                 </Select.Item>
               ))}
-              <Select.Item
-                key="new-trip"
-                value={"new-trip"}
-                className="group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden transition-colors duration-150 select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
-              >
+              <Select.Item value={NEW_TRIP} className={itemClass}>
                 <Select.ItemIndicator className="col-start-1">
                   <PinPencilIcon
                     className={
