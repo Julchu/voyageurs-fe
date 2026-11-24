@@ -1,116 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
+import { backendRequest } from "@/server/backend";
+import { env } from "@/server/env";
 
+/** Stale unless the token names its session and has more than 30s left. */
 const accessTokenStale = (token: string) => {
   try {
-    const part = token.split(".")[1];
-    if (!part) return true;
-    const padded = part.replace(/-/g, "+").replace(/_/g, "/");
-    const payload = JSON.parse(atob(padded)) as {
-      exp?: unknown;
-      sid?: unknown;
-    };
+    const { sid, exp } = JSON.parse(
+      Buffer.from(token.split(".")[1] ?? "", "base64url").toString(),
+    ) as { sid?: unknown; exp?: unknown };
     return (
-      typeof payload.sid !== "string" ||
-      typeof payload.exp !== "number" ||
-      payload.exp * 1000 <= Date.now() + 30_000
+      typeof sid !== "string" ||
+      typeof exp !== "number" ||
+      exp * 1000 <= Date.now() + 30_000
     );
   } catch {
     return true;
   }
 };
 
-const setCookiePair = (setCookie: string) => {
-  const pair = setCookie.split(";", 1)[0] ?? "";
-  const eq = pair.indexOf("=");
-  if (eq <= 0) return;
-  const name = pair.slice(0, eq).trim();
-  const value = pair.slice(eq + 1).trim();
-  if (!name || !value) return;
-  return { name, value };
-};
-
-const removeCookie = (cookieHeader: string, name: string) =>
-  cookieHeader
-    .split(";")
-    .map((part) => part.trim())
-    .filter((part) => part && !part.startsWith(`${name}=`))
-    .join("; ");
-
-const replaceCookie = (cookieHeader: string, name: string, value: string) =>
-  [removeCookie(cookieHeader, name), `${name}=${value}`]
-    .filter(Boolean)
-    .join("; ");
+const isAuthRoute = (path: string) =>
+  path.startsWith("/api/login") || path === "/api/logout";
 
 export async function proxy(req: NextRequest) {
-  const accessTokenKey = process.env.ACCESS_TOKEN_KEY;
-  const refreshTokenKey = process.env.REFRESH_TOKEN_KEY;
-  const accessToken = accessTokenKey
-    ? req.cookies.get(accessTokenKey)?.value
-    : undefined;
-  const refreshToken = refreshTokenKey
-    ? req.cookies.get(refreshTokenKey)?.value
-    : undefined;
-
-  let requestCookie = req.headers.get("cookie") ?? "";
-  const setCookies: string[] = [];
-
-  const shouldRefresh =
-    Boolean(refreshToken) &&
-    (!accessToken || accessTokenStale(accessToken)) &&
-    !req.nextUrl.pathname.startsWith("/api/login") &&
-    req.nextUrl.pathname !== "/api/logout";
-
-  if (shouldRefresh && accessTokenKey && refreshTokenKey && refreshToken) {
-    try {
-      const refreshRes = await fetch(
-        `${process.env.VOYAGEURS_BACKEND_URL}/user/refresh`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-          },
-        },
-      );
-
-      if (refreshRes.ok) {
-        for (const cookie of refreshRes.headers.getSetCookie()) {
-          setCookies.push(cookie);
-          const pair = setCookiePair(cookie);
-          if (!pair) continue;
-          if (pair.name === accessTokenKey || pair.name === refreshTokenKey) {
-            requestCookie = replaceCookie(requestCookie, pair.name, pair.value);
-          }
-        }
-      } else if (refreshRes.status === 401) {
-        requestCookie = removeCookie(requestCookie, accessTokenKey);
-        requestCookie = removeCookie(requestCookie, refreshTokenKey);
-        const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-        setCookies.push(
-          `${accessTokenKey}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${secure}`,
-          `${refreshTokenKey}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${secure}`,
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Session refresh failed",
-        error instanceof Error ? error.name : "unknown",
-      );
-    }
+  const { accessKey, refreshKey } = env();
+  const refreshToken = req.cookies.get(refreshKey)?.value;
+  const accessToken = req.cookies.get(accessKey)?.value;
+  if (
+    !refreshToken ||
+    (accessToken && !accessTokenStale(accessToken)) ||
+    isAuthRoute(req.nextUrl.pathname)
+  ) {
+    return NextResponse.next();
   }
 
-  const requestHeaders = new Headers(req.headers);
-  if (requestCookie) requestHeaders.set("cookie", requestCookie);
-  else requestHeaders.delete("cookie");
-
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
-  response.headers.set("X-Current-Path", req.nextUrl.pathname);
-
-  for (const cookie of setCookies) {
-    response.headers.append("Set-Cookie", cookie);
+  const refreshed = await backendRequest("user/refresh", {
+    method: "POST",
+    token: refreshToken,
+  }).catch((error: unknown) =>
+    console.error(
+      "Session refresh failed",
+      error instanceof Error ? error.name : "unknown",
+    ),
+  );
+  // Timeout, 5xx or 429: keep the current cookies and let the request through.
+  if (!refreshed || (!refreshed.ok && refreshed.status !== 401)) {
+    return NextResponse.next();
   }
 
+  // The BE sets both tokens on 200 and clears both on 401; this request sees the same.
+  const { cookies } = new NextResponse(null, { headers: refreshed.headers });
+  for (const { name, value } of cookies.getAll()) {
+    if (value) req.cookies.set(name, value);
+    else req.cookies.delete(name);
+  }
+  const response = NextResponse.next({ request: { headers: req.headers } });
+  for (const setCookie of refreshed.headers.getSetCookie()) {
+    response.headers.append("Set-Cookie", setCookie);
+  }
   return response;
 }
 

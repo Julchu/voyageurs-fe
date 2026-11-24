@@ -1,11 +1,13 @@
 import { proxyJson } from "@/server/backend";
 
-type TripRouteContext = {
-  params: Promise<{ publicId: string }>;
-};
-
-export const PATCH = async (request: Request, context: TripRouteContext) => {
-  const { publicId } = await context.params;
-  const body = await request.text();
-  return proxyJson(`trips/${publicId}`, { method: "PATCH", body });
+export const PATCH = async (
+  request: Request,
+  ctx: RouteContext<"/api/trips/[publicId]">,
+) => {
+  const { publicId } = await ctx.params;
+  // Encoded so the ID can't reach another backend path.
+  return proxyJson(`trips/${encodeURIComponent(publicId)}`, {
+    method: "PATCH",
+    body: await request.text(),
+  });
 };
