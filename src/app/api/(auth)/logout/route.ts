@@ -4,9 +4,8 @@ import { cookieBase } from "@/server/cookies";
 import { env } from "@/server/env";
 import { getAccessToken, getRefreshToken } from "@/server/session-token";
 
-export async function POST(req: NextRequest) {
-  let status = 200;
-
+/** Ends the backend session. The status to answer with: 200, or why it failed. */
+const backendLogout = async (req: NextRequest) => {
   try {
     const headers = new Headers(forwardedFor(req));
     const refreshToken = await getRefreshToken();
@@ -17,19 +16,21 @@ export async function POST(req: NextRequest) {
       token: await getAccessToken(),
       headers,
     });
-
-    if (!backendResponse.ok) {
-      console.error("Backend logout failed", backendResponse.status);
-      status = 502;
-    }
+    if (backendResponse.ok) return 200;
+    console.error("Backend logout failed", backendResponse.status);
+    return 502;
   } catch (error) {
     console.error(
       "Logout failed",
       error instanceof Error ? error.name : "unknown",
     );
-    status = 503;
+    return 503;
   }
+};
 
+export async function POST(req: NextRequest) {
+  const status = await backendLogout(req);
+  // Cookies clear even when the backend fails, so the browser is signed out.
   const response = NextResponse.json({ userInfo: null }, { status });
   const { accessKey, refreshKey } = env();
   for (const name of [accessKey, refreshKey]) {

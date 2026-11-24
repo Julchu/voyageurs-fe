@@ -44,9 +44,8 @@ export const TripSelector = () => {
     : [{ value: currentValue, label: currentTrip.name }, ...options];
 
   const handleValueChange = (tripId: string | null) => {
-    if (!tripId) return;
-    if (tripId === NEW_TRIP) return createTrip("New Trip");
-    selectTrip(tripId);
+    if (tripId === NEW_TRIP) createTrip("New Trip");
+    else if (tripId) selectTrip(tripId);
   };
 
   return (
@@ -58,7 +57,7 @@ export const TripSelector = () => {
       <Select.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-lg bg-blue-500 p-2 pl-4 text-xl font-bold tracking-widest text-white">
         <Select.Value placeholder="Select trip" />
         <Select.Icon>
-          <CaretCircleDownIcon className={"h-6 w-6 fill-none stroke-white"} />
+          <CaretCircleDownIcon className="h-6 w-6 fill-none stroke-white" />
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal>
@@ -75,7 +74,7 @@ export const TripSelector = () => {
             )}
           >
             <Select.ScrollUpArrow className="top-0 z-1 flex h-4 w-full cursor-default items-center justify-center bg-white text-center text-xs before:absolute before:left-0 before:h-full before:w-full before:content-[''] data-[side=none]:before:top-[-100%]">
-              <CaretUpIcon className={"h-6 w-6 fill-none stroke-blue-500"} />
+              <CaretUpIcon className="h-6 w-6 fill-none stroke-blue-500" />
             </Select.ScrollUpArrow>
             <Select.List className="relative flex max-h-[var(--available-height)] scroll-py-6 flex-col overflow-y-auto p-1 tracking-widest outline-hidden transition-[opacity,scale] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)]">
               {selectValues.map(({ label, value }) => (
@@ -90,11 +89,7 @@ export const TripSelector = () => {
                   className={itemClass}
                 >
                   <Select.ItemIndicator className="col-start-1">
-                    <MapCurrentIcon
-                      className={
-                        "h-6 w-6 fill-none stroke-green-500 group-data-highlighted/item:stroke-white"
-                      }
-                    />
+                    <MapCurrentIcon className="h-6 w-6 fill-none stroke-green-500 group-data-highlighted/item:stroke-white" />
                   </Select.ItemIndicator>
                   <Select.ItemText className="col-start-2">
                     {label}
@@ -103,11 +98,7 @@ export const TripSelector = () => {
               ))}
               <Select.Item value={NEW_TRIP} className={itemClass}>
                 <Select.ItemIndicator className="col-start-1">
-                  <PinPencilIcon
-                    className={
-                      "h-6 w-6 fill-green-500 stroke-green-500 group-data-highlighted/item:stroke-white"
-                    }
-                  />
+                  <PinPencilIcon className="h-6 w-6 fill-green-500 stroke-green-500 group-data-highlighted/item:stroke-white" />
                 </Select.ItemIndicator>
                 <Select.ItemText className="col-start-2">
                   New Trip
@@ -116,7 +107,7 @@ export const TripSelector = () => {
             </Select.List>
 
             <Select.ScrollDownArrow className="bottom-0 z-1 flex h-4 w-full cursor-default items-center justify-center bg-white text-center text-xs before:absolute before:left-0 before:h-full before:w-full before:content-[''] data-[side=none]:before:bottom-[-100%]">
-              <CaretDownIcon className={"h-6 w-6 fill-none stroke-blue-500"} />
+              <CaretDownIcon className="h-6 w-6 fill-none stroke-blue-500" />
             </Select.ScrollDownArrow>
           </Select.Popup>
         </Select.Positioner>

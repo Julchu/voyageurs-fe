@@ -31,7 +31,7 @@ export const UserAvatar = () => {
               fill
               sizes="48px"
               alt=""
-              className={"rounded-full object-cover"}
+              className="rounded-full object-cover"
             />
           }
         />
