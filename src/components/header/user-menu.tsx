@@ -16,7 +16,7 @@ import { Drawer } from "@base-ui/react/drawer";
 import { visitDrawerHandle } from "@/components/visits-drawer/visit-drawer";
 
 const userMenuItem =
-  "relative flex h-6 items-center rounded-lg py-4 leading-none transition-colors duration-150 outline-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none";
+  "relative flex h-6 items-center rounded-xl py-4 leading-none transition-colors duration-150 outline-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none";
 
 export const UserMenu = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -37,7 +37,7 @@ export const UserMenu = () => {
           className={cn(
             popupSurface,
             popupMotion,
-            "relative min-w-40 rounded-xl p-1 tracking-widest select-none",
+            "relative min-w-40 rounded-2xl p-1.5 tracking-widest select-none",
           )}
         >
           <Menu.Arrow className={popupArrow} />

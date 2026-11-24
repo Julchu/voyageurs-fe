@@ -73,7 +73,7 @@ export const AddressCombobox = <Item extends AddressComboboxItem>({
         if (hit) onSelect(hit);
       }}
     >
-      <Combobox.InputGroup className="flex flex-row gap-2 rounded-xl bg-white px-2 shadow has-[:disabled]:cursor-not-allowed has-[:disabled]:bg-neutral-100">
+      <Combobox.InputGroup className="flex flex-row gap-2 rounded-full bg-white px-3 shadow has-[:disabled]:cursor-not-allowed has-[:disabled]:bg-neutral-100">
         <div className="flex shrink-0 items-center">
           <MapSearchIcon className="h-5 w-5 fill-none stroke-blue-500" />
         </div>
@@ -111,7 +111,7 @@ export const AddressCombobox = <Item extends AddressComboboxItem>({
             aria-busy={loading}
             className={cn(
               popupMotion,
-              "max-h-[var(--available-height)] w-[var(--anchor-width)] max-w-[var(--available-width)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl bg-white p-2 text-base text-neutral-950 shadow sm:max-h-38",
+              "max-h-[var(--available-height)] w-[var(--anchor-width)] max-w-[var(--available-width)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl bg-white p-2 text-base text-neutral-950 shadow sm:max-h-38",
             )}
           >
             <Combobox.Status
@@ -140,7 +140,7 @@ export const AddressCombobox = <Item extends AddressComboboxItem>({
                 <Combobox.Item
                   key={hit.id}
                   value={hit}
-                  className="group flex h-10 w-full shrink-0 cursor-pointer flex-col justify-center rounded-lg px-4 text-left tracking-widest transition-colors duration-150 outline-none select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
+                  className="group flex h-10 w-full shrink-0 cursor-pointer flex-col justify-center rounded-xl px-4 text-left tracking-widest transition-colors duration-150 outline-none select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none"
                 >
                   <span className="block w-full truncate">{hit.name}</span>
                   <span className="block w-full truncate text-xs text-neutral-500 capitalize group-data-highlighted:text-white">

@@ -44,7 +44,7 @@ export const LinksNavigationMenu = () => {
         <NavigationMenu.Item>
           <NavigationMenu.Trigger
             className={
-              "flex cursor-pointer items-center rounded-xl bg-blue-500/50 px-4 py-2 text-2xl font-bold tracking-widest text-white hover:bg-blue-500 focus-visible:bg-blue-500 data-popup-open:bg-blue-500 motion-safe:transition-colors motion-safe:duration-200 motion-safe:ease-out"
+              "pointer-events-auto flex cursor-pointer items-center rounded-full bg-blue-500/50 px-4 py-2 text-2xl font-bold tracking-widest text-white hover:bg-blue-500 focus-visible:bg-blue-500 data-popup-open:bg-blue-500 motion-safe:transition-colors motion-safe:duration-200 motion-safe:ease-out"
             }
           >
             Voyageurs
@@ -55,7 +55,7 @@ export const LinksNavigationMenu = () => {
                 <li key={link.href}>
                   <NavigationMenu.Link
                     className={
-                      "group relative block h-full w-full rounded-lg p-2 text-left text-inherit no-underline hover:bg-blue-500 hover:text-white focus-visible:bg-blue-500 focus-visible:text-white focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-blue-500 motion-reduce:transition-none"
+                      "group relative block h-full w-full rounded-xl p-2 text-left text-inherit no-underline hover:bg-blue-500 hover:text-white focus-visible:bg-blue-500 focus-visible:text-white focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-blue-500 motion-reduce:transition-none"
                     }
                     closeOnClick
                     render={<NextLink href={link.href} />}
@@ -86,7 +86,7 @@ export const LinksNavigationMenu = () => {
             className={cn(
               popupSurface,
               popupMotion,
-              "relative h-[var(--popup-height)] w-[var(--popup-width)] rounded-xl",
+              "relative h-[var(--popup-height)] w-[var(--popup-width)] rounded-2xl",
             )}
           >
             <NavigationMenu.Arrow

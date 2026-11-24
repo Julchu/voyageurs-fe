@@ -7,6 +7,7 @@ import { Header } from "@/components/header/header";
 import Script from "next/script";
 import { AppShell } from "@/components/map-box/app-shell";
 
+// TODO: add app/apple-icon.png (iOS home screen ignores icon.svg)
 export const metadata: Metadata = {
   title: "Voyageurs",
   description: "Plan a trip as an ordered list of places on the map",
