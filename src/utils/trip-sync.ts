@@ -10,8 +10,8 @@ import type { TripDraft, TripStopDraft } from "@/types/trip-draft";
 import { stopId } from "./trip-stop";
 
 /** The saved copy of the trip a draft was made from. */
-export const serverTrip = (trips: TripDto[], draft?: TripDraft) =>
-  draft?.publicId
+export const serverTrip = (trips: TripDto[], draft: TripDraft) =>
+  draft.publicId
     ? trips.find((trip) => trip.publicId === draft.publicId)
     : undefined;
 
@@ -68,16 +68,21 @@ const stopInput = (stop: TripStopDto | TripStopDraft): TripStopInput => ({
   coordinates: stop.coordinates,
 });
 
+/** Save part 1 for a new trip: its name and every stop. */
+export const newTripInput = (draft: TripDraft): CreateTripInput => ({
+  name: draft.name.trim(),
+  stops: draft.stops.map(stopInput),
+});
+
 /**
- * Save part 1: name, added and removed stops. Kept stops stay in their saved
- * order and new stops go last; the calendar part saves the final order.
+ * Save part 1 for a saved trip: name, added and removed stops. Kept stops stay
+ * in their saved order and new stops go last; the calendar part saves the final order.
  */
 export const stopListChanges = (
   draft: TripDraft,
-  saved?: TripDto,
+  saved: TripDto,
 ): CreateTripInput | undefined => {
   const name = draft.name.trim();
-  if (!saved) return { name, stops: draft.stops.map(stopInput) };
   const kept = new Set(draft.stops.map((stop) => stop.publicId));
   const added = draft.stops.filter((stop) => !stop.publicId);
   const stops = [
@@ -149,3 +154,7 @@ export const calendarChanges = (
 
 export const isTripDirty = (draft: TripDraft, saved?: TripDto) =>
   !saved || !!stopListChanges(draft, saved) || !!calendarChanges(draft, saved);
+
+/** The draft started from an older version, e.g. after a save in another tab. */
+export const isStale = (draft: TripDraft, saved?: TripDto) =>
+  !!draft.publicId && draft.version !== saved?.version;

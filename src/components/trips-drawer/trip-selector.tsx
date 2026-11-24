@@ -1,5 +1,4 @@
 "use client";
-import { useMemo } from "react";
 import { cn } from "cn";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useShallow } from "zustand/react/shallow";
@@ -34,22 +33,15 @@ export const TripSelector = () => {
     })),
   );
 
-  const selectValues = useMemo<TripOption[]>(() => {
-    const options = trips.map(({ publicId, name }) => ({
-      value: publicId,
-      label: name,
-    }));
-    if (!currentTrip) return options;
-    const current = {
-      value: currentTrip.publicId ?? currentTrip.clientId,
-      label: currentTrip.name,
-    };
-    return options.some((option) => option.value === current.value)
-      ? options.map((option) =>
-          option.value === current.value ? current : option,
-        )
-      : [current, ...options];
-  }, [trips, currentTrip]);
+  const currentValue = currentTrip.publicId ?? currentTrip.clientId;
+  // The draft's name wins over the saved one; an unsaved draft is listed first.
+  const options: TripOption[] = trips.map(({ publicId, name }) => ({
+    value: publicId,
+    label: publicId === currentValue ? currentTrip.name : name,
+  }));
+  const selectValues = options.some(({ value }) => value === currentValue)
+    ? options
+    : [{ value: currentValue, label: currentTrip.name }, ...options];
 
   const handleValueChange = (tripId: string | null) => {
     if (!tripId) return;
@@ -61,7 +53,7 @@ export const TripSelector = () => {
     <Select.Root
       onValueChange={handleValueChange}
       items={selectValues}
-      value={currentTrip?.publicId ?? currentTrip?.clientId ?? null}
+      value={currentValue}
     >
       <Select.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-lg bg-blue-500 p-2 pl-4 text-xl font-bold tracking-widest text-white">
         <Select.Value placeholder="Select trip" />
@@ -88,8 +80,9 @@ export const TripSelector = () => {
             <Select.List className="relative flex max-h-[var(--available-height)] scroll-py-6 flex-col overflow-y-auto p-1 tracking-widest outline-hidden transition-[opacity,scale] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)]">
               {selectValues.map(({ label, value }) => (
                 <Select.Item
+                  // Saving a draft swaps its value for a public ID. A fixed key keeps its item mounted.
                   key={
-                    !currentTrip?.publicId && value === currentTrip?.clientId
+                    !currentTrip.publicId && value === currentTrip.clientId
                       ? "current-draft"
                       : value
                   }
