@@ -6,6 +6,7 @@ import { useStopDetailsStore } from "@/providers/stop-details-store-provider";
 import { useUserStore } from "@/providers/user-store-provider";
 import { serverTrip } from "@/utils/trip-sync";
 import { placeKey } from "@/utils/trip-stop";
+import { uniqueBy } from "@/utils/unique-by";
 import {
   emptyStopDetails,
   sameDetails,
@@ -44,19 +45,17 @@ export const useStopDetails = () => {
   );
   const places = new Map(saved?.places.map((place) => [place.key, place]));
 
-  const rows = new Map<string, StopDetailsRow>();
-  for (const stop of trip.stops) {
+  const rows = uniqueBy(trip.stops, placeKey).map((stop): StopDetailsRow => {
     const key = placeKey(stop);
-    if (rows.has(key)) continue;
     const place = places.get(key);
-    rows.set(key, {
+    return {
       key,
       place: place ?? stop,
       details:
         draft?.[key] ?? (place ? stopDetailsFrom(place) : emptyStopDetails),
       editable: !!place,
-    });
-  }
+    };
+  });
 
   const changes = Object.entries(draft ?? {}).flatMap(
     ([key, details]): PlaceDetailsInput[] => {
@@ -79,7 +78,7 @@ export const useStopDetails = () => {
 
   return {
     trip,
-    rows: [...rows.values()],
+    rows,
     edit,
     isDirty: changes.length > 0,
     isSaving,
