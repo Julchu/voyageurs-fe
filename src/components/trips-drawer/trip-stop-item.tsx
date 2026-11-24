@@ -1,42 +1,67 @@
-import {
-  useTripStopSorting,
-  useTripStopSortable,
-} from "@/hooks/use-trip-stop-sorting";
-import { StopDragHandle } from "./stop-drag-controls";
-import type { Coordinates } from "@/types/place";
-import type { TripStopDraft } from "@/types/trip-draft";
-import { MoveDownArrow, MoveUpArrow } from "@/components/ui/icons/move-icons";
-import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
-import { openPlacePopup } from "@/components/place-info-card/utils/place-popup-handle";
 import { Field } from "@base-ui/react/field";
 import { Menu } from "@base-ui/react/menu";
-import { useTripStore } from "@/providers/trip-store-provider";
-import { useShallow } from "zustand/react/shallow";
-import { VerticalEllipsisIcon } from "@/components/ui/icons/stop-card-icons";
-import { FlyToIcon } from "@/components/ui/icons/map-icons";
-import { dateDays, timeLabel } from "@/utils/trip-time";
+import { useSortable } from "@dnd-kit/react/sortable";
 import { cn } from "cn";
+import { FlyToIcon } from "@/components/ui/icons/map-icons";
+import { MoveDownArrow, MoveUpArrow } from "@/components/ui/icons/move-icons";
+import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
+import { VerticalEllipsisIcon } from "@/components/ui/icons/stop-card-icons";
 import { MenuItem } from "@/components/ui/menu-item";
 import { popupMotion, popupSurface } from "@/components/ui/popup-styles";
-import { stopId } from "@/utils/trip-stop";
+import type { TimeSlot } from "@/types/trip-api";
+import type { TripStopDraft } from "@/types/trip-draft";
+import { timeLabel } from "@/utils/trip-time";
+import { StopDragHandle } from "./stop-drag-controls";
 
-export const DraggableTripStops = ({
-  index,
-  stop,
-  onClickHandler,
-}: {
-  index: number;
+export type StopRow = {
   stop: TripStopDraft;
-  onClickHandler: (coords: Coordinates, zoom?: number) => void;
+  index: number;
+  slot?: TimeSlot;
+  changed: boolean;
+  unscheduled: boolean;
+  isLast: boolean;
+  startsDay: boolean;
+};
+
+export type StopActions = {
+  open: (stop: TripStopDraft) => void;
+  flyTo: (stop: TripStopDraft) => void;
+  move: (from: number, to: number, day?: string) => void;
+  remove: (stop: TripStopDraft) => void;
+};
+
+const iconClass = "h-6 w-6 stroke-blue-500 group-data-highlighted:stroke-white";
+
+export const TripStopItem = ({
+  row,
+  days,
+  busy,
+  actions,
+}: {
+  row: StopRow;
+  days: string[];
+  busy: boolean;
+  actions: StopActions;
 }) => {
-  const { ref, handleRef, isDragging, disabled, slot, changed, unscheduled } =
-    useTripStopSortable(stop, index);
+  const { stop, index, slot, changed, unscheduled } = row;
+  const disabled = busy || !!slot?.locked;
+  const { ref, handleRef, isDragging } = useSortable({
+    id: stop.clientId,
+    index,
+    disabled: { draggable: disabled, droppable: busy },
+  });
 
   return (
     <li
       data-base-ui-swipe-ignore
       ref={ref}
-      className={`flex items-center gap-2 rounded-xl border p-2 ${isDragging ? "cursor-grab" : "cursor-pointer"} ${changed || unscheduled ? "border-amber-300 bg-amber-50" : "border-neutral-200 bg-white"}`}
+      className={cn(
+        "flex items-center gap-2 rounded-xl border p-2",
+        isDragging && "cursor-grab",
+        changed || unscheduled
+          ? "border-amber-300 bg-amber-50"
+          : "border-neutral-200 bg-white",
+      )}
     >
       <StopDragHandle
         name={stop.name}
@@ -44,12 +69,10 @@ export const DraggableTripStops = ({
         disabled={disabled}
       />
 
-      <div
-        className={"flex flex-row items-center gap-2"}
-        onClick={() => {
-          openPlacePopup.openWithPayload(stop);
-          onClickHandler(stop.coordinates);
-        }}
+      <button
+        type="button"
+        onClick={() => actions.open(stop)}
+        className="flex cursor-pointer flex-row items-center gap-2 text-left"
       >
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white">
           {index + 1}
@@ -68,7 +91,7 @@ export const DraggableTripStops = ({
             </span>
           ) : null}
         </span>
-      </div>
+      </button>
 
       {(changed || unscheduled) && (
         <span className="text-[10px] text-amber-800">
@@ -83,36 +106,26 @@ export const DraggableTripStops = ({
           Reserved
         </span>
       )}
-      <div className={"ml-auto shrink-0"}>
-        <PlaceActionsMenu
-          index={index}
-          stop={stop}
-          onJumpToLocation={() => onClickHandler(stop.coordinates)}
-        />
+      <div className="ml-auto shrink-0">
+        <StopActionsMenu row={row} days={days} busy={busy} actions={actions} />
       </div>
     </li>
   );
 };
 
-export const PlaceActionsMenu = ({
-  stop,
-  index,
-  onJumpToLocation,
+const StopActionsMenu = ({
+  row: { stop, index, slot, isLast },
+  days,
+  busy,
+  actions,
 }: {
-  stop: TripStopDraft;
-  index: number;
-  onJumpToLocation: () => void;
+  row: StopRow;
+  days: string[];
+  busy: boolean;
+  actions: StopActions;
 }) => {
-  const { trip, busy, slotsByStop } = useTripStopSorting();
-  const { removeStop, moveStop } = useTripStore(
-    useShallow(({ removeStop, moveStop }) => ({ removeStop, moveStop })),
-  );
+  const locked = !!slot?.locked;
 
-  const slot = slotsByStop.get(stopId(stop));
-  const days =
-    trip?.startDate && trip.endDate
-      ? dateDays(trip.startDate, trip.endDate)
-      : [];
   return (
     <Menu.Root>
       <Menu.Trigger
@@ -120,13 +133,13 @@ export const PlaceActionsMenu = ({
         aria-label="Stop actions"
         className="ml-auto flex size-8 cursor-pointer items-center justify-center text-neutral-950 outline-none select-none any-pointer-coarse:opacity-100"
       >
-        <VerticalEllipsisIcon className={"h-6 w-6 fill-blue-500"} />
+        <VerticalEllipsisIcon className="h-6 w-6 fill-blue-500" />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner
           align="end"
           sideOffset={8}
-          className={"z-50 outline-hidden"}
+          className="z-50 outline-hidden"
         >
           <Menu.Popup
             className={cn(
@@ -135,7 +148,7 @@ export const PlaceActionsMenu = ({
               "flex flex-col rounded-2xl p-2",
             )}
           >
-            <MenuItem onClick={onJumpToLocation}>
+            <MenuItem onClick={() => actions.flyTo(stop)}>
               <FlyToIcon
                 aria-hidden="true"
                 className="h-6 w-6 fill-none stroke-blue-500 group-data-highlighted:stroke-white"
@@ -143,45 +156,34 @@ export const PlaceActionsMenu = ({
               Fly to location
             </MenuItem>
 
-            {index !== 0 && !slot?.locked ? (
+            {index !== 0 && !locked ? (
               <MenuItem
                 aria-label={`Move ${stop.name} up`}
-                disabled={busy}
-                onClick={() => moveStop(index, index - 1)}
+                onClick={() => actions.move(index, index - 1)}
               >
-                <MoveUpArrow
-                  className={
-                    "h-6 w-6 cursor-pointer stroke-blue-500 group-data-highlighted:stroke-white"
-                  }
-                />
+                <MoveUpArrow className={iconClass} />
                 Move Up
               </MenuItem>
             ) : null}
 
-            {!(trip && index === trip.stops.length - 1) && !slot?.locked ? (
+            {!isLast && !locked ? (
               <MenuItem
                 aria-label={`Move ${stop.name} down`}
-                disabled={busy}
-                onClick={() => moveStop(index, index + 1)}
+                onClick={() => actions.move(index, index + 1)}
               >
-                <MoveDownArrow
-                  className={
-                    "h-6 w-6 cursor-pointer stroke-blue-500 group-data-highlighted:stroke-white"
-                  }
-                />
+                <MoveDownArrow className={iconClass} />
                 Move Down
               </MenuItem>
             ) : null}
 
-            {slot && !slot.locked && days.length > 1 && (
+            {slot && !locked && days.length > 1 && (
               <Field.Root className="flex items-center gap-2 px-2 py-2 text-xs">
                 <Field.Label>Move {stop.name} to day</Field.Label>
                 <Field.Control
                   render={<select />}
                   value={slot.date}
-                  disabled={busy}
                   className="rounded border border-neutral-200 p-1"
-                  onValueChange={(day) => moveStop(index, index, day)}
+                  onValueChange={(day) => actions.move(index, index, day)}
                 >
                   {days.map((day) => (
                     <option key={day} value={day}>
@@ -191,12 +193,9 @@ export const PlaceActionsMenu = ({
                 </Field.Control>
               </Field.Root>
             )}
-            <MenuItem disabled={busy} onClick={() => removeStop(stopId(stop))}>
-              <PinRemoveIcon
-                className={
-                  "h-6 w-6 fill-none stroke-red-500 group-data-highlighted:stroke-white"
-                }
-              />
+
+            <MenuItem onClick={() => actions.remove(stop)}>
+              <PinRemoveIcon className="h-6 w-6 fill-none stroke-red-500 group-data-highlighted:stroke-white" />
               Remove
             </MenuItem>
           </Menu.Popup>
