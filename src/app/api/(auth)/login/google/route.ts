@@ -6,13 +6,10 @@ import {
   oauthCookieClearOptions,
 } from "@/server/oauth";
 
-const finishLogin = (req: NextRequest, failed: boolean) => {
+// TODO: send failed logins to "/?login=failed" and show a "Sign-in failed" message.
+const finishLogin = (req: NextRequest) => {
   const base = process.env.VOYAGEURS_BASE_URL ?? req.nextUrl.origin;
-
-  // ?login=failed query param for showing “Sign-in failed” msg if needed
-  // const destination = new URL(failed ? "/?login=failed" : "/", base);
-  const destination = new URL(failed ? "/" : "/", base);
-  const response = NextResponse.redirect(destination);
+  const response = NextResponse.redirect(new URL("/", base));
   response.cookies.set(OAUTH_STATE_COOKIE, "", oauthCookieClearOptions);
   response.cookies.set(OAUTH_VERIFIER_COOKIE, "", oauthCookieClearOptions);
   return response;
@@ -33,7 +30,7 @@ export async function GET(req: NextRequest) {
     !codeVerifier ||
     state !== expectedState
   ) {
-    return finishLogin(req, true);
+    return finishLogin(req);
   }
 
   try {
@@ -43,9 +40,9 @@ export async function GET(req: NextRequest) {
       body: JSON.stringify({ code, codeVerifier }),
     });
 
-    if (!loginResponse.ok) return finishLogin(req, true);
+    if (!loginResponse.ok) return finishLogin(req);
 
-    const response = finishLogin(req, false);
+    const response = finishLogin(req);
     for (const cookie of loginResponse.headers.getSetCookie()) {
       response.headers.append("Set-Cookie", cookie);
     }
@@ -55,6 +52,6 @@ export async function GET(req: NextRequest) {
       "Google login callback failed",
       error instanceof Error ? error.name : "unknown",
     );
-    return finishLogin(req, true);
+    return finishLogin(req);
   }
 }
