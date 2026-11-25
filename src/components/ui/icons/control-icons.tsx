@@ -57,7 +57,7 @@ export const PowerIcon = ({
       d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
     />
     <path
-      className={`motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out ${crossed ? "opacity-100" : "opacity-0"}`}
+      className={`motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out ${crossed ? "opacity-100 group-hover:opacity-0" : "opacity-0 group-hover:opacity-100"}`}
       strokeLinecap="round"
       d="M3 3L21 21"
     />

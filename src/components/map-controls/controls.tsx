@@ -112,7 +112,7 @@ export const Controls = ({
 
         {userInfo ? (
           <Toolbar.Button
-            className={controlButton}
+            className={cn(controlButton, "group")}
             aria-label="Performance mode"
             aria-pressed={performanceMode}
             title={
