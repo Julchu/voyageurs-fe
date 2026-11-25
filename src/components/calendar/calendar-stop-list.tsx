@@ -1,10 +1,12 @@
 import { type ReactNode, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@base-ui/react/button";
-import { DragDropProvider } from "@dnd-kit/react";
 import { Cursor } from "@dnd-kit/dom";
 import { Draggable } from "@fullcalendar/react/interaction";
-import { StopDragHandle } from "@/components/trips-drawer/stop-drag-controls";
+import {
+  StopDragHandle,
+  StopDragProvider,
+} from "@/components/trips-drawer/stop-drag-controls";
 import {
   useStopSortable,
   useTripStopSorting,
@@ -47,7 +49,7 @@ export function CalendarStopList({
   onEditHours: (id: string) => void;
   onDuplicate: (stop: TripStopDraft) => void;
 }) {
-  const { handleDragEnd } = useTripStopSorting();
+  const { handleDragEnd, handleDragOver } = useTripStopSorting();
   const list = useRef<HTMLUListElement>(null);
   useEffect(() => {
     if (!list.current) return;
@@ -63,7 +65,11 @@ export function CalendarStopList({
   }, []);
 
   return (
-    <DragDropProvider onDragEnd={handleDragEnd} plugins={reorderPlugins}>
+    <StopDragProvider
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      plugins={reorderPlugins}
+    >
       <ul
         ref={list}
         className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-none p-2 transition-colors has-[[data-dnd-dragging]]:bg-blue-50 has-[[data-dnd-dragging]]:ring-1 has-[[data-dnd-dragging]]:ring-blue-200 has-[[data-dnd-dragging]]:ring-inset"
@@ -139,7 +145,7 @@ export function CalendarStopList({
           </li>
         )}
       </ul>
-    </DragDropProvider>
+    </StopDragProvider>
   );
 }
 
