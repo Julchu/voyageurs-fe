@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { MapComponents } from "@/components/map-box/map-components";
@@ -22,15 +23,24 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
         <MapComponents />
       </div>
       {onMap ? null : (
-        <div
-          className={
-            onPlanner
-              ? "absolute inset-x-4 top-20 bottom-4 isolate overflow-hidden rounded-2xl bg-white text-neutral-950 shadow-sm"
-              : "absolute inset-0 bg-none"
-          }
-        >
-          {children}
-        </div>
+        <>
+          {onPlanner ? (
+            <Link
+              href="/"
+              aria-label="Back to map"
+              className="absolute inset-0"
+            />
+          ) : null}
+          <div
+            className={
+              onPlanner
+                ? "absolute inset-x-4 top-20 bottom-4 isolate overflow-hidden rounded-3xl bg-white text-neutral-950 shadow-xl shadow-neutral-900/10"
+                : "absolute inset-0 bg-none"
+            }
+          >
+            {children}
+          </div>
+        </>
       )}
     </div>
   );

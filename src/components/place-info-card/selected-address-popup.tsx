@@ -165,7 +165,7 @@ const PlaceCard = ({ payload }: { payload: Place }) => {
                 tripDrawerHandle.open(null);
               }}
               disabled={lookingUp}
-              className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-blue-600 px-3 text-sm leading-none font-medium whitespace-nowrap text-white select-none hover:not-data-disabled:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-600 px-3 text-sm leading-none font-medium whitespace-nowrap text-white select-none hover:not-data-disabled:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               <MapAddIcon className="h-5 w-5 fill-none stroke-white" />
               Add to trip

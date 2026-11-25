@@ -1,7 +1,9 @@
 import { Button } from "@base-ui/react/button";
-import { MapSaveIcon } from "@/components/ui/icons/map-icons";
+import { cn } from "cn";
+import { CheckIcon } from "@/components/ui/icons/planner-icons";
 import { ResetIcon } from "@/components/ui/icons/reset-icons";
 import { Spinner } from "@/components/ui/icons/spinner";
+import { pill } from "./button-styles";
 
 type Props = {
   isDirty: boolean;
@@ -9,6 +11,7 @@ type Props = {
   isSaving: boolean;
   canSave: boolean;
   resetLabel?: string;
+  saveLabel?: string;
   onSave: () => void;
   onReset: () => void;
 };
@@ -19,6 +22,7 @@ export function EditorFooter({
   isSaving,
   canSave,
   resetLabel = "Reset",
+  saveLabel = "Save",
   onSave,
   onReset,
 }: Props) {
@@ -26,38 +30,36 @@ export function EditorFooter({
 
   return (
     <footer
-      className="mt-auto shrink-0 border-t border-gray-200 bg-white font-medium"
+      className="mt-auto flex shrink-0 gap-4 border-t border-neutral-100 bg-white p-4"
       aria-label="Editor actions"
     >
-      <div className="flex justify-end gap-4 p-4">
-        <Button
-          onClick={onReset}
-          disabled={isSaving}
-          className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 px-4 font-medium tracking-widest transition-colors duration-150 hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
-        >
-          <ResetIcon
-            aria-hidden="true"
-            className="h-6 w-6 stroke-black group-hover:stroke-white"
-          />
-          {resetLabel}
-        </Button>
-        <Button
-          onClick={onSave}
-          disabled={!isDirty || isSaving || !canSave}
-          aria-busy={isSaving}
-          className="group flex h-10 w-full cursor-pointer items-center justify-center gap-x-2 rounded-md border border-gray-200 bg-blue-500 px-4 font-medium tracking-widest text-white transition-colors duration-150 hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
-        >
-          {isSaving ? (
-            <Spinner className="h-6 w-6 animate-spin fill-white" />
-          ) : (
-            <MapSaveIcon
-              aria-hidden="true"
-              className="h-6 w-6 fill-none stroke-white"
-            />
-          )}
-          Save
-        </Button>
-      </div>
+      <Button
+        onClick={onReset}
+        disabled={isSaving}
+        className={cn(
+          pill,
+          "flex-1 border border-neutral-200 bg-transparent text-neutral-800 hover:border-red-500 hover:bg-red-500 hover:text-white disabled:hover:border-neutral-200 disabled:hover:bg-transparent disabled:hover:text-neutral-800",
+        )}
+      >
+        <ResetIcon aria-hidden="true" className="size-5 stroke-current" />
+        {resetLabel}
+      </Button>
+      <Button
+        onClick={onSave}
+        disabled={!isDirty || isSaving || !canSave}
+        aria-busy={isSaving}
+        className={cn(
+          pill,
+          "flex-1 bg-blue-500/80 text-white shadow-lg shadow-blue-500/30 hover:bg-green-500 hover:shadow-green-500/30 disabled:shadow-none disabled:hover:bg-blue-500/80",
+        )}
+      >
+        {isSaving ? (
+          <Spinner className="size-5 animate-spin fill-white" />
+        ) : (
+          <CheckIcon aria-hidden="true" className="size-5" />
+        )}
+        {saveLabel}
+      </Button>
     </footer>
   );
 }

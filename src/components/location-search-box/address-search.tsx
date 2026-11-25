@@ -198,7 +198,7 @@ export const AddressSearch = () => {
       {retrieveStatus === "error" ? (
         <p
           role="status"
-          className="absolute bottom-full mb-4 w-full rounded-xl bg-white p-2 text-base text-neutral-600 shadow"
+          className="absolute bottom-full mb-4 w-full rounded-2xl bg-white p-2 text-base text-neutral-600 shadow"
         >
           Error searching that location.
         </p>
