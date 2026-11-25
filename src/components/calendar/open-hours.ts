@@ -1,10 +1,5 @@
 import type { AvailabilityWindow } from "@/types/trip-api";
-import {
-  DAY_MINUTES as DAY,
-  SLOT_MINUTES,
-  timeLabel,
-  weekdays,
-} from "@/utils/trip-time";
+import { DAY_MINUTES as DAY, SLOT_MINUTES, timeLabel } from "@/utils/trip-time";
 
 const WEEK = 7 * DAY;
 
@@ -42,18 +37,6 @@ export const fromBlock = ({ start, end }: Block): WeekdayRange => {
     endMinute: end - endDay * DAY,
   };
 };
-
-const shortWeekday = (day: number) => weekdays[day].slice(0, 3);
-
-export const weekdayRangeLabel = ({
-  startDay,
-  startMinute,
-  endDay,
-  endMinute,
-}: WeekdayRange) =>
-  startDay === endDay
-    ? `${shortWeekday(startDay)} · ${timeLabel(startMinute)}–${timeLabel(endMinute)}`
-    : `${shortWeekday(startDay)} ${timeLabel(startMinute)} – ${shortWeekday(endDay)} ${timeLabel(endMinute)}`;
 
 /** Sorted open hours, with overlapping windows on the same day joined. */
 const mergeHours = (windows: AvailabilityWindow[]) => {

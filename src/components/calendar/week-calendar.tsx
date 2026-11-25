@@ -9,12 +9,15 @@ import { weekCalendarTheme } from "./week-calendar-theme";
 const plugins = [timeGrid, interaction];
 // timeGridWeek aligns prev/next to the week start, so a day increment there
 // snaps back to the same week. A day-based duration steps prev/next by 3 days.
+const rolling = (days: number) => ({
+  type: "timeGrid",
+  duration: { days },
+  dateIncrement: { days: 3 },
+});
 const views = {
-  timeGridRollingWeek: {
-    type: "timeGrid",
-    duration: { days: 7 },
-    dateIncrement: { days: 3 },
-  },
+  timeGridRolling3: rolling(3),
+  timeGridRolling4: rolling(4),
+  timeGridRolling7: rolling(7),
 };
 // The calendar runs in UTC as a neutral wall clock, so the real "now" would
 // read as UTC time (hours ahead/behind). Re-express local wall-clock time as
@@ -40,7 +43,7 @@ const clockFormat = {
 
 export function WeekCalendar(props: CalendarOptions) {
   return (
-    <div className="h-112 min-w-0 flex-none bg-white text-xs md:h-auto md:min-h-0 md:flex-1">
+    <div className="min-h-0 min-w-0 flex-1 bg-white text-xs">
       <FullCalendar
         {...weekCalendarTheme}
         plugins={plugins}

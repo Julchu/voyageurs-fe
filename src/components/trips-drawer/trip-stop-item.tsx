@@ -1,6 +1,6 @@
-import { Field } from "@base-ui/react/field";
 import { Menu } from "@base-ui/react/menu";
 import { cn } from "cn";
+import { stopNumber } from "@/components/ui/button-styles";
 import { FlyToIcon } from "@/components/ui/icons/map-icons";
 import { MoveDownArrow, MoveUpArrow } from "@/components/ui/icons/move-icons";
 import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
@@ -18,36 +18,40 @@ export type StopRow = {
   index: number;
   slot?: TimeSlot;
   changed: boolean;
-  unscheduled: boolean;
   isLast: boolean;
-  startsDay: boolean;
+  /** Set on the first stop of each day; unscheduled stops join the day above them. */
+  dayHeading?: string;
 };
 
 export type StopActions = {
   open: (stop: TripStopDraft) => void;
   flyTo: (stop: TripStopDraft) => void;
-  move: (from: number, to: number, day?: string) => void;
+  move: (from: number, to: number) => void;
   remove: (stop: TripStopDraft) => void;
 };
 
 const iconClass = "h-6 w-6 stroke-blue-500 group-data-highlighted:stroke-white";
 
+const stopActionButton =
+  "ml-auto flex size-9 cursor-pointer items-center justify-center rounded-full text-neutral-950 outline-none select-none hover:bg-blue-50 focus-visible:bg-blue-50 data-popup-open:bg-blue-50 any-pointer-coarse:opacity-100";
+
+/** One stop in the drawer. Reordering and the actions menu only show while editing. */
 export const TripStopItem = ({
   row,
-  days,
+  editing,
   busy,
   actions,
 }: {
   row: StopRow;
-  days: string[];
+  editing: boolean;
   busy: boolean;
   actions: StopActions;
 }) => {
-  const { stop, index, slot, changed, unscheduled } = row;
+  const { stop, index, slot, changed } = row;
   const { ref, handleRef, isDragging, disabled } = useStopSortable(
     stop,
     index,
-    { busy, locked: !!slot?.locked },
+    { busy, locked: !editing || !!slot?.locked },
   );
 
   return (
@@ -55,47 +59,53 @@ export const TripStopItem = ({
       data-base-ui-swipe-ignore
       ref={ref}
       className={cn(
-        "flex items-center gap-2 rounded-xl border p-2",
-        isDragging && "cursor-grab",
-        changed || unscheduled
-          ? "border-amber-300 bg-amber-50"
-          : "border-neutral-200 bg-white",
+        "flex items-center gap-2 rounded-2xl border px-1.5 py-2 transition-colors",
+        isDragging
+          ? "cursor-grab border-blue-300 bg-white shadow-xl"
+          : "cursor-pointer border-transparent hover:bg-neutral-50",
       )}
     >
-      <StopDragHandle
-        name={stop.name}
-        handleRef={handleRef}
-        disabled={disabled}
-      />
+      {editing && (
+        <StopDragHandle
+          name={stop.name}
+          handleRef={handleRef}
+          disabled={disabled}
+        />
+      )}
 
       <button
         type="button"
         onClick={() => actions.open(stop)}
-        className="flex cursor-pointer flex-row items-center gap-2 text-left"
+        className="flex min-w-0 flex-1 cursor-pointer flex-row items-center gap-3 text-left"
       >
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-medium text-white">
+        <span className={cn(stopNumber(!!slot), "size-8 text-sm")}>
           {index + 1}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm text-wrap">{stop.name}</span>
-          <span className="block truncate text-xs text-wrap text-neutral-500 capitalize">
-            {stop.streetAddress || "No address"}
+          <span className="block truncate font-semibold text-wrap text-neutral-950">
+            {stop.name}
           </span>
-          <span className="hidden truncate text-xs text-neutral-500 capitalize sm:block">
-            {stop.areaAddress || "No address"}
-          </span>
-          {slot ? (
-            <span className="mt-1 block text-xs text-blue-700">
+          {slot && (
+            <span
+              className={cn(
+                "block text-sm font-semibold",
+                changed ? "text-amber-600" : "text-blue-500",
+              )}
+            >
               {timeLabel(slot.startMinute)}–{timeLabel(slot.endMinute)}
             </span>
-          ) : null}
+          )}
+          <span className="block truncate text-sm text-wrap text-neutral-500 capitalize">
+            {stop.streetAddress || "No address"}
+          </span>
+          <span className="hidden truncate text-xs text-neutral-400 capitalize sm:block">
+            {stop.areaAddress || "No address"}
+          </span>
         </span>
       </button>
 
-      {(changed || unscheduled) && (
-        <span className="text-[10px] text-amber-800">
-          {unscheduled ? "Unscheduled" : "Time changed"}
-        </span>
+      {changed && (
+        <span className="text-[10px] text-amber-800">Time changed</span>
       )}
       {slot?.locked && (
         <span
@@ -106,7 +116,21 @@ export const TripStopItem = ({
         </span>
       )}
       <div className="ml-auto shrink-0">
-        <StopActionsMenu row={row} days={days} busy={busy} actions={actions} />
+        {editing ? (
+          <StopActionsMenu row={row} busy={busy} actions={actions} />
+        ) : (
+          <button
+            type="button"
+            aria-label={`Fly to ${stop.name}`}
+            onClick={() => actions.flyTo(stop)}
+            className={stopActionButton}
+          >
+            <FlyToIcon
+              aria-hidden="true"
+              className="h-6 w-6 fill-none stroke-blue-500"
+            />
+          </button>
+        )}
       </div>
     </li>
   );
@@ -114,12 +138,10 @@ export const TripStopItem = ({
 
 const StopActionsMenu = ({
   row: { stop, index, slot, isLast },
-  days,
   busy,
   actions,
 }: {
   row: StopRow;
-  days: string[];
   busy: boolean;
   actions: StopActions;
 }) => {
@@ -130,7 +152,7 @@ const StopActionsMenu = ({
       <Menu.Trigger
         disabled={busy}
         aria-label="Stop actions"
-        className="ml-auto flex size-8 cursor-pointer items-center justify-center text-neutral-950 outline-none select-none any-pointer-coarse:opacity-100"
+        className={stopActionButton}
       >
         <VerticalEllipsisIcon className="h-6 w-6 fill-blue-500" />
       </Menu.Trigger>
@@ -174,24 +196,6 @@ const StopActionsMenu = ({
                 Move Down
               </MenuItem>
             ) : null}
-
-            {slot && !locked && days.length > 1 && (
-              <Field.Root className="flex items-center gap-2 px-2 py-2 text-xs">
-                <Field.Label>Move {stop.name} to day</Field.Label>
-                <Field.Control
-                  render={<select />}
-                  value={slot.date}
-                  className="rounded border border-neutral-200 p-1"
-                  onValueChange={(day) => actions.move(index, index, day)}
-                >
-                  {days.map((day) => (
-                    <option key={day} value={day}>
-                      {day}
-                    </option>
-                  ))}
-                </Field.Control>
-              </Field.Root>
-            )}
 
             <MenuItem onClick={() => actions.remove(stop)}>
               <PinRemoveIcon className="h-6 w-6 fill-none stroke-red-500 group-data-highlighted:stroke-white" />

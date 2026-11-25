@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Button } from "@base-ui/react/button";
 import { DayPicker } from "@daypicker/react";
+import { outlineButton } from "@/components/ui/button-styles";
+import { XIcon } from "@/components/ui/icons/close-icons";
 import type { TimeSlot } from "@/types/trip-api";
 import { dateLabel, dayOf, parseDate, timeLabel } from "@/utils/trip-time";
 import type { SlotTime } from "./calendar-time";
-import { DoneFooter, RangePopover, TimeRangeSelects } from "./range-popover";
-import { calendarButton, dayPickerClassNames } from "./styles";
+import { RangePopover, TimeRangeSelects } from "./range-popover";
+import { dayPickerClassNames, pickedDay } from "./styles";
 
 /** One input for a time slot's day and time. Time slots can't cross midnight. */
 function SlotTimePicker({
@@ -13,12 +15,15 @@ function SlotTimePicker({
   dates,
   disabled,
   invalid,
+  fits,
   onChange,
 }: {
   value: SlotTime;
   dates: string[];
   disabled?: boolean;
   invalid: boolean;
+  /** False for times that overlap another stop, are closed, or are outside the trip. */
+  fits: (time: SlotTime) => boolean;
   onChange: (value: SlotTime) => void;
 }) {
   const first = parseDate(dates[0]);
@@ -39,100 +44,102 @@ function SlotTimePicker({
         defaultMonth={parseDate(value.date)}
         startMonth={first}
         endMonth={last}
-        disabled={[{ before: first }, { after: last }]}
+        disabled={[
+          { before: first },
+          { after: last },
+          (day) => !invalid && !fits({ ...value, date: dayOf(day) }),
+        ]}
         selected={parseDate(value.date)}
+        modifiersClassNames={{ selected: pickedDay }}
         onSelect={(day) => day && onChange({ ...value, date: dayOf(day) })}
       />
-      <TimeRangeSelects
-        start={value.startMinute}
-        end={value.endMinute}
-        disabled={disabled}
-        invalid={invalid}
-        onChange={(startMinute, endMinute) =>
-          onChange({ ...value, startMinute, endMinute })
-        }
-      />
-      <DoneFooter>{label}</DoneFooter>
+      <div className="mt-3 border-t border-neutral-100 pt-3">
+        <TimeRangeSelects
+          start={value.startMinute}
+          end={value.endMinute}
+          disabled={disabled}
+          invalid={invalid}
+          isAllowed={(startMinute, endMinute) =>
+            fits({ ...value, startMinute, endMinute })
+          }
+          onChange={(startMinute, endMinute) =>
+            onChange({ ...value, startMinute, endMinute })
+          }
+        />
+      </div>
     </RangePopover>
   );
 }
 
+/** Picking a day or time places the selected stop right away. Removing happens on the calendar event. */
 export function SlotFields({
-  name,
   slot,
   dates,
   disabled,
+  fits,
   onPlace,
   onReserve,
-  onRemove,
+  onClose,
 }: {
-  name: string;
   slot?: TimeSlot;
   dates: string[];
   disabled: boolean;
+  fits: (time: SlotTime) => boolean;
   onPlace: (time: SlotTime) => void;
   onReserve: () => void;
-  onRemove: () => void;
+  onClose: () => void;
 }) {
-  const locked = disabled || slot?.locked;
-  const [time, setTime] = useState<SlotTime>(() => ({
+  const fromSlot = (): SlotTime => ({
     date: slot?.date ?? dates[0],
     startMinute: slot?.startMinute ?? 540,
     endMinute: slot?.endMinute ?? 570,
-  }));
+  });
+  const [time, setTime] = useState(fromSlot);
+  // Follow moves made on the calendar (drag, resize, click).
+  const slotKey = slot && `${slot.date}/${slot.startMinute}/${slot.endMinute}`;
+  const [seenKey, setSeenKey] = useState(slotKey);
+  if (slotKey !== seenKey) {
+    setSeenKey(slotKey);
+    setTime(fromSlot());
+  }
   const invalid = time.endMinute <= time.startMinute;
-  const canPlace = !locked && dates.length > 0 && !invalid;
+  const change = (next: SlotTime) => {
+    setTime(next);
+    if (next.endMinute > next.startMinute) onPlace(next);
+  };
   return (
-    <form
-      className="space-y-2 text-xs text-neutral-600"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (canPlace) onPlace(time);
-      }}
+    <div
+      // Phones: unwrapped so the picker shares a row with the day arrows.
+      className="contents text-sm md:flex md:min-w-0 md:flex-1 md:flex-wrap md:items-center md:gap-2"
     >
-      <p className="font-medium text-blue-700">
-        {name}
-        {slot?.locked && " · Reserved"}
-      </p>
-      <div className="flex flex-wrap items-end gap-2">
-        {dates.length ? (
-          <div className="flex min-w-56 flex-col gap-1">
-            Time slot
-            <SlotTimePicker
-              value={time}
-              dates={dates}
-              disabled={locked}
-              invalid={invalid}
-              onChange={setTime}
-            />
-          </div>
-        ) : (
-          <p className="text-neutral-500">Set trip dates to add time slots.</p>
-        )}
-        <Button type="submit" className={calendarButton} disabled={!canPlace}>
-          {slot ? "Update time slot" : "Add time slot"}
-        </Button>
-        {slot && (
-          <>
-            <Button
-              type="button"
-              className={calendarButton}
-              disabled={disabled}
-              onClick={onReserve}
-            >
-              {slot.locked ? "Unreserve" : "Reserve"}
-            </Button>
-            <Button
-              type="button"
-              className={calendarButton}
-              disabled={disabled}
-              onClick={onRemove}
-            >
-              Remove time slot
-            </Button>
-          </>
-        )}
+      <div className="min-w-44 flex-1 max-md:order-first">
+        <SlotTimePicker
+          value={time}
+          dates={dates}
+          disabled={disabled || slot?.locked}
+          invalid={invalid}
+          fits={fits}
+          onChange={change}
+        />
       </div>
-    </form>
+      {slot && (
+        <Button
+          type="button"
+          className={outlineButton}
+          disabled={disabled}
+          onClick={onReserve}
+        >
+          {slot.locked ? "Unreserve" : "Reserve"}
+        </Button>
+      )}
+      <Button
+        type="button"
+        aria-label="Stop placing"
+        onClick={onClose}
+        className="flex size-8 cursor-pointer items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-100"
+      >
+        <XIcon aria-hidden="true" className="size-5 stroke-current" />
+      </Button>
+    </div>
   );
 }

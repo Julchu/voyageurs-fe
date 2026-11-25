@@ -14,6 +14,17 @@ import { popupMotion, popupSurface } from "@/components/ui/popup-styles";
 import { useTripDraft } from "@/hooks/use-trip-draft";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useUserStore } from "@/providers/user-store-provider";
+import type { TripDraft } from "@/types/trip-draft";
+import { stopCountLabel } from "@/utils/trip-stop";
+import { dateLabel } from "@/utils/trip-time";
+
+/** "Nov 18 – Nov 28 · 8 stops", or just the stop count before dates are set. */
+const tripSummary = ({ startDate, endDate, stops }: TripDraft) => {
+  const count = stopCountLabel(stops.length);
+  return startDate && endDate
+    ? `${dateLabel(startDate, false)} – ${dateLabel(endDate, false)} · ${count}`
+    : count;
+};
 
 export const TripContent = () => {
   const signedIn = useUserStore(({ userInfo }) => !!userInfo);
@@ -21,7 +32,7 @@ export const TripContent = () => {
   const renameTrip = useTripStore(({ renameTrip }) => renameTrip);
   const { trip, isDirty, isSaving, canSave, save, reset } = useTripDraft();
 
-  const showNameInput = !signedIn || !trip.publicId || isEditingTrip;
+  const editing = !signedIn || !trip.publicId || isEditingTrip;
   const title = trip.name.trim() || "My Trip";
 
   const onSave = async () => {
@@ -36,22 +47,27 @@ export const TripContent = () => {
 
   return (
     <div className="flex min-h-0 w-full flex-auto flex-col">
-      <div className="flex shrink-0 flex-row justify-between gap-4 p-4">
-        {signedIn ? (
-          <>
-            <Drawer.Title className="sr-only">{title}</Drawer.Title>
-            <TripSelector />
-          </>
-        ) : (
-          <Drawer.Title className="flex w-full rounded-2xl bg-blue-500 px-4 py-2 text-2xl font-bold tracking-widest text-white">
-            {title}
-          </Drawer.Title>
-        )}
+      <div className="flex shrink-0 items-center gap-3 px-5 py-4">
+        <div className="min-w-0 flex-1">
+          {signedIn ? (
+            <>
+              <Drawer.Title className="sr-only">{title}</Drawer.Title>
+              <TripSelector />
+            </>
+          ) : (
+            <Drawer.Title className="truncate text-xl font-bold sm:text-2xl">
+              {title}
+            </Drawer.Title>
+          )}
+          <Drawer.Description className="mt-0.5 text-sm font-medium text-neutral-500">
+            {tripSummary(trip)}
+          </Drawer.Description>
+        </div>
         <TripDrawerMenu onEdit={() => setIsEditingTrip(true)} />
       </div>
 
-      {showNameInput ? (
-        <div className="px-4 pb-4">
+      {editing ? (
+        <div className="px-5 pb-4">
           <Input
             type="text"
             placeholder="Name your trip"
@@ -60,15 +76,15 @@ export const TripContent = () => {
             onValueChange={renameTrip}
             maxLength={255}
             disabled={isSaving}
-            className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-neutral-950 outline-none"
+            className="h-10 w-full rounded-xl border border-neutral-200 bg-white px-3 text-neutral-950 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
           />
         </div>
       ) : null}
 
-      <Separator className="h-px bg-gray-200" />
+      <Separator className="h-px bg-neutral-100" />
 
-      <div className="flex min-h-0 flex-auto flex-col p-4 font-medium">
-        <StopsList />
+      <div className="flex min-h-0 flex-auto flex-col px-3 pt-2 pb-4">
+        <StopsList editing={editing} />
       </div>
 
       <EditorFooter
@@ -89,7 +105,7 @@ const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => (
     <Menu.Trigger
       aria-label="Trip menu"
       openOnHover
-      className="group flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-blue-500 text-xl font-bold tracking-widest text-white transition-colors duration-150 hover:bg-green-500 data-popup-open:bg-green-500 motion-reduce:transition-none"
+      className="group flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-blue-500 text-xl font-bold tracking-widest text-white transition-colors duration-150 hover:bg-green-500 data-popup-open:bg-green-500 motion-reduce:transition-none"
     >
       <PinMenuButton
         aria-hidden="true"
@@ -106,7 +122,7 @@ const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => (
           className={cn(
             popupSurface,
             popupMotion,
-            "flex flex-col rounded-lg p-2",
+            "flex flex-col rounded-2xl p-2",
           )}
         >
           <MenuItem onClick={onEdit}>

@@ -22,6 +22,8 @@ export type StopDetailsRow = {
   details: StopDetails;
   /** Places get details once the trip has saved them. */
   editable: boolean;
+  /** Stops in the trip at this place. */
+  count: number;
 };
 
 /** Place details for the stops page: one row per place, saved apart from the trip draft. */
@@ -54,6 +56,7 @@ export const useStopDetails = () => {
       details:
         draft?.[key] ?? (place ? stopDetailsFrom(place) : emptyStopDetails),
       editable: !!place,
+      count: trip.stops.filter((item) => placeKey(item) === key).length,
     };
   });
 

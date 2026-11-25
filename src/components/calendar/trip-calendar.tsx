@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Separator } from "@base-ui/react/separator";
 import { useShallow } from "zustand/react/shallow";
+import { cn } from "cn";
+import { sectionLabel } from "@/components/ui/button-styles";
 import { EditorFooter } from "@/components/ui/editor-footer";
 import { useTripDraft } from "@/hooks/use-trip-draft";
 import { useTripStore } from "@/providers/trip-store-provider";
@@ -73,89 +74,95 @@ function CalendarEditor() {
       aria-label="Trip calendar"
       className="group/cal flex h-full min-h-0 flex-col overflow-hidden text-neutral-900"
     >
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-none md:flex md:overflow-hidden">
-        <div className="flex min-h-144 flex-1 flex-col md:min-h-0 md:flex-row">
-          <aside
-            className="flex max-h-40 shrink-0 flex-col border-b border-neutral-100 md:max-h-none md:w-60 md:border-r md:border-b-0 lg:w-64"
-            aria-label="Trip stops"
-          >
-            <div className="flex w-full flex-wrap p-2">
-              <TripDateRange
-                startDate={schedule.startDate}
-                endDate={schedule.endDate}
-                disabled={isSaving}
-                onChange={setTripDates}
-              />
-            </div>
-            <Separator className="h-px bg-gray-200" />
-            <CalendarStopList
-              schedule={schedule}
-              activeId={focus?.stopId}
-              selectedId={selectedId}
-              canDrag={!isSaving && dates.length > 0 && !editingStop}
+      {/* Phones: stops and calendar split the height 50/50. */}
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <aside
+          className={cn(
+            "min-h-0 flex-1 flex-col border-b border-neutral-100 md:w-80 md:flex-none md:border-r md:border-b-0 xl:w-96",
+            editingStop ? "hidden md:flex" : "flex",
+          )}
+          aria-label="Trip stops"
+        >
+          <div className="shrink-0 p-3 md:p-4">
+            <TripDateRange
+              startDate={schedule.startDate}
+              endDate={schedule.endDate}
               disabled={isSaving}
-              onSelect={select}
-              onEditHours={(id) => setFocus({ stopId: id, mode: "hours" })}
-              onDuplicate={duplicate}
+              onChange={setTripDates}
             />
-          </aside>
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white *:transition-opacity group-has-[[data-dnd-dragging]]/cal:pointer-events-none group-has-[[data-dnd-dragging]]/cal:*:opacity-30">
-            {editingStop ? (
-              <OpenHoursEditor
-                stop={editingStop}
-                disabled={isSaving}
-                onBack={() => setFocus(null)}
-              />
-            ) : (
-              <>
-                <div className="shrink-0 space-y-3 border-b border-neutral-100 p-4">
-                  {selectedId && selectedStop ? (
-                    <SlotFields
-                      key={JSON.stringify([
-                        selectedId,
-                        selectedSlot,
-                        dates[0],
-                        dates.at(-1),
-                      ])}
-                      name={selectedStop.name}
-                      slot={selectedSlot}
-                      dates={dates}
-                      disabled={isSaving}
-                      onPlace={(slot) => place(selectedId, slot)}
-                      onReserve={() =>
-                        selectedSlot && toggleReserved(selectedSlot.id)
-                      }
-                      onRemove={() => selectedSlot && unschedule(selectedSlot)}
-                    />
-                  ) : (
-                    <p className="text-xs text-neutral-500">
-                      Select a stop, then choose a time. All times are local to
-                      your trip.
-                    </p>
-                  )}
-                </div>
-                {dates.length ? (
-                  <SlotWeek
-                    schedule={schedule}
-                    selectedId={selectedId}
-                    disabled={isSaving}
-                    onSelect={select}
-                    onPlace={place}
-                  />
-                ) : (
-                  <NoDatesState />
-                )}
-                {schedule.outsideDates.length > 0 && (
-                  <OutsideDatesNotice
-                    slots={schedule.outsideDates}
-                    nameOf={schedule.nameOf}
-                    disabled={isSaving}
-                    onRemove={unschedule}
-                  />
-                )}
-              </>
-            )}
           </div>
+          <div className="flex shrink-0 items-baseline justify-between gap-2 px-4 pb-2 md:px-5">
+            <h2 className={sectionLabel}>Trip order</h2>
+            <span className="text-xs text-neutral-400 pointer-coarse:hidden">
+              Drag to reorder or schedule
+            </span>
+            <span className="hidden text-xs text-neutral-400 pointer-coarse:inline">
+              Hold to drag
+            </span>
+          </div>
+          <CalendarStopList
+            schedule={schedule}
+            activeId={focus?.stopId}
+            selectedId={selectedId}
+            canDrag={!isSaving && dates.length > 0 && !editingStop}
+            disabled={isSaving}
+            onSelect={select}
+            onEditHours={(id) => setFocus({ stopId: id, mode: "hours" })}
+            onDuplicate={duplicate}
+          />
+        </aside>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white *:transition-opacity group-has-[[data-dnd-dragging]]/cal:pointer-events-none group-has-[[data-dnd-dragging]]/cal:*:opacity-30">
+          {editingStop ? (
+            <OpenHoursEditor
+              stop={editingStop}
+              disabled={isSaving}
+              onBack={() => setFocus(null)}
+            />
+          ) : (
+            <>
+              {dates.length ? (
+                <SlotWeek
+                  schedule={schedule}
+                  selectedId={selectedId}
+                  disabled={isSaving}
+                  onSelect={select}
+                  onPlace={place}
+                  onRemove={unschedule}
+                  banner={
+                    selectedId &&
+                    selectedStop && (
+                      <SlotFields
+                        key={JSON.stringify([
+                          selectedId,
+                          dates[0],
+                          dates.at(-1),
+                        ])}
+                        slot={selectedSlot}
+                        dates={dates}
+                        disabled={isSaving}
+                        fits={(time) => !!schedule.fit(selectedId, time)}
+                        onPlace={(slot) => place(selectedId, slot)}
+                        onReserve={() =>
+                          selectedSlot && toggleReserved(selectedSlot.id)
+                        }
+                        onClose={() => setFocus(null)}
+                      />
+                    )
+                  }
+                />
+              ) : (
+                <NoDatesState />
+              )}
+              {schedule.outsideDates.length > 0 && (
+                <OutsideDatesNotice
+                  slots={schedule.outsideDates}
+                  nameOf={schedule.nameOf}
+                  disabled={isSaving}
+                  onRemove={unschedule}
+                />
+              )}
+            </>
+          )}
         </div>
       </div>
       <EditorFooter
@@ -163,6 +170,7 @@ function CalendarEditor() {
         isEditing={focus !== null}
         isSaving={isSaving}
         canSave={canSave && !schedule.hasErrors}
+        saveLabel={editingStop ? "Save hours" : "Save schedule"}
         onSave={() => void save()}
         onReset={() => {
           reset();

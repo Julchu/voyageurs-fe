@@ -3,11 +3,7 @@ import { cn } from "cn";
 import { useTripStore } from "@/providers/trip-store-provider";
 import { useShallow } from "zustand/react/shallow";
 import { Select } from "@base-ui/react/select";
-import {
-  CaretCircleDownIcon,
-  CaretDownIcon,
-  CaretUpIcon,
-} from "@/components/ui/icons/caret-icons";
+import { CaretDownIcon, CaretUpIcon } from "@/components/ui/icons/caret-icons";
 import { PinPencilIcon } from "@/components/ui/icons/pin-icons";
 import { MapCurrentIcon } from "@/components/ui/icons/map-icons";
 import { popupMotion, popupSurface } from "@/components/ui/popup-styles";
@@ -21,7 +17,7 @@ type TripOption = {
 const NEW_TRIP = "new-trip";
 
 const itemClass =
-  "group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-lg py-1.5 pr-4 pl-2.5 text-sm outline-hidden transition-colors duration-150 select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none";
+  "group/item grid cursor-pointer grid-cols-[1.5rem_1fr] items-center gap-2 rounded-xl py-1.5 pr-4 pl-2.5 text-sm outline-hidden transition-colors duration-150 select-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none";
 
 export const TripSelector = () => {
   const { trips, selectTrip, currentTrip, createTrip } = useTripStore(
@@ -54,10 +50,10 @@ export const TripSelector = () => {
       items={selectValues}
       value={currentValue}
     >
-      <Select.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-lg bg-blue-500 p-2 pl-4 text-xl font-bold tracking-widest text-white">
-        <Select.Value placeholder="Select trip" />
-        <Select.Icon>
-          <CaretCircleDownIcon className="h-6 w-6 fill-none stroke-white" />
+      <Select.Trigger className="flex min-w-0 cursor-pointer items-center gap-2 rounded-xl text-xl font-bold text-neutral-950 outline-blue-500 hover:text-blue-600 sm:text-2xl">
+        <Select.Value placeholder="Select trip" className="truncate" />
+        <Select.Icon className="flex">
+          <CaretDownIcon className="size-6 shrink-0 fill-none stroke-blue-500" />
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal>
@@ -70,7 +66,7 @@ export const TripSelector = () => {
             className={cn(
               popupSurface,
               popupMotion,
-              "group relative min-w-[var(--anchor-width)] overflow-hidden rounded-lg data-[side=none]:min-w-[calc(var(--anchor-width)+1.75rem)] data-[side=none]:translate-y-px data-[side=none]:data-ending-style:transition-none data-[side=none]:data-starting-style:scale-100 data-[side=none]:data-starting-style:opacity-100 data-[side=none]:data-starting-style:transition-none",
+              "group relative min-w-[var(--anchor-width)] overflow-hidden rounded-2xl data-[side=none]:min-w-[calc(var(--anchor-width)+1.75rem)] data-[side=none]:translate-y-px data-[side=none]:data-ending-style:transition-none data-[side=none]:data-starting-style:scale-100 data-[side=none]:data-starting-style:opacity-100 data-[side=none]:data-starting-style:transition-none",
             )}
           >
             <Select.ScrollUpArrow className="top-0 z-1 flex h-4 w-full cursor-default items-center justify-center bg-white text-center text-xs before:absolute before:left-0 before:h-full before:w-full before:content-[''] data-[side=none]:before:top-[-100%]">
