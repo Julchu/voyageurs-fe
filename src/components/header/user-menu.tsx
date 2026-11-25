@@ -13,7 +13,6 @@ import { useUserStore } from "@/providers/user-store-provider";
 import { useLogout } from "@/hooks/use-logout";
 import { tripDrawerHandle } from "@/components/trips-drawer/trip-drawer";
 import { Drawer } from "@base-ui/react/drawer";
-import { visitDrawerHandle } from "@/components/visits-drawer/visit-drawer";
 
 const userMenuItem =
   "relative flex h-6 items-center rounded-xl py-4 leading-none transition-colors duration-150 outline-none data-highlighted:bg-blue-500 data-highlighted:text-white motion-reduce:transition-none";
@@ -49,24 +48,13 @@ export const UserMenu = () => {
 
             <Menu.Item
               nativeButton
-              render={<Drawer.Trigger handle={visitDrawerHandle} />}
-              className={cn(
-                userMenuItem,
-                "w-full cursor-pointer pr-[5px] pl-[25px]",
-              )}
-            >
-              {/* TODO: add another trigger/drawer for list of trips to select/load from */}
-              Calendar
-            </Menu.Item>
-
-            <Menu.Item
-              nativeButton
               render={<Drawer.Trigger handle={tripDrawerHandle} />}
               className={cn(
                 userMenuItem,
                 "w-full cursor-pointer pr-[5px] pl-[25px]",
               )}
             >
+              {/* TODO: add another trigger/drawer for list of trips to select/load from */}
               Trip
             </Menu.Item>
           </Menu.Group>
