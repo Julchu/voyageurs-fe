@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { cn } from "cn";
 import { sectionLabel } from "@/components/ui/button-styles";
@@ -42,6 +42,7 @@ function CalendarEditor() {
       ),
     );
   const [focus, setFocus] = useState<Focus | null>(null);
+  const calendarPane = useRef<HTMLDivElement>(null);
   const { dates } = schedule;
   const focusedStop = focus ? schedule.stopsById.get(focus.stopId) : undefined;
   const editingStop = focus?.mode === "hours" ? focusedStop : undefined;
@@ -54,6 +55,13 @@ function CalendarEditor() {
   // TODO: Add styled feedback for invalid dates, unavailable times, and rejected drops.
 
   const select = (id: string) => setFocus({ stopId: id, mode: "slot" });
+  // No-op on desktop, where the calendar is already in view.
+  const showCalendar = (behavior: ScrollBehavior) =>
+    calendarPane.current?.scrollIntoView({
+      behavior,
+      block: "nearest",
+      inline: "nearest",
+    });
   const place = (id: string, time: SlotTime) => {
     const placed = schedule.place(id, time);
     if (placed) select(id);
@@ -74,11 +82,11 @@ function CalendarEditor() {
       aria-label="Trip calendar"
       className="group/cal flex h-full min-h-0 flex-col overflow-hidden text-neutral-900"
     >
-      {/* Phones: stops and calendar split the height 50/50. */}
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      {/* Phones: stops and calendar are full-screen panes in a horizontal snap scroller. */}
+      <div className="flex min-h-0 flex-1 snap-x snap-mandatory [scrollbar-width:none] overflow-x-auto md:overflow-hidden">
         <aside
           className={cn(
-            "min-h-0 flex-1 flex-col border-b border-neutral-100 md:w-80 md:flex-none md:border-r md:border-b-0 xl:w-96",
+            "min-h-0 w-full shrink-0 snap-start flex-col md:w-80 md:border-r md:border-neutral-100 xl:w-96",
             editingStop ? "hidden md:flex" : "flex",
           )}
           aria-label="Trip stops"
@@ -106,12 +114,19 @@ function CalendarEditor() {
             selectedId={selectedId}
             canDrag={!isSaving && dates.length > 0 && !editingStop}
             disabled={isSaving}
-            onSelect={select}
+            onSelect={(id) => {
+              select(id);
+              showCalendar("smooth");
+            }}
+            onDragStart={() => showCalendar("instant")}
             onEditHours={(id) => setFocus({ stopId: id, mode: "hours" })}
             onDuplicate={duplicate}
           />
         </aside>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white *:transition-opacity group-has-[[data-dnd-dragging]]/cal:pointer-events-none group-has-[[data-dnd-dragging]]/cal:*:opacity-30">
+        <div
+          ref={calendarPane}
+          className="flex min-h-0 w-full min-w-0 shrink-0 snap-start flex-col bg-white *:transition-opacity group-has-[[data-dnd-dragging]]/cal:pointer-events-none group-has-[[data-dnd-dragging]]/cal:*:opacity-30 md:w-auto md:flex-1"
+        >
           {editingStop ? (
             <OpenHoursEditor
               stop={editingStop}
@@ -170,7 +185,6 @@ function CalendarEditor() {
         isEditing={focus !== null}
         isSaving={isSaving}
         canSave={canSave && !schedule.hasErrors}
-        saveLabel={editingStop ? "Save hours" : "Save schedule"}
         onSave={() => void save()}
         onReset={() => {
           reset();

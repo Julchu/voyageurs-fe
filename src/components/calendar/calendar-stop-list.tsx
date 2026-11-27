@@ -1,9 +1,10 @@
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useEffectEvent, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@base-ui/react/button";
 import { cn } from "cn";
 import { Cursor } from "@dnd-kit/dom";
 import { Draggable } from "@fullcalendar/react/interaction";
+import type { PointerDragEvent } from "@fullcalendar/react/protected-api";
 import {
   StopDragHandle,
   StopDragProvider,
@@ -43,6 +44,7 @@ export function CalendarStopList({
   canDrag,
   disabled,
   onSelect,
+  onDragStart,
   onEditHours,
   onDuplicate,
 }: {
@@ -52,11 +54,14 @@ export function CalendarStopList({
   canDrag: boolean;
   disabled: boolean;
   onSelect: (id: string) => void;
+  /** A card body started dragging toward the calendar. Must bring the calendar into view synchronously. */
+  onDragStart: () => void;
   onEditHours: (id: string) => void;
   onDuplicate: (stop: TripStopDraft) => void;
 }) {
   const { handleDragEnd, handleDragOver } = useTripStopSorting();
   const list = useRef<HTMLUListElement>(null);
+  const startDrag = useEffectEvent(onDragStart);
   useEffect(() => {
     if (!list.current) return;
     const draggable = new Draggable(list.current, {
@@ -66,6 +71,13 @@ export function CalendarStopList({
         duration: { minutes: Number(el.dataset.duration) },
         extendedProps: { stopId: el.dataset.calendarStop },
       }),
+    });
+    const { emitter } = draggable.dragging;
+    emitter.on("dragstart", (ev: PointerDragEvent) => {
+      startDrag();
+      // FullCalendar measures drop slots on touch-down; re-measure now the calendar may have moved into view.
+      emitter.trigger("pointerup", ev);
+      emitter.trigger("pointerdown", ev);
     });
     return () => draggable.destroy();
   }, []);

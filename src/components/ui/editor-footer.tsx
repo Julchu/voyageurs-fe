@@ -50,7 +50,7 @@ export function EditorFooter({
         aria-busy={isSaving}
         className={cn(
           pill,
-          "flex-1 bg-blue-500/80 text-white shadow-lg shadow-blue-500/30 hover:bg-green-500 hover:shadow-green-500/30 disabled:shadow-none disabled:hover:bg-blue-500/80",
+          "flex-1 border border-transparent bg-blue-500/80 text-white shadow-lg shadow-blue-500/30 hover:bg-green-500 hover:shadow-green-500/30 disabled:shadow-none disabled:hover:bg-blue-500/80",
         )}
       >
         {isSaving ? (
