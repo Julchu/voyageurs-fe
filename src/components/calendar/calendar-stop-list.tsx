@@ -66,6 +66,7 @@ export function CalendarStopList({
     if (!list.current) return;
     const draggable = new Draggable(list.current, {
       itemSelector: "[data-calendar-stop]",
+      longPressDelay: 250, // FullCalendar's 1000ms touch default feels stuck
       eventData: (el) => ({
         title: el.dataset.name,
         duration: { minutes: Number(el.dataset.duration) },

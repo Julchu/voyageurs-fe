@@ -60,6 +60,7 @@ export function WeekCalendar(props: CalendarOptions) {
         eventTimeFormat={clockFormat}
         dayHeaderFormat={{ weekday: "short", day: "numeric" }}
         headerToolbar={false}
+        longPressDelay={250}
         nowIndicator
         eventInteractive
         borderless

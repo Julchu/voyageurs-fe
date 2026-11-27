@@ -16,6 +16,7 @@ import { parseDate, weekdays } from "@/utils/trip-time";
 /** DragDropProvider that ends a live drag before dnd-kit tears down its manager. */
 export function StopDragProvider({
   plugins,
+  onDragStart,
   ...props
 }: ComponentProps<typeof DragDropProvider>) {
   const [manager] = useState(() => new DragDropManager({ plugins }));
@@ -27,7 +28,16 @@ export function StopDragProvider({
     },
     [manager],
   );
-  return <DragDropProvider {...props} manager={manager} />;
+  return (
+    <DragDropProvider
+      {...props}
+      manager={manager}
+      onDragStart={(event, manager) => {
+        navigator.vibrate?.(10); // no-op on iOS
+        onDragStart?.(event, manager);
+      }}
+    />
+  );
 }
 
 export function StopDragHandle({
