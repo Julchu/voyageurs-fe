@@ -93,9 +93,9 @@ export function SlotWeek({
 
   return (
     <>
-      <div className="flex shrink-0 flex-wrap items-center gap-2 px-4 py-3 md:flex-nowrap md:gap-3 md:px-6 md:py-4">
+      <div className="flex shrink-0 items-center gap-2 px-4 py-3 md:gap-3 md:px-6 md:py-4">
         {banner}
-        <div className="ml-auto flex shrink-0 gap-2 max-md:order-first">
+        <div className="ml-auto flex shrink-0 gap-2">
           <Button
             aria-label="Earlier days"
             className={circleButton}

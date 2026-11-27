@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Button } from "@base-ui/react/button";
+import { cn } from "cn";
 import { DayPicker } from "@daypicker/react";
 import { outlineButton } from "@/components/ui/button-styles";
-import { XIcon } from "@/components/ui/icons/close-icons";
+import { CalendarCheckIcon } from "@/components/ui/icons/planner-icons";
 import type { TimeSlot } from "@/types/trip-api";
-import { dateLabel, dayOf, parseDate, timeLabel } from "@/utils/trip-time";
+import { dayOf, parseDate, timeLabel } from "@/utils/trip-time";
 import type { SlotTime } from "./calendar-time";
 import { RangePopover, TimeRangeSelects } from "./range-popover";
 import { dayPickerClassNames, pickedDay } from "./styles";
@@ -28,7 +29,7 @@ function SlotTimePicker({
 }) {
   const first = parseDate(dates[0]);
   const last = parseDate(dates.at(-1)!);
-  const label = `${dateLabel(value.date, false)} · ${timeLabel(value.startMinute)}–${timeLabel(value.endMinute)}`;
+  const label = `${timeLabel(value.startMinute)}–${timeLabel(value.endMinute)}`;
   return (
     <RangePopover
       label={label}
@@ -79,7 +80,6 @@ export function SlotFields({
   fits,
   onPlace,
   onReserve,
-  onClose,
 }: {
   slot?: TimeSlot;
   dates: string[];
@@ -87,7 +87,6 @@ export function SlotFields({
   fits: (time: SlotTime) => boolean;
   onPlace: (time: SlotTime) => void;
   onReserve: () => void;
-  onClose: () => void;
 }) {
   const fromSlot = (): SlotTime => ({
     date: slot?.date ?? dates[0],
@@ -108,11 +107,8 @@ export function SlotFields({
     if (next.endMinute > next.startMinute) onPlace(next);
   };
   return (
-    <div
-      // Phones: unwrapped so the picker shares a row with the day arrows.
-      className="contents text-sm md:flex md:min-w-0 md:flex-1 md:flex-wrap md:items-center md:gap-2"
-    >
-      <div className="min-w-44 flex-1 max-md:order-first">
+    <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">
+      <div className="min-w-0 flex-1">
         <SlotTimePicker
           value={time}
           dates={dates}
@@ -125,21 +121,17 @@ export function SlotFields({
       {slot && (
         <Button
           type="button"
-          className={outlineButton}
+          // Phones: icon only.
+          className={cn(outlineButton, "max-md:size-10 max-md:px-0")}
           disabled={disabled}
           onClick={onReserve}
         >
-          {slot.locked ? "Unreserve" : "Reserve"}
+          <CalendarCheckIcon aria-hidden="true" className="size-5" />
+          <span className="max-md:sr-only">
+            {slot.locked ? "Unreserve" : "Reserve"}
+          </span>
         </Button>
       )}
-      <Button
-        type="button"
-        aria-label="Stop placing"
-        onClick={onClose}
-        className="flex size-8 cursor-pointer items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-100"
-      >
-        <XIcon aria-hidden="true" className="size-5 stroke-current" />
-      </Button>
     </div>
   );
 }

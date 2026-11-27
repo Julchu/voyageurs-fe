@@ -160,7 +160,6 @@ function CalendarEditor() {
                         onReserve={() =>
                           selectedSlot && toggleReserved(selectedSlot.id)
                         }
-                        onClose={() => setFocus(null)}
                       />
                     )
                   }
