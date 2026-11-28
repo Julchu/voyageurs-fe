@@ -3,7 +3,10 @@ import { Button } from "@base-ui/react/button";
 import { cn } from "cn";
 import { DayPicker } from "@daypicker/react";
 import { outlineButton } from "@/components/ui/button-styles";
-import { CalendarCheckIcon } from "@/components/ui/icons/planner-icons";
+import {
+  CalendarCheckIcon,
+  CalendarXIcon,
+} from "@/components/ui/icons/planner-icons";
 import type { TimeSlot } from "@/types/trip-api";
 import { dayOf, parseDate, timeLabel } from "@/utils/trip-time";
 import type { SlotTime } from "./calendar-time";
@@ -126,7 +129,11 @@ export function SlotFields({
           disabled={disabled}
           onClick={onReserve}
         >
-          <CalendarCheckIcon aria-hidden="true" className="size-5" />
+          {slot.locked ? (
+            <CalendarXIcon aria-hidden="true" className="size-5" />
+          ) : (
+            <CalendarCheckIcon aria-hidden="true" className="size-5" />
+          )}
           <span className="max-md:sr-only">
             {slot.locked ? "Unreserve" : "Reserve"}
           </span>

@@ -2,6 +2,7 @@ import { Menu } from "@base-ui/react/menu";
 import { cn } from "cn";
 import { stopNumber } from "@/components/ui/button-styles";
 import { FlyToIcon } from "@/components/ui/icons/map-icons";
+import { CalendarCheckIcon } from "@/components/ui/icons/planner-icons";
 import { MoveDownArrow, MoveUpArrow } from "@/components/ui/icons/move-icons";
 import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
 import { VerticalEllipsisIcon } from "@/components/ui/icons/stop-card-icons";
@@ -88,11 +89,17 @@ export const TripStopItem = ({
           {slot && (
             <span
               className={cn(
-                "block text-sm font-semibold",
+                "flex items-center gap-1 text-sm font-semibold",
                 changed ? "text-amber-600" : "text-blue-500",
               )}
             >
               {timeLabel(slot.startMinute)}–{timeLabel(slot.endMinute)}
+              {slot.locked && (
+                <span title="Remove the reservation on the calendar to rearrange">
+                  <CalendarCheckIcon aria-hidden="true" className="size-4" />
+                  <span className="sr-only">Reserved</span>
+                </span>
+              )}
             </span>
           )}
           <span className="block truncate text-sm text-wrap text-neutral-500 capitalize">
@@ -106,14 +113,6 @@ export const TripStopItem = ({
 
       {changed && (
         <span className="text-[10px] text-amber-800">Time changed</span>
-      )}
-      {slot?.locked && (
-        <span
-          className="text-[10px] text-neutral-500"
-          title="Remove the reservation on the calendar to rearrange"
-        >
-          Reserved
-        </span>
       )}
       <div className="ml-auto shrink-0">
         {editing ? (
