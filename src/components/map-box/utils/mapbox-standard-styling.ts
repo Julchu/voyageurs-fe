@@ -13,7 +13,8 @@ const STANDARD_STYLE_URL = "mapbox://styles/mapbox/standard";
  * its place set with its own zoom and label density.
  * Indoor mode stays off: the poi-label filter hides outdoor places unless
  * `showIndoor` is false, or the place is on the active indoor floor.
- * Extruded buildings, landmark models, and window facades start on.
+ * Extruded buildings, landmark models, window facades, and trees start on.
+ * Performance mode turns all of them off at once via `show3dObjects`.
  */
 const BASEMAP_CONFIG = {
   showPointOfInterestLabels: true,
@@ -21,7 +22,7 @@ const BASEMAP_CONFIG = {
   show3dBuildings: true,
   show3dLandmarks: true,
   show3dFacades: true,
-  show3dTrees: false,
+  show3dTrees: true,
   showIndoor: false,
   showHdRoads: true,
   showPlaceLabels: true,
