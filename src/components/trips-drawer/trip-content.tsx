@@ -128,7 +128,7 @@ const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => (
           <MenuItem onClick={onEdit}>
             <PencilPinIcon
               aria-hidden="true"
-              className="h-6 w-6 fill-blue-500 group-hover:fill-white"
+              className="h-6 w-6 fill-blue-500 group-data-highlighted:fill-white"
             />
             Edit Trip
           </MenuItem>
@@ -136,7 +136,7 @@ const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => (
           <MenuItem nativeButton render={<Drawer.Close />}>
             <XIcon
               aria-hidden="true"
-              className="h-6 w-6 stroke-red-500 group-hover:stroke-white"
+              className="h-6 w-6 stroke-red-500 group-data-highlighted:stroke-white"
             />
             Close
           </MenuItem>
