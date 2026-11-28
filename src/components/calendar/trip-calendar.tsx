@@ -181,7 +181,6 @@ function CalendarEditor() {
       </div>
       <EditorFooter
         isDirty={isDirty}
-        isEditing={focus !== null}
         isSaving={isSaving}
         canSave={canSave && !schedule.hasErrors}
         onSave={() => void save()}
