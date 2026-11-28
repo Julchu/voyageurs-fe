@@ -1,5 +1,5 @@
 import type { StoreApi } from "zustand";
-import { listTrips, sendTrip } from "@/api/trips";
+import { deleteTrip, listTrips, sendTrip } from "@/api/trips";
 import type { PlaceDetailsInput, TripDto } from "@/types/trip-api";
 import type { TripDraft } from "@/types/trip-draft";
 import { errorMessage } from "@/utils/errors";
@@ -17,6 +17,7 @@ import type { TripState, TripStore } from "./trip-store";
 import { shouldFetchCollection } from "./utils/collection-load";
 
 const SAVE_FAILED = "Unable to save. Please try again.";
+const DELETE_FAILED = "Unable to delete. Please try again.";
 
 /** The state a server load starts from. Clearing the store returns to it. */
 export const initTripStore = (
@@ -113,6 +114,34 @@ export const createTripSaveActions = (
       } catch (error) {
         return version === requestVersion
           ? fail(errorMessage(error, SAVE_FAILED))
+          : false;
+      }
+    },
+
+    /** Deletes the saved trip being edited, then opens the next one. True when deleted. */
+    deleteTrip: async () => {
+      const { currentTrip, trips, save } = get();
+      const saved = serverTrip(trips, currentTrip);
+      if (!saved || save.status === "saving") return false;
+      const version = requestVersion;
+      set({ save: { status: "saving" } });
+      try {
+        await deleteTrip(saved.publicId);
+        if (version !== requestVersion) return false;
+        set(({ trips }) => {
+          const remaining = trips.filter(
+            (trip) => trip.publicId !== saved.publicId,
+          );
+          return {
+            trips: remaining,
+            currentTrip: firstDraft(remaining),
+            save: { status: "idle" },
+          };
+        });
+        return true;
+      } catch (error) {
+        return version === requestVersion
+          ? fail(errorMessage(error, DELETE_FAILED))
           : false;
       }
     },

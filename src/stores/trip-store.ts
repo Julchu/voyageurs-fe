@@ -48,6 +48,7 @@ type TripActions = {
   clearTrips: () => void;
   fetchTrips: () => Promise<void>;
   saveTrip: () => Promise<boolean>;
+  deleteTrip: () => Promise<boolean>;
   saveDetails: (placeDetails: PlaceDetailsInput[]) => Promise<boolean>;
 };
 

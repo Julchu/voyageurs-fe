@@ -4,6 +4,7 @@ import { Menu } from "@base-ui/react/menu";
 import { Separator } from "@base-ui/react/separator";
 import { useState } from "react";
 import { cn } from "cn";
+import { DeleteTripDialog } from "@/components/trips-drawer/delete-trip-dialog";
 import { StopsList } from "@/components/trips-drawer/stops-list";
 import { TripSelector } from "@/components/trips-drawer/trip-selector";
 import { EditorFooter } from "@/components/ui/editor-footer";
@@ -30,7 +31,9 @@ const tripSummary = ({ startDate, endDate, stops }: TripDraft) => {
 export const TripContent = () => {
   const signedIn = useUserStore(({ userInfo }) => !!userInfo);
   const [isEditingTrip, setIsEditingTrip] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const renameTrip = useTripStore(({ renameTrip }) => renameTrip);
+  const deleteTrip = useTripStore(({ deleteTrip }) => deleteTrip);
   const { trip, isDirty, isSaving, canSave, save, reset } = useTripDraft();
 
   const editing = !signedIn || !trip.publicId || isEditingTrip;
@@ -43,6 +46,13 @@ export const TripContent = () => {
 
   const onReset = () => {
     reset();
+    setIsEditingTrip(false);
+  };
+
+  // A failed delete keeps the dialog open to retry.
+  const onDelete = async () => {
+    if (!(await deleteTrip())) return;
+    setIsConfirmingDelete(false);
     setIsEditingTrip(false);
   };
 
@@ -64,7 +74,19 @@ export const TripContent = () => {
             {tripSummary(trip)}
           </Drawer.Description>
         </div>
-        <TripDrawerMenu onEdit={() => setIsEditingTrip(true)} />
+        <TripDrawerMenu
+          onEdit={() => setIsEditingTrip(true)}
+          onDelete={
+            trip.publicId ? () => setIsConfirmingDelete(true) : undefined
+          }
+        />
+        <DeleteTripDialog
+          name={title}
+          open={isConfirmingDelete}
+          busy={isSaving}
+          onOpenChange={setIsConfirmingDelete}
+          onConfirm={onDelete}
+        />
       </div>
 
       {editing ? (
@@ -101,7 +123,14 @@ export const TripContent = () => {
   );
 };
 
-const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => (
+/** Delete only shows for saved trips; Restore already discards an unsaved one. */
+const TripDrawerMenu = ({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void;
+  onDelete?: () => void;
+}) => (
   <Menu.Root>
     <Menu.Trigger
       aria-label="Trip menu"
@@ -134,14 +163,15 @@ const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => (
             Edit
           </MenuItem>
 
-          {/* TODO: hook up delete action */}
-          <MenuItem>
-            <MapDeleteIcon
-              aria-hidden="true"
-              className="h-6 w-6 fill-none stroke-red-500 group-data-highlighted:stroke-white"
-            />
-            Delete
-          </MenuItem>
+          {onDelete && (
+            <MenuItem onClick={onDelete}>
+              <MapDeleteIcon
+                aria-hidden="true"
+                className="h-6 w-6 fill-none stroke-red-500 group-data-highlighted:stroke-white"
+              />
+              Delete
+            </MenuItem>
+          )}
 
           <MenuItem nativeButton render={<Drawer.Close />}>
             <XIcon

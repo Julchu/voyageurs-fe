@@ -1,5 +1,5 @@
 import type { TripDto, TripPatch } from "@/types/trip-api";
-import { apiJson } from "./client";
+import { ApiError, apiJson } from "./client";
 
 export const listTrips = async () => {
   const trips = await apiJson<TripDto[]>("/api/trips");
@@ -28,4 +28,14 @@ export const sendTrip = async (
   )
     throw new Error("Invalid trip save response");
   return trip;
+};
+
+/** Deletes a saved trip. One that is already gone counts as deleted. */
+export const deleteTrip = async (publicId: string) => {
+  await apiJson(`/api/trips/${publicId}`, { method: "DELETE" }).catch(
+    (error: unknown) => {
+      if (error instanceof ApiError && error.status === 404) return;
+      throw error;
+    },
+  );
 };
