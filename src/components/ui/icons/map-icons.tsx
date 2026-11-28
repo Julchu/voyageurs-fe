@@ -18,6 +18,24 @@ export const MapSaveIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+// tabler:map-x
+export const MapDeleteIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="32"
+    height="32"
+    viewBox="0 0 24 24"
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M14 19.5L9 17l-6 3V7l6-3l6 3l6-3v9M9 4v13m6-10v6.5m7 8.5l-5-5m0 5l5-5"
+    />
+  </svg>
+);
+
 // tabler:map-plus
 export const MapAddIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg

@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useEffectEvent, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@base-ui/react/button";
+import { Menu } from "@base-ui/react/menu";
 import { cn } from "cn";
 import { Cursor } from "@dnd-kit/dom";
 import { Draggable } from "@fullcalendar/react/interaction";
@@ -11,6 +12,10 @@ import {
 } from "@/components/trips-drawer/stop-drag-controls";
 import { stopNumber } from "@/components/ui/button-styles";
 import { ClockIcon, CopyIcon } from "@/components/ui/icons/planner-icons";
+import { PinRemoveIcon } from "@/components/ui/icons/pin-icons";
+import { VerticalEllipsisIcon } from "@/components/ui/icons/stop-card-icons";
+import { MenuItem } from "@/components/ui/menu-item";
+import { popupMotion, popupSurface } from "@/components/ui/popup-styles";
 import {
   useStopSortable,
   useTripStopSorting,
@@ -47,6 +52,7 @@ export function CalendarStopList({
   onDragStart,
   onEditHours,
   onDuplicate,
+  onRemove,
 }: {
   schedule: SlotSchedule;
   activeId?: string;
@@ -58,6 +64,7 @@ export function CalendarStopList({
   onDragStart: () => void;
   onEditHours: (id: string) => void;
   onDuplicate: (stop: TripStopDraft) => void;
+  onRemove: (stop: TripStopDraft) => void;
 }) {
   const { handleDragEnd, handleDragOver } = useTripStopSorting();
   const list = useRef<HTMLUListElement>(null);
@@ -146,16 +153,6 @@ export function CalendarStopList({
               <Button
                 type="button"
                 disabled={disabled}
-                onClick={() => onDuplicate(stop)}
-                aria-label={`Duplicate ${stop.name}`}
-                title="Duplicate stop"
-                className={iconButton}
-              >
-                <CopyIcon aria-hidden="true" className="size-4.5" />
-              </Button>
-              <Button
-                type="button"
-                disabled={disabled}
                 onClick={() => onEditHours(id)}
                 aria-label={`Open hours for ${stop.name}`}
                 aria-pressed={active && selectedId !== id}
@@ -164,6 +161,12 @@ export function CalendarStopList({
               >
                 <ClockIcon aria-hidden="true" className="size-4.5" />
               </Button>
+              <StopMenu
+                stop={stop}
+                disabled={disabled}
+                onDuplicate={onDuplicate}
+                onRemove={onRemove}
+              />
             </SortableCalendarStop>
           );
         })}
@@ -178,6 +181,63 @@ export function CalendarStopList({
         )}
       </ul>
     </StopDragProvider>
+  );
+}
+
+function StopMenu({
+  stop,
+  disabled,
+  onDuplicate,
+  onRemove,
+}: {
+  stop: TripStopDraft;
+  disabled: boolean;
+  onDuplicate: (stop: TripStopDraft) => void;
+  onRemove: (stop: TripStopDraft) => void;
+}) {
+  return (
+    <Menu.Root>
+      <Menu.Trigger
+        disabled={disabled}
+        aria-label={`Actions for ${stop.name}`}
+        className={cn(iconButton, "data-popup-open:bg-white")}
+      >
+        <VerticalEllipsisIcon
+          aria-hidden="true"
+          className="size-5 fill-current"
+        />
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Positioner
+          align="end"
+          sideOffset={8}
+          className="z-50 outline-hidden"
+        >
+          <Menu.Popup
+            className={cn(
+              popupSurface,
+              popupMotion,
+              "flex flex-col rounded-2xl p-2",
+            )}
+          >
+            <MenuItem onClick={() => onDuplicate(stop)}>
+              <CopyIcon
+                aria-hidden="true"
+                className="h-6 w-6 stroke-blue-500 group-data-highlighted:stroke-white"
+              />
+              Clone
+            </MenuItem>
+            <MenuItem onClick={() => onRemove(stop)}>
+              <PinRemoveIcon
+                aria-hidden="true"
+                className="h-6 w-6 fill-none stroke-red-500 group-data-highlighted:stroke-white"
+              />
+              Remove
+            </MenuItem>
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
   );
 }
 

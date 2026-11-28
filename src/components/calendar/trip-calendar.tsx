@@ -9,6 +9,7 @@ import { useTripDraft } from "@/hooks/use-trip-draft";
 import { useTripStore } from "@/providers/trip-store-provider";
 import type { TimeSlot } from "@/types/trip-api";
 import type { TripStopDraft } from "@/types/trip-draft";
+import { stopId } from "@/utils/trip-stop";
 import type { SlotTime } from "./calendar-time";
 import { NoDatesState, OutsideDatesNotice } from "./calendar-notices";
 import { CalendarStopList } from "./calendar-stop-list";
@@ -30,11 +31,18 @@ export function TripCalendar() {
 function CalendarEditor() {
   const { trip, isDirty, isSaving, canSave, save, reset } = useTripDraft();
   const schedule = useSlotSchedule(trip, isSaving);
-  const { addStop, setTripDates, removeTimeSlot, toggleReserved } =
+  const { addStop, removeStop, setTripDates, removeTimeSlot, toggleReserved } =
     useTripStore(
       useShallow(
-        ({ addStop, setTripDates, removeTimeSlot, toggleReserved }) => ({
+        ({
           addStop,
+          removeStop,
+          setTripDates,
+          removeTimeSlot,
+          toggleReserved,
+        }) => ({
+          addStop,
+          removeStop,
           setTripDates,
           removeTimeSlot,
           toggleReserved,
@@ -75,6 +83,11 @@ function CalendarEditor() {
   const duplicate = (stop: TripStopDraft) => {
     const id = addStop(stop);
     if (id) select(id);
+  };
+  const remove = (stop: TripStopDraft) => {
+    const id = stopId(stop);
+    removeStop(id);
+    if (focus?.stopId === id) setFocus(null);
   };
 
   return (
@@ -121,6 +134,7 @@ function CalendarEditor() {
             onDragStart={() => showCalendar("instant")}
             onEditHours={(id) => setFocus({ stopId: id, mode: "hours" })}
             onDuplicate={duplicate}
+            onRemove={remove}
           />
         </aside>
         <div

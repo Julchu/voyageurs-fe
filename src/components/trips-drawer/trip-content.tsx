@@ -8,6 +8,7 @@ import { StopsList } from "@/components/trips-drawer/stops-list";
 import { TripSelector } from "@/components/trips-drawer/trip-selector";
 import { EditorFooter } from "@/components/ui/editor-footer";
 import { XIcon } from "@/components/ui/icons/close-icons";
+import { MapDeleteIcon } from "@/components/ui/icons/map-icons";
 import { PencilPinIcon, PinMenuButton } from "@/components/ui/icons/pin-icons";
 import { MenuItem } from "@/components/ui/menu-item";
 import { popupMotion, popupSurface } from "@/components/ui/popup-styles";
@@ -130,7 +131,16 @@ const TripDrawerMenu = ({ onEdit }: { onEdit: () => void }) => (
               aria-hidden="true"
               className="h-6 w-6 fill-blue-500 group-data-highlighted:fill-white"
             />
-            Edit Trip
+            Edit
+          </MenuItem>
+
+          {/* TODO: hook up delete action */}
+          <MenuItem>
+            <MapDeleteIcon
+              aria-hidden="true"
+              className="h-6 w-6 fill-none stroke-red-500 group-data-highlighted:stroke-white"
+            />
+            Delete
           </MenuItem>
 
           <MenuItem nativeButton render={<Drawer.Close />}>
